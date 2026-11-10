@@ -28,6 +28,7 @@ const GLOWING := ["window_in", "lampglass", "ember"]  # their own light: unshade
 var room: Node3D
 var tone: AudioStreamPlayer
 var lights: Array[OmniLight3D] = []
+var windows: Array[OmniLight3D] = []   # the luz_janela lights: daylight, so DayCycle dims them at night
 var loops: Array[AudioStreamPlayer3D] = []
 
 
@@ -40,6 +41,8 @@ func _build() -> void:
 	for m in Nodes.children_named(room, "luz_"):
 		var l: Array = LIGHT[m.name.get_slice("_", 1)]
 		lights.append(Looks.omni(self, m.position, l[0], l[1] * dim, l[2]))
+		if m.name.get_slice("_", 1) == "janela":
+			windows.append(lights[-1])
 	spawn_npcs(room)
 	Door.make(room.get_node("porta"), "E · sair para a rua", Paths.VILAREJO, door, 1.6)
 
@@ -50,6 +53,11 @@ func _player_start() -> Transform3D:
 
 
 func _started() -> void:  # the room tone (wind muffled by the walls), the drone, what crackles, ticks and plays in it
+	var panes: Array[BaseMaterial3D] = []
+	Nodes.visit_surfaces(room, func(_mi, _i, m):
+		if m is BaseMaterial3D and m.resource_name == "window_in" and m not in panes:
+			panes.append(m))
+	day = DayCycle.indoors(self, windows, panes)  # the windows go dark at night; the rain drums on the roof
 	tone = Audio.play2d(self, "casa", -12.0, true)
 	if drone != "":
 		Audio.play2d(self, drone, -15.0, true)

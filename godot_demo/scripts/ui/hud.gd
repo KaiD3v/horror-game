@@ -4,12 +4,13 @@
 class_name Hud
 extends CanvasLayer
 
-const CONTROLS := "WASD trotar · Ctrl andar · Shift correr · L lamparina · E usar · F facão · LMB/RMB golpes · Espaço esquiva (+A/D lateral) · C agachar · Q besta · R recarregar · Tab notas"
+const CONTROLS := "WASD trotar · Ctrl andar · Shift correr · L lamparina · E usar · F facão · LMB/RMB golpes · Espaço esquiva (+A/D lateral) · C agachar · Q besta · R recarregar · X curativo · Tab notas"
 const DEATH := "Morreu. Enter para recomeçar."
 
 var player: Player
 var legend: Label
 var crosshair: Label
+var ammo: Label        # with the crossbow up: the bolts left in the quiver
 var prompt: Label
 var message: Label
 var vision: ColorRect
@@ -28,6 +29,7 @@ func _build(controls: String) -> void:
 	legend = Label.new(); add_child(legend); legend.position = Vector2(10, 8); legend.text = controls
 	legend.add_theme_font_size_override("font_size", 12)  # the game font at 1x: the controls line fits
 	crosshair = _centred("+", 0.48); crosshair.visible = false
+	ammo = _centred("", 0.56); ammo.visible = false; ammo.add_theme_font_size_override("font_size", 12)
 	message = _centred("", 0.83); message.visible = false
 	prompt = _centred("", 0.88); prompt.visible = false
 
@@ -41,6 +43,7 @@ func _centred(t: String, at: float) -> Label:  # a line across the screen, at a 
 
 func _ready() -> void:
 	player.died.connect(func(): legend.text = DEATH; legend.add_theme_font_size_override("font_size", 24))
+	player.notice.connect(say.bind(2.5))
 	var arrival := SceneRouter.take_arrival()
 	if arrival[0]:  # came through a door: it creaks and shuts behind you
 		if arrival[1] != "":
@@ -62,6 +65,8 @@ func _process(delta: float) -> void:
 	_message_t -= delta
 	message.visible = _message_t > 0.0
 	crosshair.visible = player.mode == Player.Mode.XBOW and player.action == ""
+	ammo.visible = player.mode == Player.Mode.XBOW
+	ammo.text = "virotes %d%s" % [Inventory.count("virote"), " · armada" if player.loaded else ""]
 	var c: PlayerCondition = player.condition
 	vision.visible = c.wound > 0.0 or c.tired > 0.0  # (no screen copy while he is fine)
 	vision.material.set_shader_parameter("hurt", c.wound)

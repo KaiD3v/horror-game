@@ -78,6 +78,28 @@ o `scripts/levels/vilarejo.gd` os coloca nos marcadores `npc_<nome>` do GLB do v
 
 Gancho da missão (a definir): o filho de Dona Firmina foi levado para a Colônia.
 
+### Lojas (`scripts/shop/`, dados em `ItemCatalog` e `ShopCatalog`)
+
+- **Quem vende:** Seu Bento e Tenório. Atrás do balcão aparece "E · comprar com <nome>", e a tela de compra abre sobre papel envelhecido, com o jogo pausado.
+  - A tela mostra a fala do vendedor, a lista com os preços, a descrição do item escolhido, quantos você tem, o estoque e o seu dinheiro.
+  - W/S, as setas ou o mouse escolhem. E, Enter ou o clique compram. Esc ou Tab saem.
+- **O que cada um vende** (a moeda é o cruzeiro, Cr$):
+
+  | Vendedor | Item | Preço | Estoque |
+  |---|---|---|---|
+  | Seu Bento (Secos e Molhados) | atadura (fecha 1 ferimento) | Cr$ 8 | 6 |
+  | Seu Bento | garrafada de arnica (fecha 2) | Cr$ 18 | 2 |
+  | Tenório (Armas e Munição) | 3 virotes | Cr$ 9 | sem limite |
+  | Tenório | 8 virotes | Cr$ 20 | 3 |
+
+- **O inventário** (`Inventory`) continua entre as cenas e volta ao início num jogo novo. O estoque das lojas também.
+  - Um jogo novo começa com Cr$ 40, 6 virotes e 1 atadura.
+  - Cada recarga da besta tira um virote da aljava. Sem virotes não há recarga, e a mira mostra quantos restam.
+  - X usa o primeiro curativo que tiver.
+- **Ainda não dá para ganhar dinheiro.** Isso fica para depois, por exemplo com saques, missões ou o corpo dos mutantes.
+- **Sons:** moedas no balcão (`compra`) e o pano da atadura (`curativo`), do ElevenLabs.
+
+
 ## Narrativa ambiental (o que aconteceu aqui, sem uma linha de texto de jogo)
 
 Alguém foi arrastado para a Colônia, e o vilarejo tentou se trancar.
@@ -95,9 +117,27 @@ Alguém foi arrastado para a Colônia, e o vilarejo tentou se trancar.
 
 ## Clima
 
-- Neblina exponencial densa (cerca de 25 m de visão) mais neblina de altura no fundo do vale.
-- Céu da mesma cor da neblina, então tudo some nela. Luz de fim de tarde encoberta, fria e baixa.
+- Neblina exponencial mais neblina de altura no fundo do vale. O céu tem a mesma cor da neblina, então tudo some nela.
 - A lanterna do protagonista continua sendo a luz quente da cena.
+
+### O dia e o clima (`scripts/world/world_time.gd`, `weather.gd`, `day_cycle.gd`; dados em `scripts/data/day_data.gd`)
+
+- **Relógio:** 1 segundo real = 1 minuto no jogo, então um dia dura 24 minutos. O relógio continua contando entre as cenas e só para quando o jogo pausa. Um jogo novo começa às 06:30. A tecla **T** avança uma hora, para testar.
+- **Períodos:** Madrugada (00:00–05:59), Manhã (06:00–11:59), Tarde (12:00–17:59) e Noite (18:00–23:59). Quando um período começa, o nome e a hora aparecem na tela.
+- **Luz:** a luz vem de uma tabela de horários (`DayData.LIGHT`) e passa suavemente de uma linha para a próxima. No teste, a maior mudança em um minuto de jogo é de 1,25%.
+  - A luz percorre o dia assim: madrugada quase escura, amanhecer rosado às 6:30, manhã clara, meio-dia, fim de tarde frio, entardecer alaranjado às 18:00 e noite azulada.
+  - Uma só luz faz o sol e a lua: de dia o sol sobe e cruza o céu; à noite a lua fica fria e fraca.
+- **Clima:** cada período sorteia o próprio clima quando começa (`DayData.CHANCES`).
+  - **Chuva:** a chance é de 25% na madrugada, 25% de manhã, 35% à tarde e 30% à noite. Quando sai, começa em algum momento do período e dura de 40 a 180 minutos de jogo. Uma chuva que já caía continua até o fim.
+  - **Névoa:** toda manhã tem névoa. Nos outros períodos a chance é de 60% na madrugada, 30% à tarde e 45% à noite. Sem névoa, o ar fica limpo.
+- **Transições:** nada muda de uma vez.
+  - A chuva leva 12 minutos de jogo para engrossar ou parar. A garoa e o som dela acompanham.
+  - A névoa leva 45 minutos para chegar ou levantar. Os bancos de neblina engrossam com ela, e a densidade do fog muda de 0,028 a 0,075.
+  - Com chuva, o céu e o ambiente escurecem e o sol fraqueja. De dia, a névoa clareia o céu.
+  - As poças se enchem em 20 minutos de chuva e secam em 4 horas. Os anéis dos pingos só aparecem enquanto chove.
+  - As silhuetas das serras e da Colônia acompanham a cor do céu.
+- **Interiores:** a luz das janelas segue a hora: cinza de dia, quase apagada e azulada à noite, mais fraca num dia de chuva. Os vidros escurecem junto, e a chuva se ouve abafada no telhado.
+- **Para mudar:** horários, cores e chances são só números em `DayData`. Para outra fase ter o ciclo, basta uma linha: `DayCycle.outdoors(...)` ou `DayCycle.indoors(...)`. Hoje a Colônia e a sala de treino continuam com a noite fixa.
 
 ### Acabamento (`vilarejo_build.py`: `stains()`, `bake_ao()`, `ridge()`, `colony()`)
 
@@ -199,10 +239,10 @@ volta para a frente dela. Por isso as casas por fora continuam fechadas; as port
 
 Gerados no **ElevenLabs** (fluxo "Vila de Santa Clara — sons", efeitos com `eleven_text_to_sound_v2`; loops com a
 opção de loop sem emenda do modelo). O jogo **não terá dublagem**: a reza da Dona Firmina é um murmúrio sem palavras.
-Os MP3 baixados ficam em `sounds_elevenlabs/`; `sounds_import.py` (ffmpeg) converte para `godot_demo/sounds/*.wav`
+Os MP3 baixados ficam em `audio_fontes/elevenlabs/`; `tools/sons/sounds_import.py` (ffmpeg) converte para `godot_demo/sounds/*.wav`
 (mono 44,1 kHz, pico por tipo, passos começando no impacto, relógio remontado num tique-taque regular). Versões não
-usadas em `sounds_elevenlabs_extra/` (o uivo e o murmúrio alternativos, a Ave-Maria falada). Os sons sintetizados
-antigos (`sounds_build.py`) ficaram em `sounds_sintetizados/` como reserva. Prévias: `renders/sons/sons_previa.wav` e
+usadas em `audio_fontes/elevenlabs_extra/` (o uivo e o murmúrio alternativos, a Ave-Maria falada). Os sons sintetizados
+antigos (`sounds_build.py`) ficaram em `audio_fontes/sintetizados/` como reserva. Prévias: `renders/sons/sons_previa.wav` e
 `renders/sons/sons_interiores_previa.wav`.
 
 - **Vilarejo:** vento em loop; Dona Firmina murmura uma reza (só de perto); de tempos em tempos corvos nas árvores
@@ -216,12 +256,26 @@ antigos (`sounds_build.py`) ficaram em `sounds_sintetizados/` como reserva. Pré
   sessão não tem modelo de música (para isso, o conector completo em https://api.elevenlabs.io/v1/mcp).
 - **Passos** por piso (terra, madeira, ladrilho; 4 de cada), mais baixos agachado e mais pesados correndo; a **porta**
   range e bate quando você passa por ela.
-- Código: `scripts/core/level.gd` (`sfx`, `play2d`, `play3d`, passos, `FLOOR`), `scripts/levels/vilarejo.gd` (`_ambience`, `_event`),
-  `scripts/levels/interior.gd` (`FLOOR_IN`, `DRONE`, marcadores `luz_*` e `som_*` que soam).
+- **O protagonista** (`scripts/player/player.gd`, `sfx()`; 2026-11-10):
+  - **facão:** sacar e guardar; o golpe corta o ar pouco antes de acertar (3 takes, o golpe de cima mais grave); acertar alguém faz um som de corte na carne (2 takes);
+  - **besta:** sacar e guardar no coldre; recarregar (corda puxada, trava, virote no trilho, no tempo da animação); disparar;
+  - **lamparina:** tirar e pendurar no gancho;
+  - **dano:** um golpe na carne, o casaco rasgando e o fôlego cortado, sem voz (2 takes);
+  - **vida baixa:** com 1/3 da vida, o coração bate forte, em loop, junto com a respiração pesada. Os dois param na morte (`PlayerCondition`).
+- **O mutante** (`Enemy.voice`, que qualquer criatura pode usar; a Enfermeira continua muda):
+  - grunhidos de vez em quando, parado ou perseguindo (3 takes);
+  - o grito ao ver você;
+  - o rosnado do golpe e o guincho quando apanha (2 takes cada);
+  - o gemido e a queda ao morrer;
+  - um passo pesado a cada 0,64 m andado (2 takes).
+- **Chuva:** um loop de 20 s do ElevenLabs (chuva fina em terra, folhas e telhas, pingos dos beirais) no lugar da `garoa` sintetizada, que fica como reserva.
+- **Variações:** um som com takes (`<nome>_1`, `_2`...) é sorteado a cada vez (`Audio.pick`), com o tom variando um pouco.
+- Código: `scripts/core/audio.gd` (`play2d`, `play3d`, `pick`, `fade`), `scripts/world/footsteps.gd`,
+  `scripts/levels/vilarejo.gd` (`_ambience`), `scripts/levels/interior.gd` (`drone`, marcadores `luz_*` e `som_*` que soam).
 
 ## Fica para depois
 
 - Mais interiores (casas, a ruína), a Colônia atrás do portão; o andar de cima da venda.
-- Sons do mutante (grunhido, grito ao ver você, passos), música; mais mutantes.
+- Música; mais mutantes.
 - Kit modular reaproveitável para o jogo final.
 - Melhorias artísticas pendentes: ver [TODO_ARTE.md](TODO_ARTE.md).

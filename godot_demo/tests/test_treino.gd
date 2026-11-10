@@ -164,7 +164,9 @@ func run() -> void:
 		await tap("heavy"); await wait(1.05)
 	check(L.enemy.state == Enemy.State.DEAD, "machete kills the mutant (its hp=%d)" % L.enemy.health)
 	await wait(1.6); await shot("13_mutant_dead")
+	sounds_heard()
 	await wound_tests()
+	await inventory_tests()
 	player.health = 2
 
 	player.take_damage(2); await wait(1.8); await shot("9_dead")
@@ -173,7 +175,7 @@ func run() -> void:
 	await press("forward", 0.5)
 	check(player.global_position.distance_to(p) < 0.05, "no control after death")
 	await wait(2.2)
-	check(not player.condition.breath.playing, "dead: the breathing stops")
+	check(not player.condition.breath.playing and not player.condition.heart.playing, "dead: the breathing and the heart stop")
 
 
 
@@ -228,7 +230,8 @@ func wound_tests() -> void:
 					var c := img.get_pixel(x, y)
 					n += int(c.r > 0.08 and c.r > 2.2 * c.g and c.r > 2.0 * c.b)
 		red.append(n)
-		check(player.condition.breath.playing == (hp == 1), "hp %d: breathing %s" % [hp, "hard" if hp == 1 else "quiet"])
+		check(player.condition.breath.playing == (hp == 1) and player.condition.heart.playing == (hp == 1),
+			"hp %d: breathing %s" % [hp, "hard, the heart pounding" if hp == 1 else "quiet"])
 	check(red[0] < red[1] and red[1] < red[2], "blood spreads with each hit (red px %s)" % [red])
 	await wait(1.0)
 	check(player.condition.breath.volume_db > -12.0, "the breathing fades in (%.1f dB)" % player.condition.breath.volume_db)
@@ -237,3 +240,34 @@ func wound_tests() -> void:
 
 func stamina_hud() -> bool:  # any bar left on screen? (the stamina is the panting and the edges now)
 	return L.find_children("*", "ColorRect", true, false).any(func(c): return c != L.hud.vision and c.visible and c.size.y < 20)
+
+
+## Everything above made its sound (Audio.heard): the machete, the crossbow, the lantern, his hurt, the mutant.
+func sounds_heard() -> void:
+	var groups := {"machete": ["facao_sacar", "facao_guardar", "facao_golpe", "facao_acerto"],
+		"crossbow": ["besta_sacar", "besta_recarga", "besta_disparo"], "lantern and hurt": ["lamparina", "dano"],
+		"mutant": ["mutante_grito", "mutante_ataque", "mutante_dor", "mutante_morte", "mutante_passo"]}
+	for g in groups:
+		var missing: Array = groups[g].filter(func(n): return n not in Audio.heard)
+		check(missing.is_empty(), "%s sounds play (missing: %s)" % [g, missing])
+	check(Audio.pick("facao_golpe") in ["facao_golpe_1", "facao_golpe_2", "facao_golpe_3"], "a blow picks one of its 3 takes")
+
+
+## What he carries (Inventory): X dresses a wound with a bandage; the crossbow spends a bolt a reload.
+func inventory_tests() -> void:
+	player.health = 1; Inventory.items["atadura"] = 1
+	await tap("heal"); await wait(0.2)
+	check(player.health == 2 and Inventory.count("atadura") == 0 and "curativo" in Audio.heard, "X: a bandage closes a wound (hp %d)" % player.health)
+	await tap("heal"); await wait(0.2)
+	check(player.health == 2 and L.hud.message.text == "Sem curativos.", "no bandage left: \"%s\"" % L.hud.message.text)
+	if player.mode == Player.Mode.COMBAT:
+		await tap("draw"); await wait(1.2)
+	Inventory.items["virote"] = 1
+	await tap("crossbow"); await wait(1.4)
+	await tap("reload"); await wait(2.2)
+	check(player.loaded and Inventory.count("virote") == 0 and L.hud.ammo.visible, "a reload takes a bolt from the quiver (%d left)" % Inventory.count("virote"))
+	await tap("attack"); await wait(0.6)
+	await tap("reload"); await wait(0.3)
+	check(not player.loaded and player.action == "" and L.hud.message.text == "Sem virotes.", "no bolts, no reload: \"%s\"" % L.hud.message.text)
+	await tap("crossbow"); await wait(1.4)
+	Inventory.reset()

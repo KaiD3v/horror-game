@@ -1,6 +1,6 @@
 # How the protagonist's body shows its state, with no bars (TODO_ARTE "Jogador ferido", "Stamina e vida"):
 #   wound  blood spreads over his clothes and skin (shaders/sangue.gdshader), eased towards 1 - health/max;
-#          at a third of his health he breathes hard (respiracao)
+#          at a third of his health he breathes hard (respiracao) and his heart pounds (coracao)
 #   tired  from 60 % stamina down he pants (ofego), hard once winded
 # Hud reads wound and tired for the screen's edges (visao.gdshader).
 class_name PlayerCondition
@@ -18,6 +18,7 @@ var tired := 0.0
 var blood: ShaderMaterial
 var breath: AudioStreamPlayer
 var pant: AudioStreamPlayer
+var heart: AudioStreamPlayer
 var _breath_amp := 0.0
 
 
@@ -28,6 +29,7 @@ func _init(p: Player) -> void:
 func _ready() -> void:
 	_bloody(Nodes.find_first(player.model, "MeshInstance3D"))
 	breath = Audio.loop_player(self, "respiracao"); pant = Audio.loop_player(self, "ofego")
+	heart = Audio.loop_player(self, "coracao")
 
 
 ## The stains follow the skinning, so the shader needs each vertex's rest position: the mesh is rebuilt with it in
@@ -57,6 +59,7 @@ func _process(delta: float) -> void:
 	var heavy := alive and player.health * 3 <= player.max_health
 	_breath_amp = move_toward(_breath_amp, 1.0 if heavy else 0.0, BREATH_FADE * delta)
 	Audio.fade(breath, _breath_amp, -6.0)
+	Audio.fade(heart, _breath_amp, -3.0)
 	var t := 1.0 if player.winded else clampf((PANT_FROM - player.stamina / Player.STAMINA_MAX) / PANT_FROM, 0.0, 1.0)
 	tired = move_toward(tired, t if alive else 0.0, delta)
 	Audio.fade(pant, tired, -8.0)

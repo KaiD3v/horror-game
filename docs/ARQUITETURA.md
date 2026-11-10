@@ -15,9 +15,10 @@ protagonista-terror/
       player/                 Player e as partes dele: animação, casaco, lamparina, virote, condição (sangue, fôlego)
       enemies/                Enemy (base), Mutante, Enfermeira, Dummy
       npcs/                   Npc
+      shop/                   Shop (regras de compra), ShopMenu (a tela), ShopCounter (o "E · comprar" de um vendedor)
       world/                  Door, Footsteps, RandomEvents, Clima, Corvo
       ui/                     Hud, menu, NotesReader, NotePaper
-      data/                   dados sem lógica: NpcCatalog, NotesData, Atmospheres
+      data/                   dados sem lógica: NpcCatalog, NotesData, Atmospheres, DayData, ItemCatalog, ShopCatalog
       levels/                 o script de cada fase: vilarejo, colonia, treino, interior (único para todos os interiores)
     shaders/                  sangue, visao, silhueta, neblina_bancos, poca, menu_neblina
     models/characters/        protagonista, monster, enfermeira, npc_<quem> (.glb gerados)
@@ -72,10 +73,13 @@ Uma fase sobrescreve três métodos:
 | **um NPC** | 1. Um arquivo em `tools/personagens/npcs/<quem>.py`, copiando o de um NPC existente: rosto (`Face`), cores, tabela de juntas, `limbs`/`head`/`finish` de `npc_kit.py`. Acrescente o nome em `NPCS` de `npcs_build.py`. 2. Uma entrada em `NpcCatalog` (nome, papel e, se quiser, a luz e o som que ele traz). 3. Um marcador `npc_<quem>` no GLB da fase. `Level.spawn_npcs` faz o resto: colisão, idle fora de fase, luz, som. |
 | **um inimigo** | Estender `Enemy` e preencher os atributos em `_init()`: modelo, vida, velocidade, alcance e tempo do golpe, cooldown. Depois, escrever só o `_decide()`, o que ele faz parado, alerta e perseguindo. O golpe, o atordoamento, o navmesh e a morte já vêm da base. Ver `Mutante` (30 linhas) e `Enfermeira`. |
 | **um interior** | 1. O build em `tools/cenarios/<nome>_build.py`, com `vila_kit.Room` e os marcadores `entrada`, `porta`, `luz_*`, `npc_*`, `som_*` e `teto`. 2. Uma cena `scenes/interiors/<nome>.tscn` com o script `interior.gd` e as configurações (modelo, porta, título, chão, ambiente). **Não precisa de código.** 3. Um `porta_<nome>` no vilarejo e uma linha em `DOORS` de `vilarejo.gd`. |
+| **um vendedor** | Pôr `"loja": "<id>"` na entrada do NPC em `NpcCatalog` e criar a loja em `ShopCatalog` (título, fala, ofertas com item, quantidade, preço e estoque). O NPC ganha "E · comprar com <nome>" e a tela de compra. **Sem código.** |
+| **um item** | Uma entrada em `ItemCatalog` com nome, descrição e `tipo`. Os tipos de hoje são `"cura"` (usado com X) e `"municao"` (o virote, gasto pela besta). Um tipo novo de efeito é um caso a mais em `Inventory.use()`. |
 | **uma nota** | Uma entrada em `NotesData`: cena, posição, papel e texto. Ela aparece no chão, tem leitor e entra na coleção. |
 | **algo para usar com E** | Um `Interactable` (prompt e raio) e o tratamento no sinal `used`, ou uma subclasse que sobrescreve `_use()`. Exemplos: `Door`, `NotePaper` e o ferrolho da Colônia. |
 | **uma porta entre cenas** | `Door.make(marcador, "E · entrar...", cena, chegada)`. |
 | **um evento ambiente aleatório** | `RandomEvents.add(nome, primeira, intervalo, função)`. |
+| **o dia e o clima numa fase** | Usar `day = DayCycle.outdoors(self, env, sol, materiais_de_silhueta, clima)` ao ar livre, ou `DayCycle.indoors(self, luzes_de_janela, vidros)` num interior. O relógio (`WorldTime`) e o clima (`Weather`) continuam entre as cenas. Horários, cores e chances ficam em `DayData`. |
 | **um som** | `Audio.play2d` / `play3d`, ou `loop_player` mais `fade` para um loop que entra e sai. |
 | **um ambiente (céu, neblina)** | Um preset em `Atmospheres` e `Looks.environment(self, preset)`. |
 | **uma fase de greybox** | Estender `Level` e montar com `Looks.box` e `Looks.triplanar`. Ver `colonia.gd` e `treino.gd`. |

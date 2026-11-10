@@ -20,12 +20,21 @@ func run() -> void:
 	await tour()
 	check(L.footsteps.steps - s0 >= 2, "footsteps on the %s floor (%d)" % [L.footsteps.kind, L.footsteps.steps - s0])
 	await notes_suite()
+	await shop_suite()
 	put(player, entry + Vector3(0, 0.02, 0), 0.0); await wait(0.4)
 	check(L.hud.prompt.visible, "at the door: \"%s\"" % L.hud.prompt.text)
 	await tap("interact")
 	check(SceneRouter.requested == Paths.VILAREJO and SceneRouter.arriving == L.door,
 		"E at the door goes back out to the village (%s)" % SceneRouter.requested)
 	await cutaway()
+	# the windows by the hour: daylight by day, nearly dark at night
+	WorldTime.reset(13 * 60); L.day._step(0.0)
+	var by_day: float = L.windows.map(func(w): return w.light_energy).reduce(func(a, b): return a + b, 0.0)
+	WorldTime.reset(23 * 60); L.day._step(0.0)
+	var by_night: float = L.windows.map(func(w): return w.light_energy).reduce(func(a, b): return a + b, 0.0)
+	check(L.windows.size() > 0 and by_night < by_day * 0.3 and L.day.panes.size() > 0,
+		"the windows go dark at night (%.2f by day, %.2f at night)" % [by_day, by_night])
+	await wait(0.3); await shot(L.door + "_9_noite")
 
 
 func tour() -> void:  # the room's own checks and captures

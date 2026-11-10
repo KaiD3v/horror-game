@@ -18,6 +18,7 @@ var embers: GPUParticles3D
 var puddles: Array[MeshInstance3D] = []
 var banks: Array[MeshInstance3D] = []
 var _bank_h: Array[float] = []      # height of each bank's centre over the ground
+var _bank_density: Array[float] = []  # how thick each bank is in full fog
 var _reground := 0.0
 
 
@@ -30,7 +31,7 @@ func setup(p: Node3D, road: PackedVector2Array, burnt: Vector3, play_area: AABB)
 	hf.size = Vector3(32, 40, 32); hf.resolution = GPUParticlesCollisionHeightField3D.RESOLUTION_256
 	hf.follow_camera_enabled = true; hf.update_mode = GPUParticlesCollisionHeightField3D.UPDATE_MODE_ALWAYS
 	_rain(); _leaves(); _ash(burnt); _banks(); _puddles(road)
-	rain_sound = Audio.play2d(self, "garoa", -15.0, true)
+	rain_sound = Audio.play2d(self, "chuva", -11.0, true)  # ElevenLabs rain (the synthesized garoa is the fallback)
 
 
 func _process(delta: float) -> void:
@@ -40,6 +41,20 @@ func _process(delta: float) -> void:
 	rain.global_position = at + Vector3(0, 9, 0) - WIND.normalized() * 1.5  # upwind, so it lands round you
 	leaves.global_position = at + Vector3(0, 2.5, 0) - WIND.normalized() * 6.0
 	_drift(delta)
+
+
+## The weather now (DayCycle, from Weather): rain 0..1 thins the drizzle out and in and its hiss with it; fog 0..1
+## thickens the mist banks; wet 0..1 keeps the puddles (rings only while it rains); sky tints the mist and the puddles.
+func weather(rain_now: float, fog_now: float, wet: float, sky: Color) -> void:
+	rain.amount_ratio = rain_now; rain.emitting = rain_now > 0.01
+	Audio.fade(rain_sound, rain_now, -11.0)
+	for i in banks.size():
+		var m: ShaderMaterial = banks[i].mesh.material
+		m.set_shader_parameter("density", _bank_density[i] * (0.15 + 0.95 * fog_now))
+		m.set_shader_parameter("tint", sky.lightened(0.06))
+	for p in puddles:
+		var m: ShaderMaterial = p.mesh.material
+		m.set_shader_parameter("rain", rain_now); m.set_shader_parameter("wet", wet); m.set_shader_parameter("sky", sky)
 
 
 # --- drizzle: thin streaks, slanted by the wind ----------------------------------------------------------
@@ -137,7 +152,8 @@ func _banks() -> void:
 	for i in BANKS:
 		var mat := ShaderMaterial.new(); mat.shader = sh
 		mat.set_shader_parameter("noise", nt); mat.set_shader_parameter("tint", MIST)
-		mat.set_shader_parameter("seed", randf() * 10.0); mat.set_shader_parameter("density", randf_range(0.35, 0.6))
+		mat.set_shader_parameter("seed", randf() * 10.0); _bank_density.append(randf_range(0.35, 0.6))
+		mat.set_shader_parameter("density", _bank_density[i])
 		var q := QuadMesh.new(); q.size = Vector2(randf_range(9, 18), randf_range(2.5, 5.0)); q.material = mat
 		var card := MeshInstance3D.new(); card.mesh = q; card.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(card)

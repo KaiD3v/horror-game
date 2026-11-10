@@ -1,6 +1,7 @@
 # Base of every creature that hunts the player (Mutante, Enfermeira): its body (capsule, model, navmesh agent), its
 # health and states, the blow it strikes and the stagger it takes. A creature sets its stats in _init() and decides
-# what to do each frame in _decide(); the attack and the stagger play out here (_attack, _stagger).
+# what to do each frame in _decide(); the attack and the stagger play out here (_attack, _stagger). Its sounds are
+# data too (`voice`): what it plays on each state, now and then while it roams, and at each step.
 # Takes hits from player.gd (group "enemy", take_hit).
 class_name Enemy
 extends CharacterBody3D
@@ -22,6 +23,10 @@ var attack_reach := 1.9         # the blow connects up to here, if the player is
 var attack_hit := 18.0 / 30.0   # when in the Attack clip it connects
 var attack_cooldown := 0.6
 var attack_track := 0.5         # how much it can still turn to follow you during the wind-up
+# event -> sound name (res://sounds, takes picked at random): idle (now and then), alert, attack, hurt, death, step.
+# Leave one out and it is silent there (A Enfermeira has none: no voice, no footsteps).
+var voice := {}
+var step_length := 0.64         # metres between footsteps (half its Walk stride)
 # --- state ---
 var health := 6
 var state := State.IDLE
@@ -32,6 +37,11 @@ var target: Node3D
 var ap: AnimationPlayer
 var agent: NavigationAgent3D    # follows the level navmesh; with none (training room) it walks straight at you
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
+var _grunt_in := randf_range(3.0, 8.0)
+var _stride := 0.0
+const SAY := {  # event -> volume dB, unit size, max distance: the scream carries, the steps stay close
+	"idle": [-3.0, 4.0, 30.0], "alert": [4.0, 8.0, 60.0], "attack": [0.0, 5.0, 35.0], "hurt": [0.0, 5.0, 35.0],
+	"death": [2.0, 6.0, 45.0], "step": [-7.0, 3.0, 25.0]}
 
 
 func _ready() -> void:
@@ -55,6 +65,15 @@ func go(s: State, anim: String, blend := 0.2) -> void:
 	state = s; t = 0.0; hit_done = false
 	ap.play(anim, blend, speed / stride if anim == "Walk" else 1.0)
 	ap.speed_scale = 1.0
+	say({State.ALERT: "alert", State.ATTACK: "attack", State.HIT: "hurt", State.DEAD: "death"}.get(s, ""))
+
+
+## Its sound for an event (voice), from its head (its feet for the steps).
+func say(event: String) -> void:
+	if voice.has(event):
+		var v: Array = SAY[event]
+		var p := Audio.play3d(self, voice[event], Vector3(0, 0.1 if event == "step" else 1.8, 0), v[0], false, v[1], v[2])
+		p.pitch_scale = randf_range(0.92, 1.06)
 
 
 func take_hit(n: int) -> void:
@@ -79,7 +98,17 @@ func _physics_process(delta: float) -> void:
 	cooldown = max(0.0, cooldown - delta)
 	if active and state != State.DEAD:
 		_think(delta)
+		_sounds(delta)
 	move_and_slide()
+
+
+func _sounds(delta: float) -> void:  # a grunt now and then while it roams; a step every step_length it walks
+	_grunt_in -= delta
+	if _grunt_in <= 0.0 and state in [State.IDLE, State.CHASE]:
+		say("idle"); _grunt_in = randf_range(5.0, 11.0)
+	_stride += Vector2(velocity.x, velocity.z).length() * delta
+	if _stride >= step_length:
+		_stride = 0.0; say("step")
 
 
 func _think(delta: float) -> void:

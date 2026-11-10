@@ -22,7 +22,8 @@ Os quatro itens estão feitos e falta o teste do autor no jogo. A descrição es
 
 ## Os mutantes
 
-- [ ] **Mutante atual:** grunhidos, grito ao ver o jogador e passos pesados. Também uma animação de corrida e outra de busca, farejando.
+- [ ] **Mutante atual:** uma animação de corrida e outra de busca, farejando.
+  - [~] Os sons estão feitos: grunhidos, grito ao ver o jogador, golpe, dor, morte e passos pesados (ver VILAREJO.md, "Sons"). Falta o teste do autor no jogo.
 - [~] **A Enfermeira:** modelo, animações, comportamento e sons feitos (ver [ENFERMEIRA.md](ENFERMEIRA.md)). Falta o teste do autor no jogo.
 - [~] **Jogador ferido:** feito, falta o teste do autor no jogo.
   - O sangue sai de `godot_demo/shaders/sangue.gdshader`, uma passada extra sobre a roupa e a pele. O `scripts/player/player.gd` guarda a posição de repouso de cada vértice em CUSTOM0, e por isso as manchas acompanham as animações.
@@ -60,7 +61,8 @@ Os quatro itens estão feitos e falta o teste do autor no jogo. A descrição es
 
 - [ ] Uma trilha ambiente por área.
 - [ ] Stingers: acordes curtos de susto quando o mutante vê o jogador.
-- [ ] Batimento cardíaco perto do perigo.
+- [ ] Batimento cardíaco perto do perigo. Hoje o coração só bate com a vida baixa (`coracao.wav`).
+- [~] Sons de ação do protagonista (facão, besta, lamparina, dano), vida baixa e a chuva nova. Feito, falta o teste do autor no jogo.
 
 Observações:
 - O jogo não tem dublagem.

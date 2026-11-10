@@ -21,18 +21,20 @@ var enemy: Mutante
 var clima: Clima
 var crows: Array[Corvo] = []
 var events: RandomEvents
+var sun: DirectionalLight3D
+var haze: Array[ShaderMaterial] = []  # the far shapes' materials (DayCycle moves their fog with the sky)
 var wind: AudioStreamPlayer
 var bell_at: Vector3          # up in the chapel tower
 var creakers: Array[Vector3] = []
 
 
 func _init() -> void:
-	title = "Vila de Santa Clara"; floor_kind = "terra"
+	title = "Vila de Santa Clara"; floor_kind = "terra"; controls_extra = "T +1 hora"
 
 
 func _build() -> void:
 	env = Looks.environment(self, Atmospheres.VILLAGE)
-	var sun: Array = Atmospheres.OVERCAST_SUN; Looks.sky_light(self, sun[0], sun[1], sun[2])
+	var s: Array = Atmospheres.OVERCAST_SUN; sun = Looks.sky_light(self, s[0], s[1], s[2])
 	village = load(Paths.LEVEL_MODEL % "vilarejo").instantiate(); add_child(village)
 	Looks.n64(village)
 	_finish(village)
@@ -55,6 +57,7 @@ func _player_start() -> Transform3D:
 func _started() -> void:
 	_ambience()
 	_life()
+	day = DayCycle.outdoors(self, env, sun, haze, clima)  # the hour and the weather light it from here on
 
 
 func marker(n: String) -> Node3D:  # the village GLB sits at the origin: its markers' positions are world positions
@@ -64,14 +67,14 @@ func marker(n: String) -> Node3D:  # the village GLB sits at the origin: its mar
 ## AO baked into the vertex colours darkens wall bases, corners and the ground round the houses; the far shapes get
 ## the haze (silhueta.gdshader).
 func _finish(root: Node) -> void:
-	var haze := Paths.shader("silhueta")
+	var silhueta := Paths.shader("silhueta")
 	Nodes.visit_surfaces(root, func(mi: MeshInstance3D, i: int, m: Material):
 		if m and HAZE.has(m.resource_name):
-			var h := ShaderMaterial.new(); h.shader = haze
+			var h := ShaderMaterial.new(); h.shader = silhueta
 			h.set_shader_parameter("dark", HAZE[m.resource_name][0]); h.set_shader_parameter("fog", Atmospheres.VILLAGE_FOG)
 			h.set_shader_parameter("least", HAZE[m.resource_name][1]); h.set_shader_parameter("density", HAZE[m.resource_name][2])
 			h.set_shader_parameter("light", 1.0 if m.resource_name == "silhueta_luz" else 0.0)
-			mi.set_surface_override_material(i, h)
+			mi.set_surface_override_material(i, h); haze.append(h)
 		elif m is BaseMaterial3D:
 			m.vertex_color_use_as_albedo = true)  # the baked AO (meshes without colours read white)
 

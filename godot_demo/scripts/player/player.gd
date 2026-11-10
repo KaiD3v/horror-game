@@ -10,6 +10,7 @@ class_name Player
 extends CharacterBody3D
 
 signal died
+signal notice(text: String)   # something to tell the player (the HUD shows it): out of bolts, healed...
 
 const WALK_SPEED := 0.91      # Ctrl held: = Walk stride / cycle time, so the feet do not slide
 const JOG_SPEED := 1.66       # the default pace, no stamina: = Jog stride / cycle time (rig.py jog_speed)
@@ -52,6 +53,7 @@ var action := ""          # one-shot playing, "" = none
 var action_t := 0.0
 var action_len := 0.0
 var hit_done := false
+var swung := false        # the swing's whoosh has played (it leads the blow a little)
 var queued := ""
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
@@ -139,6 +141,8 @@ func _unhandled_input(e: InputEvent) -> void:
 			reload()
 		elif e.is_action_pressed("lantern"):
 			toggle_lantern()
+		elif e.is_action_pressed("heal"):
+			use_cure()
 
 
 # --- actions ---------------------------------------------------------------------------------------
@@ -146,7 +150,7 @@ func play(n: String, backward := false) -> void:
 	shot.animation = n
 	shot.play_mode = AnimationNodeAnimation.PLAY_MODE_BACKWARD if backward else AnimationNodeAnimation.PLAY_MODE_FORWARD
 	tree.set("parameters/action/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE)
-	action = n; action_t = 0.0; hit_done = false; queued = ""
+	action = n; action_t = 0.0; hit_done = false; swung = false; queued = ""
 	action_len = tree.get_animation(n).length
 
 
@@ -160,8 +164,10 @@ func toggle_weapon() -> void:
 		return
 	if mode == Mode.EXPLORE:
 		play("Draw_Machete"); set_mode(Mode.COMBAT)   # the one-shot hides the switch underneath
+		sfx("facao_sacar", -4.0)
 	else:
 		play("Draw_Machete", true); set_mode(Mode.EXPLORE)  # sheathing = the draw backwards
+		sfx("facao_guardar", -4.0)
 
 
 func attack(n: String) -> void:
@@ -191,16 +197,24 @@ func dodge() -> void:
 func toggle_crossbow() -> void:  # exploring only; holstering = the draw backwards (the lantern back in hand)
 	if action != "":
 		return
-	_set_loaded(false)  # it travels uncocked in the holster; a loaded bolt goes back in the quiver
+	if loaded:  # it travels uncocked in the holster; a loaded bolt goes back in the quiver
+		Inventory.add("virote")
+	_set_loaded(false)
 	if mode == Mode.EXPLORE:
 		play("Draw_Crossbow"); set_mode(Mode.XBOW)
+		sfx("besta_sacar", -5.0)
 	elif mode == Mode.XBOW:
 		play("Draw_Crossbow", true); set_mode(Mode.EXPLORE)
+		sfx("besta_sacar", -5.0, 0.88)  # back into the holster: the same leather, a touch lower
 
 
 func reload() -> void:
 	if mode == Mode.XBOW and action == "" and not loaded:
+		if not Inventory.take("virote"):  # a bolt from the quiver (Inventory), if there is one left
+			notice.emit("Sem virotes.")
+			return
 		play("Reload_Crossbow")
+		sfx("besta_recarga", -4.0)
 
 
 func _set_loaded(v: bool) -> void:
@@ -223,8 +237,25 @@ func toggle_lantern() -> void:  # exploring: hang it on the belt hook (hands fre
 		return
 	play("Stow_Lantern", not lantern_out)
 	lantern_out = not lantern_out
+	sfx("lamparina", -6.0)
 	for n in ["hands", "crouch_hands"]:
 		tree.set("parameters/%s/blend_amount" % n, 0.0 if lantern_out else 1.0)
+
+
+func heal(n: int) -> void:
+	health = mini(max_health, health + n)
+
+
+## X: dresses a wound with the first healing item carried (Inventory).
+func use_cure() -> void:
+	var id := Inventory.first_cure()
+	if id == "":
+		notice.emit("Sem curativos.")
+	elif health >= max_health:
+		notice.emit("Não está ferido.")
+	elif Inventory.use(id, self):
+		sfx("curativo", -3.0)
+		notice.emit("%s · restam %d" % [ItemCatalog.item(id).nome, Inventory.count(id)])
 
 
 func take_damage(n: int) -> void:
@@ -232,6 +263,7 @@ func take_damage(n: int) -> void:
 		return
 	health -= n
 	shake = 0.25; flicker = 0.4
+	sfx("dano", -2.0)
 	if health <= 0:
 		tree.set("parameters/action/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_ABORT)
 		action = ""
@@ -239,6 +271,11 @@ func take_damage(n: int) -> void:
 		died.emit()
 	elif mode == Mode.COMBAT:
 		play("Hit_React")  # exploring: no flinch clip with the lantern pose, the shake sells it
+
+
+## One of his own sounds (heard from where he is: 2D), pitch varied a little so a repeat never sounds the same.
+func sfx(n: String, db := 0.0, pitch := 1.0) -> void:
+	Audio.play2d(self, n, db).pitch_scale = pitch * randf_range(0.95, 1.05)
 
 
 # --- per frame -------------------------------------------------------------------------------------
@@ -315,13 +352,20 @@ func _tick_action(delta: float) -> void:
 	if action == "Shoot_Crossbow" and not hit_done and action_t >= SHOT_TIME:
 		hit_done = true
 		_loose_bolt(); _set_loaded(false)
+		sfx("besta_disparo", -2.0)
+	if HIT_TIME.has(action) and not swung and action_t >= HIT_TIME[action] - 0.12:
+		swung = true
+		sfx("facao_golpe", -3.0, 0.88 if action == "Attack_Overhead" else 1.0)  # the chop from above: heavier
 	if HIT_TIME.has(action) and not hit_done and action_t >= HIT_TIME[action]:
 		hit_done = true
+		var struck := false
 		for e in get_tree().get_nodes_in_group("enemy"):
 			var to: Vector3 = e.global_position - global_position
 			to.y = 0
 			if to.length() < HIT_RANGE and (-global_basis.z).dot(to.normalized()) > 0.4:
-				e.take_hit(HIT_DAMAGE[action])
+				e.take_hit(HIT_DAMAGE[action]); struck = true
+		if struck:
+			sfx("facao_acerto", -2.0)
 	if action_t >= action_len:
 		if action == "Reload_Crossbow":
 			_set_loaded(true)

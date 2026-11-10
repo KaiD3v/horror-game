@@ -15,9 +15,11 @@ var hud: Hud
 var interactor: Interactor
 var footsteps: Footsteps
 var notes: NotesReader
+var shop: ShopMenu                 # the shop screen, for whichever seller you talk to
 var env: Environment
 var nav: NavigationRegion3D
 var npcs := {}                     # who -> Npc
+var day: DayCycle                  # the hour and the weather (levels that have them: vilarejo, interiors)
 
 
 func _ready() -> void:
@@ -30,6 +32,7 @@ func _ready() -> void:
 	interactor = Interactor.new(player, hud); add_child(interactor)
 	footsteps = Footsteps.new(player, floor_kind); add_child(footsteps)
 	notes = NotesReader.new(); add_child(notes)
+	shop = ShopMenu.new(); add_child(shop)
 	notes.closed.connect(func(): hud.say("%d de %d notas · Tab relê" % [NotesReader.read.size(), NotesData.NOTES.size()], 2.5))
 	_place_notes.call_deferred()  # once the level's colliders are in the physics world
 	_started()
@@ -52,6 +55,8 @@ func _started() -> void:
 func _unhandled_input(e: InputEvent) -> void:
 	if e.is_action_pressed("restart"):
 		get_tree().reload_current_scene()
+	elif e.is_action_pressed("debug_time") and day:  # T: an hour on (to see the day go round)
+		day._step(60.0)
 
 
 func _place_notes() -> void:

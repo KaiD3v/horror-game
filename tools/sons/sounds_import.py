@@ -18,7 +18,10 @@ FFMPEG = os.environ.get("FFMPEG") or shutil.which("ffmpeg") or glob.glob(
 SR = 44100
 PEAK = {"vento": 0.7, "casa": 0.5, "fogo": 0.6, "velas": 0.35, "relogio": 0.5, "coro": 0.45, "sino": 0.8, "cao": 0.6,
         "reza": 0.55, "porta": 0.8, "corvo": 0.75, "rangido": 0.6, "passo": 0.6,
-        "musica": 0.4}  # musica_venda: the shop radio (sound-effects model: this connector has no music model)
+        "musica": 0.4,  # musica_venda: the shop radio (sound-effects model: this connector has no music model)
+        # the protagonist's actions and body, the mutant, the rain (2026-11-10)
+        "facao": 0.75, "besta": 0.75, "lamparina": 0.6, "dano": 0.8, "coracao": 0.7, "mutante": 0.85, "chuva": 0.6, "compra": 0.6, "curativo": 0.6}
+LOOPS = ("vento", "casa", "fogo", "velas", "relogio", "coro", "reza", "musica", "chuva", "coracao")  # generated seamless
 
 
 def load(path):
@@ -76,7 +79,7 @@ for path in sorted(glob.glob(os.path.join(SRC, "*.mp3"))):
     name = os.path.splitext(os.path.basename(path))[0]
     x = load(path)
     kind = name.split("_")[0]
-    if kind == "passo":  # start on the impact, end clean
+    if kind == "passo" or name.startswith("mutante_passo"):  # start on the impact, end clean
         start = max(0, int(np.argmax(np.abs(x) > 0.08 * np.max(np.abs(x)))) - int(0.005 * SR))
         x = fade(x[start:], 0.0, 0.05)
     elif name == "musica_venda":  # from the shop radio, failing (see failing_radio)
@@ -87,7 +90,7 @@ for path in sorted(glob.glob(os.path.join(SRC, "*.mp3"))):
         tick = fade(x[max(0, on - int(0.01 * SR)):on + int(0.3 * SR)], 0.002, 0.08)
         tock = np.interp(np.arange(0, len(tick), 0.94), np.arange(len(tick)), tick)  # read slower: a touch lower
         x = np.zeros(2 * SR); x[:len(tick)] += tick; x[SR:SR + len(tock)] += 0.85 * tock
-    elif kind not in ("vento", "casa", "fogo", "velas", "relogio", "coro", "reza", "musica"):  # one-shots: no click at the cut
+    elif kind not in LOOPS:  # one-shots: no click at the cut
         x = fade(x, 0.0, 0.08)
     x = x / (np.max(np.abs(x)) + 1e-9) * PEAK[kind if kind in PEAK else name]
     with wave.open(os.path.join(OUT, name + ".wav"), "wb") as w:

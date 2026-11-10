@@ -104,6 +104,7 @@ func run() -> void:
 	check(ok, "the mutant follows the navmesh over the terrain to you (%.1f m away)" % L.enemy.global_position.distance_to(player.global_position))
 	L.enemy.active = false; put(L.enemy, L.ground(-30.0, 40.0), 0.0)
 	await notes_suite()
+	await day_tests()
 
 
 
@@ -166,3 +167,52 @@ func life_tests(carcass: Vector3) -> void:
 	check(up > 1.0, "they climb away (the lowest %.1f m up)" % up)
 	await wait(7.0)
 	check(flock.all(func(c): return c.gone), "...and are lost in the fog")
+
+
+# --- the day and its weather (WorldTime, Weather, DayCycle) ------------------------------------------------
+func day_tests() -> void:
+	var at := {0: "madrugada", 359: "madrugada", 360: "manha", 719: "manha", 720: "tarde", 1079: "tarde", 1080: "noite", 1439: "noite", 1440: "madrugada"}
+	var wrong := at.keys().filter(func(m): WorldTime.minutes = m; return WorldTime.period().id != at[m])
+	check(wrong.is_empty(), "the periods: madrugada 00-05:59, manhã 06-11:59, tarde 12-17:59, noite 18-23:59 (wrong at %s)" % [wrong])
+	WorldTime.reset(10 * 60); L.day._step(0.0)
+	var m0 := WorldTime.minutes
+	await wait(2.0)
+	check(absf(WorldTime.minutes - m0 - 2.0) < 0.35, "1 s = 1 game minute (%.2f min in 2 s)" % (WorldTime.minutes - m0))
+	# light round the clock: no jumps from one minute to the next, darker at night than by day
+	var worst := 0.0; var prev := DayData.sample(0.0)
+	for m in range(1, 1441):
+		var k := DayData.sample(m / 60.0)
+		worst = maxf(worst, maxf(absf(k.amb_e - prev.amb_e), absf(k.fog.v - prev.fog.v) + absf(k.sun_e + k.moon_e - prev.sun_e - prev.moon_e)))
+		prev = k
+	check(worst < 0.015, "the light changes smoothly through the day (biggest step in a minute %.4f)" % worst)
+	var lit := {}
+	for p in [["madrugada", 3], ["manha", 8], ["tarde", 14], ["noite", 21]]:
+		WorldTime.reset(p[1] * 60); Weather.force(0.0, 1.0 if p[0] == "manha" else 0.3); L.day._step(0.0)
+		lit[p[0]] = L.env.ambient_light_energy + L.sun.light_energy
+		put(player, L.ground(1.0, 10.0), 0.0); await wait(0.6); await shot("v28_%s" % p[0])
+	check(lit.tarde > lit.noite * 2.0 and lit.manha > lit.madrugada * 2.0, "day is lit, night is dark (%s)" % [lit])
+	# the weather plan: every morning fog; elsewhere rain and fog by chance
+	Weather.release()
+	var rains := 0; var fogs := 0; var mornings_fog := 0
+	for i in 400:
+		WorldTime.minutes = (i * 4 + 2) * 360.0 + 1.0  # an afternoon (12:01) of day i
+		Weather.rain_until = -1.0; Weather.plan(); rains += int(Weather.rain_from >= 0.0 and Weather.rain_from >= WorldTime.period_start())
+		fogs += int(Weather.fog_goal >= 0.5)
+		WorldTime.minutes = (i * 4 + 1) * 360.0 + 1.0  # a morning
+		Weather.plan(); mornings_fog += int(Weather.fog_goal == 1.0)
+	check(mornings_fog == 400, "every morning is foggy (%d/400)" % mornings_fog)
+	check(absf(rains / 400.0 - DayData.CHANCES.tarde.chuva) < 0.08 and absf(fogs / 400.0 - DayData.CHANCES.tarde.nevoa) < 0.08,
+		"afternoons: rain %.0f %%, fog %.0f %% of the time (chances %.0f / %.0f %%)" % [rains / 4.0, fogs / 4.0, DayData.CHANCES.tarde.chuva * 100, DayData.CHANCES.tarde.nevoa * 100])
+	# a rain setting in: eased, never a snap; the drizzle and its hiss follow
+	WorldTime.reset(14 * 60); Weather.reset(); Weather.plan(); Weather.rain = 0.0
+	Weather.rain_from = WorldTime.minutes; Weather.rain_until = WorldTime.minutes + 120.0
+	var steps: Array[float] = []
+	for i in 14:
+		var r0 := Weather.rain; L.day._step(1.0); steps.append(Weather.rain - r0)
+	check(steps.max() <= 1.0 / DayData.RAIN_EASE + 0.001 and Weather.rain == 1.0 and is_equal_approx(L.clima.rain.amount_ratio, 1.0),
+		"rain sets in over %d game minutes, the drizzle with it (%.2f)" % [DayData.RAIN_EASE, L.clima.rain.amount_ratio])
+	put(player, L.ground(1.0, 20.0), 0.0); await wait(0.6); await shot("v29_chuva_tarde")
+	# a new period is told on the screen
+	WorldTime.reset(11 * 60 + 59); L.day._step(0.0); L.day._step(2.0); await wait(0.1)
+	check(L.hud.message.visible and L.hud.message.text.begins_with("Tarde"), "the period is told as it begins: \"%s\"" % L.hud.message.text)
+	Weather.force(1.0, 1.0)
