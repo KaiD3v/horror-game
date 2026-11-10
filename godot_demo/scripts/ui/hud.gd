@@ -4,7 +4,7 @@
 class_name Hud
 extends CanvasLayer
 
-const CONTROLS := "WASD trotar · Ctrl andar · Shift correr · E usar · 1 facão · 2 besta · 3 lamparina · Q roda · LMB/RMB golpes · Espaço esquiva (+A/D lateral) · C agachar · R recarregar · F curativo · Tab notas"
+const CONTROLS := "WASD trotar · Ctrl andar · Shift correr · E usar · 1 facão · 2 besta · 3 lamparina · Q roda (toque: guardar) · LMB/RMB golpes · Espaço esquiva (+A/D lateral) · C agachar · R recarregar · F curativo · Tab notas"
 const DEATH := "Morreu. Enter para recomeçar."
 
 var player: Player

@@ -283,6 +283,13 @@ func wheel_tests() -> void:
 	await tap("lantern"); await wait(1.3)
 	check(player.mode == Player.Mode.EXPLORE and not player.machete_in_hand() and not player.lantern_hung(),
 		"3 with the machete out: sheathed, the lantern in hand")
+	await tap("crossbow"); await wait(1.4)
+	await tap("weapons"); await wait(1.4)
+	check(player.mode == Player.Mode.EXPLORE and not player.crossbow_in_hand() and not L.wheel.open,
+		"a tap of Q with the crossbow out: holstered")
+	await tap("draw"); await wait(1.2)
+	await tap("weapons"); await wait(1.2)
+	check(player.mode == Player.Mode.EXPLORE and not player.machete_in_hand(), "...and with the machete out: sheathed")
 	player.velocity = Vector3.ZERO
 	player.global_position = p0; player.rotation.y = r0; player.pivot.rotation.y = yaw; player.coat.reset()
 	await wait(0.3)

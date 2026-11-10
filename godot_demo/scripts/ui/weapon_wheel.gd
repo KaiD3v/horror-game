@@ -2,6 +2,7 @@
 # per weapon on it (WHEEL), its picture burnt in like an ex-voto (art: ../tools/texturas/roda_armas.py, at 2x).
 # The mouse (or WASD) points at one, and candlelight comes up behind it; letting go of Q puts it in his hands
 # (Player.equip: whatever he holds goes away first). A red ribbon is tied on the one he holds now.
+# A quick tap of Q, pointing at nothing, puts away the weapon in hand.
 class_name WeaponWheel
 extends CanvasLayer
 
@@ -13,6 +14,7 @@ const WHEEL := [  # clockwise from the top, at the art's slots (roda_armas.py SL
 const PX := 2.0            # texels -> pixels
 const RADIUS := 64.0       # the rosary's radius, texels (roda_armas.py R)
 const SLOW := 0.25         # time scale while it is open
+const TAP := 0.25          # real s: Q let go sooner, pointing at nothing = a tap
 const DEADZONE := 28.0     # px of mouse travel before a tablet is pointed at
 const REACH := 150.0       # px: how far the mouse travel counts
 const TEXT := Color(0.86, 0.82, 0.72)
@@ -22,6 +24,7 @@ var player: Player
 var open := false
 var picked := -1           # tablet pointed at, -1 = none
 var aim := Vector2.ZERO    # mouse travel since it opened, px
+var _opened_at := 0        # ms
 var ring: Control
 var centre: Label
 var note: Label
@@ -104,7 +107,7 @@ func _input(e: InputEvent) -> void:  # open: the mouse steers the wheel, not the
 
 
 func _open() -> void:
-	open = true; aim = Vector2.ZERO; picked = -1
+	open = true; aim = Vector2.ZERO; picked = -1; _opened_at = Time.get_ticks_msec()
 	Engine.time_scale = SLOW
 	ring.visible = true; ring.modulate.a = 0.0
 	create_tween().set_ignore_time_scale().tween_property(ring, "modulate:a", 1.0, 0.12)
@@ -117,6 +120,8 @@ func _close(choose: bool) -> void:
 	Engine.time_scale = 1.0
 	if choose and picked >= 0:
 		player.equip(WHEEL[picked].mode)
+	elif choose and Time.get_ticks_msec() - _opened_at < TAP * 1000.0 and _holding() != Player.Mode.EXPLORE:
+		player.equip(Player.Mode.EXPLORE)  # a tap: the weapon away
 
 
 func _holding() -> int:  # crouched = hands as when exploring
