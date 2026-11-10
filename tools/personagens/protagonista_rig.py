@@ -685,18 +685,25 @@ for name, ld in (("Aim_Crossbow_Loop", 1), ("Aim_Crossbow_Empty_Loop", 0)):  # 2
 
 # --- a drawn weapon carried (not raised: RMB raises it), with its own idle / walk / jog / sprint, the same legs as
 # the lantern sets so the game moves him at the same speeds:
-#   machete: in the left fist, the arm out a little ahead and the blade up and forward, swinging with the step;
-#            the lantern stays out in the right hand
+#   machete: in the left fist, the arm long and down-forward as in a normal walk, the wrist straight (the hand
+#            continues the forearm, no sideways bend), the blade square off the fist, up and forward; the arm
+#            swings with the step; the lantern stays out in the right hand
 #   crossbow: low ready, both hands on it, pointed at the ground ahead; the lantern on the hook. Whether a bolt sits
 #            on the rail is laid over by the game (Carry_Crossbow[_Empty]: only the string and the rail bolt count)
-CARRY_M = ((0.3, -0.38, 0.98), (0.12, -0.6, 0.79), (0.05, -0.75, -0.6), (1, 0.3, -0.6))  # palm, blade, edge, pole
+CARRY_M = ((0.12, -0.3, -1), (0.04, -0.85, -0.75), (0, -0.55, 1))  # upper arm, forearm, blade (before squaring)
 CARRY_X = xbow_frame((-0.14, -0.26, 1.0), (0.1, -1, -0.62))
 
 
 def machete_carry(a=0.0, breath=0.0):  # a = arm phase (+1: the right arm forward, so the left one back)
-    palm = Vector(CARRY_M[0]) + Vector((0, 0.07 * a, 0.012 * breath - 0.02 * abs(a)))
-    blade = Vector(CARRY_M[1]) + Vector((0, 0.1 * a, 0))
-    return {"left": (palm, blade) + CARRY_M[2:], "armed": 1}
+    def left():  # from the shoulder as posed: elbow, wrist, then a hand on the forearm's line (hand Y = forearm)
+        s0 = P["upper_arm.L"].matrix.translation.copy()
+        up = Vector(CARRY_M[0]) + Vector((0, 0.3 * a, 0.01 * breath))
+        fo = (Vector(CARRY_M[1]) + Vector((0, 0.25 * a, 0))).normalized()
+        elbow = s0 + up.normalized() * P["upper_arm.L"].length
+        wrist = elbow + fo * (P["forearm.L"].length - 1e-3)
+        b = Vector(CARRY_M[2]); blade = (b - fo * b.dot(fo)).normalized()  # square to the forearm, still up-forward
+        return wrist + fo * 0.05, blade, fo.cross(blade), elbow - (s0 + wrist) / 2  # edge = -(blade x forearm)
+    return {"left": left, "armed": 1}
 
 
 def xbow_carry(a=0.0, breath=0.0):
