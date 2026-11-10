@@ -1,6 +1,6 @@
 # The protagonist's AnimationTree (protagonista.glb's clips). Modes play underneath; one-shot actions (draw,
 # sheathe, attacks, dodge, hit) play over the mode:
-#   idle --+                         guard ----------+
+#   idle --+                 guard / block (Blend2) --+
 #   walk/jog/sprint (x2: lantern in hand l_, on the hook f_) -- l_/f_explore -- hands (Blend2)       walk legs -----+-- combat (Blend2, legs only)
 #   explore / combat / death / crouch / xbow -- mode (Transition) -- action (OneShot <- shot) -- output
 # Player drives it by the parameters: <l|f>_explore, _jog_mix, _run_mix, _walk_ts... (see player.gd).
@@ -36,9 +36,12 @@ static func build(model: Node3D, ap: AnimationPlayer) -> AnimationTree:
 	bt.connect_node("crouch_hands", 0, "l_crouch"); bt.connect_node("crouch_hands", 1, "f_crouch")
 
 	bt.add_node("guard", anim.call("Combat_Idle"))
+	bt.add_node("block_pose", anim.call("Block"))     # RMB held: the machete raised across
+	bt.add_node("block", AnimationNodeBlend2.new())
+	bt.connect_node("block", 0, "guard"); bt.connect_node("block", 1, "block_pose")
 	bt.add_node("walk2", anim.call("Walk_Lantern"))
 	bt.add_node("combat", _legs_only(ap))
-	bt.connect_node("combat", 0, "guard"); bt.connect_node("combat", 1, "walk2")
+	bt.connect_node("combat", 0, "block"); bt.connect_node("combat", 1, "walk2")
 	bt.add_node("aim", anim.call("Aim_Crossbow_Empty"))
 	bt.add_node("walk3", anim.call("Walk_Lantern"))
 	bt.add_node("xbow", _legs_only(ap))

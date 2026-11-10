@@ -81,6 +81,7 @@ func nurse_tests() -> void:
 			break
 		var to = L.nurse.global_position - player.global_position
 		put(player, player.global_position, atan2(-to.x, -to.z))
-		await tap("heavy"); await wait(1.05)
+		player.stamina = Player.STAMINA_MAX
+		player.attack("Attack_Overhead"); await wait(1.05)
 	check(L.nurse.state == Enemy.State.DEAD, "the machete kills her (her hp=%d)" % L.nurse.health)
 	await wait(1.6); await shot("c8_enfermeira_morta")

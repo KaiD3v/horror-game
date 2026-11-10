@@ -478,6 +478,28 @@ pose([("spine", (0, 0.1, 1)), ("chest", (0, 0.2, 1)), ("neck", (0, 0.25, 1)), ("
 guard(10, swing=-6)
 guard(18)
 
+# block (RMB held): a high guard, the machete across in front of his face, the tip up to his right, the edge out
+BLOCK_HAND = ((0.16, -0.34, 1.34), (-0.8, -0.3, 0.5), (0.05, -0.85, 0.5), (1, 0.1, -0.8))  # palm, blade, edge, pole
+
+
+def block(frame, breath=0.0, push=0.0):  # push: 1 = knocked back by a blow on the blade
+    aims = [("spine", (0, -0.16 + 0.12 * push, 1)), ("chest", (0, -0.3 + 0.3 * push + 0.06 * breath, 1)),
+            ("neck", (0, -0.3 + 0.25 * push, 1)), ("head", (0, -0.2 + 0.3 * push, 1))] + GUARD_UP[4:]
+    palm = Vector(BLOCK_HAND[0]) + Vector((0, 0.1 * push, 0.015 * breath - 0.04 * push))
+    pose(aims + GUARD_LEGS, frame, turns=[("chest", "Z", -8 + 6 * push), ("head", "Z", 6)],
+         left=(palm,) + BLOCK_HAND[1:], armed=1, swing=10 * push)
+
+
+act("Block_Loop", 61, loop=True)  # 2 s, a held breath behind the blade
+for f, b in ((1, 0), (31, 1), (61, 0)):
+    block(f, breath=b)
+
+act("Block_Hit", 16)  # a blow lands on the blade: knocked back, then the guard up again
+block(1)
+block(4, push=1)
+block(9, push=0.3)
+block(16)
+
 act("Dodge_Back", 18)  # back-hop out of reach: airborne 6-10, lands 12. Move the root ~0.8 m back over 4-12.
 guard(1)
 pose([("spine", (0, -0.15, 1)), ("chest", (0, -0.35, 1))] + GUARD_UP[2:] +

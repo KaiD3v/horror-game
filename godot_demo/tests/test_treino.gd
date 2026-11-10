@@ -121,11 +121,14 @@ func run() -> void:
 
 	await tap("attack"); await wait(0.33); await shot("4_slash"); await wait(0.6)
 	check(L.dummy.hits == 1, "slash hits the dummy (hits=%d)" % L.dummy.hits)
-	await tap("heavy"); await wait(0.43); await shot("5_overhead"); await wait(0.7)
+	player.attack("Attack_Overhead"); await wait(0.43); await shot("5_overhead"); await wait(0.7)
 	check(L.dummy.hits == 2 and L.dummy.damage == 3, "overhead hits harder (hits=%d dmg=%d)" % [L.dummy.hits, L.dummy.damage])
+	player.stamina = Player.STAMINA_MAX
 	await tap("attack"); await wait(0.45); await tap("attack"); await wait(1.5)
 	check(L.dummy.hits == 4, "slash + LMB during follow-through combos into the overhead (hits=%d)" % L.dummy.hits)
 
+	await combat_tests()
+	player.stamina = Player.STAMINA_MAX
 	var d0 = player.global_position.distance_to(L.dummy.global_position)
 	await tap("dodge"); await wait(0.27); await shot("6_dodge"); await wait(0.5)
 	var d1 = player.global_position.distance_to(L.dummy.global_position)
@@ -162,7 +165,8 @@ func run() -> void:
 	for i in 14:
 		if L.enemy.state == Enemy.State.DEAD:
 			break
-		await tap("heavy"); await wait(1.05)
+		player.stamina = Player.STAMINA_MAX
+		player.attack("Attack_Overhead"); await wait(1.05)
 	check(L.enemy.state == Enemy.State.DEAD, "machete kills the mutant (its hp=%d)" % L.enemy.health)
 	await wait(1.6); await shot("13_mutant_dead")
 	sounds_heard()
@@ -237,6 +241,60 @@ func wound_tests() -> void:
 	await wait(1.0)
 	check(player.condition.breath.volume_db > -12.0, "the breathing fades in (%.1f dB)" % player.condition.breath.volume_db)
 	player.pivot.rotation.y = player.rotation.y; lamp.queue_free()
+
+
+## Stamina for swings and dodges, the block (RMB) and the lock-on (E), against the dummy in front.
+func combat_tests() -> void:
+	player.stamina = Player.STAMINA_MAX; player.rest = 0.0
+	await tap("attack"); await wait(0.9)
+	check(absf(player.stamina - (Player.STAMINA_MAX - Player.COST.Attack_Slash)) < 0.05,
+		"a slash spends stamina (%.2f left)" % player.stamina)
+	player.stamina = Player.STAMINA_MAX
+	await tap("dodge"); await wait(0.7)
+	check(absf(player.stamina - (Player.STAMINA_MAX - Player.COST.Dodge)) < 0.05, "a dodge spends stamina (%.2f left)" % player.stamina)
+	player.global_position = Vector3(0, player.global_position.y, -1.4); player.velocity = Vector3.ZERO
+	player.rotation.y = 0.0; player.pivot.rotation.y = 0.0; await wait(0.3)
+	player.stamina = 0.3; var hits: int = L.dummy.hits
+	await tap("attack"); await wait(0.6)
+	await tap("dodge"); await wait(0.3)
+	check(player.action == "" and L.dummy.hits == hits and L.hud.message.text == "Sem fôlego.",
+		"out of breath: no swing, no dodge (\"%s\")" % L.hud.message.text)
+	player.stamina = Player.STAMINA_MAX
+
+	Input.action_press("block"); await wait(0.5); await shot("5b_block")
+	check(player.blocking and player.block_amt > 0.99, "RMB held raises the machete to block")
+	var hp := player.health; var st := player.stamina
+	player.take_damage(1, L.dummy); await wait(0.15); await shot("5c_block_hit")
+	check(absf(player.health - (hp - Player.BLOCK_CHIP)) < 0.01 and player.stamina >= st and "bloqueio" in Audio.heard,
+		"a blow from the front on the block: %.2f hp gets through, no stamina spent" % (hp - player.health))
+	await wait(0.6)
+	var behind := Node3D.new(); L.add_child(behind); behind.global_position = player.global_position + player.global_basis.z * 1.5
+	hp = player.health
+	player.take_damage(1, behind); behind.queue_free(); await wait(0.7)
+	check(absf(player.health - (hp - 1.0)) < 0.01, "...from behind the block does not help (-%.2f)" % (hp - player.health))
+	Input.action_release("block"); await wait(0.4)
+	check(not player.blocking and player.block_amt < 0.01, "letting go lowers it")
+	player.health = player.max_health
+
+	var dummy: Node3D = L.dummy  # (in the group "enemy" like the creatures)
+	player.pivot.rotation.y = PI; await wait(0.2)  # looking back the way he came
+	await tap("interact"); await wait(0.1)
+	check(player.lock != dummy, "E with the dummy out of view: not locked on it")
+	player.lock = null
+	player.pivot.rotation.y = 0.35; await wait(0.2)
+	await tap("interact"); await wait(0.8); await shot("5d_lock")
+	var to := player._lock_point(dummy) - player.cam.global_position
+	var off := (-player.cam.global_basis.z).angle_to(to)
+	check(player.lock == dummy and off < 0.05 and L.hud.lock_mark.visible,
+		"E locks on: the camera swings onto it (%.3f rad off), the mark over it" % off)
+	var m := InputEventMouseMotion.new(); m.relative = Vector2(300, 0); Input.parse_input_event(m); await wait(0.2)
+	check(player.lock == dummy and (-player.cam.global_basis.z).angle_to(player._lock_point(dummy) - player.cam.global_position) < 0.05,
+		"...the mouse does not pull it away")
+	await tap("interact"); await wait(0.1)
+	check(player.lock == null and not L.hud.lock_mark.visible, "E again lets go")
+	player.global_position = Vector3(0, player.global_position.y, -1.4); player.velocity = Vector3.ZERO
+	player.rotation.y = 0.0; player.pivot.rotation.y = 0.0; player.pitch.rotation.x = -0.25
+	L.dummy.hits = 2; L.dummy.damage = 3; await wait(0.4)
 
 
 ## Q held: the weapon wheel (WeaponWheel). Slows time, the mouse picks a tablet, letting go puts it in his hands,

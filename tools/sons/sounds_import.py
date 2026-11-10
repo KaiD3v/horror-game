@@ -20,7 +20,8 @@ PEAK = {"vento": 0.7, "casa": 0.5, "fogo": 0.6, "velas": 0.35, "relogio": 0.5, "
         "reza": 0.55, "porta": 0.8, "corvo": 0.75, "rangido": 0.6, "passo": 0.6,
         "musica": 0.4,  # musica_venda: the shop radio (sound-effects model: this connector has no music model)
         # the protagonist's actions and body, the mutant, the rain (2026-11-10)
-        "facao": 0.75, "besta": 0.75, "lamparina": 0.6, "dano": 0.8, "coracao": 0.7, "mutante": 0.85, "chuva": 0.6, "compra": 0.6, "curativo": 0.6}
+        "facao": 0.75, "besta": 0.75, "lamparina": 0.6, "dano": 0.8, "coracao": 0.7, "mutante": 0.85, "chuva": 0.6, "compra": 0.6, "curativo": 0.6,
+        "bloqueio": 0.8}  # the machete blocking a blow (2026-11-10)
 LOOPS = ("vento", "casa", "fogo", "velas", "relogio", "coro", "reza", "musica", "chuva", "coracao")  # generated seamless
 
 

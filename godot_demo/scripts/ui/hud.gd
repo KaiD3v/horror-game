@@ -4,7 +4,7 @@
 class_name Hud
 extends CanvasLayer
 
-const CONTROLS := "WASD trotar · Ctrl andar · Shift correr · E usar · 1 facão · 2 besta · 3 lamparina · Q roda (toque: guardar) · LMB/RMB golpes · Espaço esquiva (+A/D lateral) · C agachar · R recarregar · F curativo · Tab notas"
+const CONTROLS := "WASD trotar · Ctrl andar · Shift correr · E usar · 1 facão · 2 besta · 3 lamparina · Q roda (toque: guardar) · LMB golpe (2x: de cima) · RMB bloquear · E travar mira · Espaço esquiva (+A/D lateral) · C agachar · R recarregar · F curativo · Tab notas"
 const DEATH := "Morreu. Enter para recomeçar."
 
 var player: Player
@@ -14,6 +14,7 @@ var ammo: Label        # with the crossbow up: the bolts left in the quiver
 var prompt: Label
 var message: Label
 var vision: ColorRect
+var lock_mark: Control  # over the enemy the camera is locked on (E)
 var _message_t := 0.0
 
 
@@ -32,6 +33,11 @@ func _build(controls: String) -> void:
 	ammo = _centred("", 0.56); ammo.visible = false; ammo.add_theme_font_size_override("font_size", 12)
 	message = _centred("", 0.83); message.visible = false
 	prompt = _centred("", 0.88); prompt.visible = false
+	lock_mark = Control.new(); add_child(lock_mark); lock_mark.visible = false
+	lock_mark.draw.connect(func():  # a hollow diamond, blood red, hard pixels
+		var d := PackedVector2Array([Vector2(0, -7), Vector2(7, 0), Vector2(0, 7), Vector2(-7, 0), Vector2(0, -7)])
+		lock_mark.draw_polyline(d, Color(0, 0, 0, 0.7), 4.0)
+		lock_mark.draw_polyline(d, Color(0.78, 0.16, 0.1), 2.0))
 
 
 func _centred(t: String, at: float) -> Label:  # a line across the screen, at a fraction of its height
@@ -67,6 +73,10 @@ func _process(delta: float) -> void:
 	crosshair.visible = player.mode == Player.Mode.XBOW and player.action == ""
 	ammo.visible = player.mode == Player.Mode.XBOW
 	ammo.text = "virotes %d%s" % [Inventory.count("virote"), " · armada" if player.loaded else ""]
+	var at := Vector3.ZERO if player.lock == null else player.lock.global_position + Vector3(0, 2.25, 0)
+	lock_mark.visible = player.lock != null and not player.cam.is_position_behind(at)
+	if lock_mark.visible:
+		lock_mark.position = player.cam.unproject_position(at).round()
 	var c: PlayerCondition = player.condition
 	vision.visible = c.wound > 0.0 or c.tired > 0.0  # (no screen copy while he is fine)
 	vision.material.set_shader_parameter("hurt", c.wound)

@@ -5,8 +5,9 @@
 # (CoatPhysics); bolts fly on their own (Bolt); how hurt and tired he is shows on his body (PlayerCondition).
 # Controls (GameInput): WASD jog (Ctrl walks, Shift sprints), mouse look, C crouch, 1 machete, 2 crossbow (each again:
 # away), 3 lantern (armed: the weapon away; exploring: on the hook / in hand), Q the weapon wheel (WeaponWheel ->
-# equip), LMB slash, RMB overhead chop, Space dodge (+A/D: to that side), R or LMB when empty reloads, LMB looses,
-# F dresses a wound, H hurt yourself (debug), Esc frees the mouse.
+# equip), LMB slash (again in its follow-through: the overhead chop), RMB held blocks, E locks on the nearest enemy
+# ahead (armed; again releases it), Space dodge (+A/D: to that side), R or LMB when empty reloads, LMB looses,
+# F dresses a wound, H hurt yourself (debug), Esc frees the mouse. Swings and dodges spend stamina (COST).
 class_name Player
 extends CharacterBody3D
 
@@ -23,6 +24,14 @@ const REGEN_DELAY := 1.0
 const WINDED_UNTIL := 1.5     # emptied: no sprint until stamina is back up to this
 const ACCEL := 8.0            # m/s², so walk <-> sprint eases instead of snapping
 const COMBAT_SPEED := 0.6
+const COST := {"Attack_Slash": 0.8, "Attack_Overhead": 1.2, "Dodge": 1.0}  # stamina, out of STAMINA_MAX
+const BLOCK_SPEED := 0.4      # shuffling behind the raised machete
+const BLOCK_CHIP := 0.25      # of a blow's damage that still gets through the block
+const BLOCK_ARC := 0.3        # a blow is blocked when the attacker is this far in front (dot)
+const BLOCK_RAISE := 8.0      # how fast the guard goes up / down (blend per second)
+const LOCK_RANGE := 12.0      # E locks onto an enemy this close, ahead of the camera
+const LOCK_BREAK := 16.0      # ...and lets go past this
+const LOCK_TURN := 8.0        # how fast the camera swings onto it
 const CROUCH_SPEED := 0.67     # = Crouch_Walk stride / cycle time
 const TURN_SPEED := 10.0
 const MOUSE_SENS := 0.003
@@ -45,7 +54,7 @@ const SHOT_TIME := 2.0 / 30.0       # Shoot_Crossbow: the bolt leaves on frame 2
 const BOLT_RANGE := 40.0            # how far the crosshair looks for what to aim at
 
 @export var max_health := 3
-var health := 3
+var health := 3.0           # a blocked blow takes a fraction (BLOCK_CHIP)
 var stamina := STAMINA_MAX
 var winded := false
 var rest := 0.0           # time since the last sprint
@@ -57,6 +66,9 @@ var hit_done := false
 var swung := false        # the swing's whoosh has played (it leads the blow a little)
 var queued := ""
 var wanted := -1          # a Mode chosen on the weapon wheel, on its way (-1 = none)
+var blocking := false     # RMB held with the machete out
+var block_amt := 0.0      # the guard's blend, eased
+var lock: Node3D          # the enemy the camera is locked on (E), null = free look
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 var model: Node3D
@@ -117,7 +129,7 @@ func _ready() -> void:
 
 
 func _unhandled_input(e: InputEvent) -> void:
-	if e is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+	if e is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and lock == null:
 		pivot.rotation.y -= e.relative.x * MOUSE_SENS
 		pitch.rotation.x = clamp(pitch.rotation.x - e.relative.y * MOUSE_SENS, -1.1, 0.35)
 	elif e is InputEventMouseButton and e.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
@@ -133,8 +145,6 @@ func _unhandled_input(e: InputEvent) -> void:
 			equip(Mode.EXPLORE if mode == Mode.XBOW else Mode.XBOW)
 		elif e.is_action_pressed("attack"):
 			attack("Attack_Slash")
-		elif e.is_action_pressed("heavy"):
-			attack("Attack_Overhead")
 		elif e.is_action_pressed("dodge"):
 			dodge()
 		elif e.is_action_pressed("crouch"):
@@ -207,16 +217,76 @@ func attack(n: String) -> void:
 		return
 	if mode == Mode.EXPLORE:
 		toggle_weapon()
-	elif action == "":
-		play(n)
-	elif action == "Attack_Slash" and action_t >= COMBO_FROM:
-		queued = "Attack_Overhead"
+	elif action == "" or action == "Block_Hit":
+		if spend(COST[n]):
+			play(n)
+	elif action == "Attack_Slash" and action_t >= COMBO_FROM and queued == "":
+		if spend(COST.Attack_Overhead):
+			queued = "Attack_Overhead"
 
 
 func dodge() -> void:
-	if mode == Mode.COMBAT and (action == "" or action.begins_with("Attack")):
+	if mode == Mode.COMBAT and (action == "" or action == "Block_Hit" or action.begins_with("Attack")) and spend(COST.Dodge):
 		var side := Input.get_axis("left", "right")
 		play("Dodge_Left" if side < -0.5 else "Dodge_Right" if side > 0.5 else "Dodge_Back")
+
+
+## Stamina for a swing or a dodge: false (and nothing spent) when there is not enough left. Emptying it winds him,
+## like sprinting does.
+func spend(cost: float) -> bool:
+	if stamina < cost:
+		notice.emit("Sem fôlego.")
+		return false
+	stamina -= cost; rest = 0.0
+	winded = winded or stamina <= 0.01
+	return true
+
+
+## E with a weapon out: lock the camera on the nearest enemy ahead that he can see, or let go of the one locked.
+## false = nothing to lock on (E is free for doors and notes).
+func toggle_lock() -> bool:
+	if lock:
+		lock = null
+		return true
+	if mode != Mode.COMBAT and mode != Mode.XBOW:
+		return false
+	lock = lock_candidate()
+	return lock != null
+
+
+func lock_candidate() -> Node3D:
+	var best: Node3D = null; var best_score := INF
+	var ahead := -cam.global_basis.z
+	for en in get_tree().get_nodes_in_group("enemy"):
+		var to: Vector3 = _lock_point(en) - cam.global_position
+		var d := to.length()
+		var facing := ahead.dot(to / d)
+		if d > LOCK_RANGE or facing < 0.5:
+			continue
+		var q := PhysicsRayQueryParameters3D.create(cam.global_position, _lock_point(en), 1, [get_rid()])
+		var hit := get_world_3d().direct_space_state.intersect_ray(q)
+		if hit and hit.collider != en:
+			continue  # behind a wall
+		var score := d * (2.0 - facing)  # near and close to the centre of the screen
+		if score < best_score:
+			best = en; best_score = score
+	return best
+
+
+func _lock_point(en: Node3D) -> Vector3:  # its chest: where the camera (and the crosshair) settle
+	return en.global_position + Vector3(0, 1.3, 0)
+
+
+func _track_lock(delta: float) -> void:
+	if lock and (not is_instance_valid(lock) or not lock.is_in_group("enemy") or (mode != Mode.COMBAT and mode != Mode.XBOW)
+			or lock.global_position.distance_to(global_position) > LOCK_BREAK):
+		lock = null
+	if lock == null:
+		return
+	var to := _lock_point(lock) - cam.global_position
+	var k := minf(1.0, LOCK_TURN * delta)
+	pivot.rotation.y = lerp_angle(pivot.rotation.y, atan2(-to.x, -to.z), k)
+	pitch.rotation.x = lerpf(pitch.rotation.x, clampf(atan2(to.y, Vector2(to.x, to.z).length()), -1.1, 0.35), k)
 
 
 func toggle_crossbow() -> void:  # exploring only; holstering = the draw backwards (the lantern back in hand)
@@ -268,7 +338,7 @@ func toggle_lantern() -> void:  # exploring: hang it on the belt hook (hands fre
 
 
 func heal(n: int) -> void:
-	health = mini(max_health, health + n)
+	health = minf(max_health, health + n)
 
 
 ## F: dresses a wound with the first healing item carried (Inventory).
@@ -283,13 +353,23 @@ func use_cure() -> void:
 		notice.emit("%s · restam %d" % [ItemCatalog.item(id).nome, Inventory.count(id)])
 
 
-func take_damage(n: int) -> void:
+## A blow (from = who struck it). Blocking with it in front, the machete takes it: only BLOCK_CHIP gets through.
+func take_damage(n: float, from: Node3D = null) -> void:
 	if mode == Mode.DEAD:
 		return
-	health -= n
-	shake = 0.25; flicker = 0.4
-	sfx("dano", -2.0)
-	if health <= 0:
+	if blocking and from and (-global_basis.z).dot((from.global_position - global_position).normalized()) > BLOCK_ARC:
+		health -= n * BLOCK_CHIP
+		shake = 0.12
+		sfx("bloqueio", -2.0)
+		play("Block_Hit")
+		if health > 0.0:
+			return
+		n = 0.0  # ...the last of him: it still kills
+	else:
+		health -= n
+		shake = 0.25; flicker = 0.4
+		sfx("dano", -2.0)
+	if health <= 0.0:
 		tree.set("parameters/action/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_ABORT)
 		action = ""
 		set_mode(Mode.DEAD)
@@ -311,6 +391,9 @@ func _physics_process(delta: float) -> void:
 	var speed := 0.0
 	if action != "":
 		_tick_action(delta)
+	blocking = mode == Mode.COMBAT and Input.is_action_pressed("block") and (action == "" or action == "Block_Hit")
+	block_amt = move_toward(block_amt, 1.0 if blocking else 0.0, BLOCK_RAISE * delta)
+	tree.set("parameters/block/blend_amount", block_amt)
 	if action == "" and mode != Mode.DEAD:
 		var input := Input.get_vector("left", "right", "forward", "back")
 		move = pivot.global_basis * Vector3(input.x, 0, input.y)
@@ -319,7 +402,7 @@ func _physics_process(delta: float) -> void:
 		if mode == Mode.CROUCH:
 			speed = CROUCH_SPEED
 		elif mode == Mode.COMBAT or mode == Mode.XBOW:
-			speed = COMBAT_SPEED
+			speed = BLOCK_SPEED if blocking else COMBAT_SPEED
 		else:
 			speed = RUN_SPEED if _sprinting(input) else (WALK_SPEED if Input.is_action_pressed("walk") else JOG_SPEED)
 	_tick_stamina(delta, speed == RUN_SPEED)
@@ -403,6 +486,7 @@ func _tick_action(delta: float) -> void:
 
 
 func _process(delta: float) -> void:
+	_track_lock(delta)
 	var goal: Dictionary = CAM_COMBAT if mode == Mode.COMBAT else CAM_AIM if mode == Mode.XBOW \
 		else CAM_CROUCH if mode == Mode.CROUCH else CAM_EXPLORE
 	for k in goal:

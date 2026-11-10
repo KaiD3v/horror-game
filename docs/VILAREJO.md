@@ -117,6 +117,27 @@ Gancho da missão (a definir): o filho de Dona Firmina foi levado para a Colôni
 - **Por que um terço:** é a fé popular do lugar (a benzedeira, a capela de Santa Clara, os ex-votos) feita interface. A arte é pixel art em 2x, como as notas e a fonte, gerada por `tools/texturas/roda_armas.py`.
 - **Referências que guiaram:** a roda sai do centro e se escolhe arrastando nessa direção, o gesto padrão das rodas de arma. O jogo fica bem mais lento enquanto ela está aberta, como em GTA V e The Witcher 2. E o visual é um objeto do mundo, não um painel de interface, na linha das interfaces diegéticas de Dead Space.
 
+### Combate (`scripts/player/player.gd`)
+
+- **Stamina:** cada golpe e cada esquiva gastam fôlego, o mesmo da corrida (4 no total):
+
+  | Ação | Custo |
+  |---|---|
+  | golpe (botão esquerdo) | 0,8 |
+  | golpe de cima (botão esquerdo de novo, no fim do golpe) | 1,2 |
+  | esquiva (Espaço) | 1,0 |
+
+  - Sem fôlego suficiente, a ação não sai e aparece "Sem fôlego.". Esvaziar a stamina deixa ele sem fôlego, como na corrida.
+  - Os custos ficam em `Player.COST`.
+- **Bloquear (segurar o botão direito, com o facão):** ele ergue o facão atravessado na frente do rosto (`Block_Loop`, do `protagonista_rig.py`) e anda devagar.
+  - Um golpe vindo da frente bate no facão: ele recua (`Block_Hit`), o aço soa (`bloqueio`) e só 1/4 do dano passa (`BLOCK_CHIP`). Não gasta stamina. Por isso a vida agora aceita frações.
+  - Um golpe pelas costas ou pelo lado entra inteiro.
+  - O golpe de cima, que era o botão direito, agora sai pelo combo: botão esquerdo de novo no fim do golpe.
+- **Travar a mira (E, com uma arma na mão):** prende a câmera no inimigo mais perto à frente que ele consegue ver, até 12 m.
+  - Um losango vermelho fica sobre o inimigo. A câmera vira sozinha e o mouse não a tira dali; ele anda de lado em volta do inimigo, e a besta mira no peito.
+  - E de novo solta a trava. Ela também se solta sozinha se o inimigo morrer, passar de 16 m ou se a arma for guardada.
+  - Sem inimigo para travar, o E continua usando portas e notas.
+
 ## Narrativa ambiental (o que aconteceu aqui, sem uma linha de texto de jogo)
 
 Alguém foi arrastado para a Colônia, e o vilarejo tentou se trancar.
@@ -277,6 +298,7 @@ antigos (`sounds_build.py`) ficaram em `audio_fontes/sintetizados/` como reserva
   - **facão:** sacar e guardar; o golpe corta o ar pouco antes de acertar (3 takes, o golpe de cima mais grave); acertar alguém faz um som de corte na carne (2 takes);
   - **besta:** sacar e guardar no coldre; recarregar (corda puxada, trava, virote no trilho, no tempo da animação); disparar;
   - **lamparina:** tirar e pendurar no gancho;
+  - **bloqueio:** garras batendo no facão erguido, um tinido seco de aço (2 takes);
   - **dano:** um golpe na carne, o casaco rasgando e o fôlego cortado, sem voz (2 takes);
   - **vida baixa:** com 1/3 da vida, o coração bate forte, em loop, junto com a respiração pesada. Os dois param na morte (`PlayerCondition`).
 - **O mutante** (`Enemy.voice`, que qualquer criatura pode usar; a Enfermeira continua muda):

@@ -1,5 +1,5 @@
 # The player's side of Interactable: each frame finds the nearest one in reach, shows its prompt on the HUD, and on
-# E uses it. One per level (Level adds it).
+# E uses it, unless E went to locking on an enemy (Player.toggle_lock, weapon out). One per level (Level adds it).
 class_name Interactor
 extends Node
 
@@ -28,6 +28,9 @@ func nearest() -> Interactable:
 
 func _unhandled_input(e: InputEvent) -> void:
 	if e.is_action_pressed("interact") and player.get("mode") != Player.Mode.DEAD:
+		if player is Player and player.toggle_lock():  # armed, E locks on an enemy first
+			get_viewport().set_input_as_handled()
+			return
 		var it := nearest()
 		if it:
 			it.use(player)

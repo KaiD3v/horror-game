@@ -141,7 +141,7 @@ func _attack(to: Vector3, delta: float) -> void:
 	elif not hit_done:
 		hit_done = true
 		if to.length() < attack_reach and (-global_basis.z).dot(to.normalized()) > 0.5:
-			target.take_damage(1)
+			target.take_damage(1, self)
 	if t >= ap.get_animation("Attack").length:
 		cooldown = attack_cooldown
 		go(State.CHASE, "Walk", 0.25)
