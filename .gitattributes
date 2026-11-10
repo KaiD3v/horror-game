@@ -1,0 +1,11 @@
+# Text as LF everywhere (Godot and the tools write LF); generated and source binaries never diffed or converted
+* text=auto eol=lf
+*.blend binary
+*.blend1 binary
+*.glb binary
+*.png binary
+*.webp binary
+*.gif binary
+*.wav binary
+*.mp3 binary
+*.ttf binary

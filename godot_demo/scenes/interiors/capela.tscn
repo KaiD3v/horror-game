@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/interior.gd" id="1"]
+
+[node name="Capela" type="Node3D"]
+script = ExtResource("1")
+title = "Capela de Santa Clara"
+floor_kind = "ladrilho"
+model = "capela"
+door = "capela"
+cutaway = Vector3(0, 13, 11)
+ambient = 0.12
+dim = 0.65
+drone = "coro"

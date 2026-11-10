@@ -1,0 +1,17 @@
+[remap]
+
+importer="font_data_bmfont"
+type="FontFile"
+uid="uid://b8mhc1iply6jt"
+path="res://.godot/imported/santa_clara.fnt-cff539185f3ffd4fe03fbe58e246c33e.fontdata"
+
+[deps]
+
+source_file="res://ui/fonts/santa_clara.fnt"
+dest_files=["res://.godot/imported/santa_clara.fnt-cff539185f3ffd4fe03fbe58e246c33e.fontdata"]
+
+[params]
+
+fallbacks=[]
+compress=true
+scaling_mode=1

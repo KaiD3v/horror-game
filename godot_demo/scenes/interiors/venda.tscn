@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/interior.gd" id="1"]
+
+[node name="Venda" type="Node3D"]
+script = ExtResource("1")
+title = "Venda do Seu Bento"
+floor_kind = "madeira"
+model = "venda"
+door = "venda"
+cutaway = Vector3(0, 9, 7)

@@ -1,0 +1,60 @@
+# An interior, its own scene, Zelda style. One script for every room: a room is a .tscn (scenes/interiors/) with
+# this script and its settings below. The room comes from a GLB built by ../tools/cenarios/<name>_build.py with
+# vila_kit.py's Room; its markers place everything:
+#   entrada          where you come in (facing into the room)
+#   porta            E there takes you back out to the village's porta_<door>
+#   npc_<who>        a villager standing there (NpcCatalog)
+#   luz_<kind>[_x]   a light (LIGHT); fogao/velario/vela also sound (LOOP_AT)
+#   som_<name>       a looped sound there (a clock: som_relogio)
+#   teto             the ceiling (hidden for the plan capture)
+# A new interior = its GLB + a .tscn with these settings + a porta_<door> marker and a DOORS entry in the village.
+extends Level
+
+@export var model := ""                 # models/levels/<model>.glb
+@export var door := ""                  # the village's porta_<door> you came in by
+@export var cutaway := Vector3(0, 8.5, 6.5)  # camera for the plan capture (ceiling off)
+@export var ambient := 0.28             # ambient light energy (the chapel's whitewash wants less)
+@export var dim := 1.0                  # scales every lamp's energy
+@export var drone := ""                 # a quiet 2D loop under the room tone (the chapel: coro)
+
+const LOOP_AT := {"fogao": "fogo", "velario": "velas", "vela": "velas"}
+const LIGHT := {  # kind: colour, energy, range
+	"lamparina": [Color(1.0, 0.68, 0.36), 1.3, 5.0], "lampiao": [Color(1.0, 0.72, 0.42), 1.5, 7.5],
+	"fogao": [Color(1.0, 0.42, 0.18), 1.0, 3.0], "vela": [Color(1.0, 0.62, 0.3), 0.8, 2.5],
+	"janela": [Color(0.62, 0.68, 0.78), 0.5, 3.5],  # grey daylight through the fog
+	"velario": [Color(1.0, 0.6, 0.28), 1.4, 4.5], "altar": [Color(1.0, 0.7, 0.42), 1.1, 6.5]}
+const GLOWING := ["window_in", "lampglass", "ember"]  # their own light: unshaded
+
+var room: Node3D
+var tone: AudioStreamPlayer
+var lights: Array[OmniLight3D] = []
+var loops: Array[AudioStreamPlayer3D] = []
+
+
+func _build() -> void:
+	var atmos: Dictionary = Atmospheres.INTERIOR.duplicate(); atmos.ambient_energy = ambient
+	env = Looks.environment(self, atmos)
+	room = load(Paths.LEVEL_MODEL % model).instantiate(); add_child(room)
+	Looks.n64(room)
+	Looks.unshade(room, GLOWING)
+	for m in Nodes.children_named(room, "luz_"):
+		var l: Array = LIGHT[m.name.get_slice("_", 1)]
+		lights.append(Looks.omni(self, m.position, l[0], l[1] * dim, l[2]))
+	spawn_npcs(room)
+	Door.make(room.get_node("porta"), "E · sair para a rua", Paths.VILAREJO, door, 1.6)
+
+
+func _player_start() -> Transform3D:
+	var entry: Node3D = room.get_node("entrada")
+	return Transform3D(Basis(Vector3.UP, entry.rotation.y), entry.position + Vector3(0, 0.05, 0))  # just inside the door
+
+
+func _started() -> void:  # the room tone (wind muffled by the walls), the drone, what crackles, ticks and plays in it
+	tone = Audio.play2d(self, "casa", -12.0, true)
+	if drone != "":
+		Audio.play2d(self, drone, -15.0, true)
+	for m in room.get_children():
+		var kind: String = m.name.get_slice("_", 1)
+		var n: String = LOOP_AT.get(kind, "") if m.name.begins_with("luz_") else (String(m.name).substr(4) if m.name.begins_with("som_") else "")
+		if n != "":
+			loops.append(Audio.play3d(self, n, (m as Node3D).position, -4.0, true, 1.5, 10.0))

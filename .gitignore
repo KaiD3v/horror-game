@@ -1,0 +1,5 @@
+# Godot's cache and the tests' captures are rebuilt; Blender's .blend1 are its own backups
+godot_demo/.godot/
+godot_demo/captures/
+*.blend1
+__pycache__/
