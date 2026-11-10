@@ -4,8 +4,8 @@
 # the machete eases it closer/lower, crouching drops it with his head. The coat flaps have spring physics
 # (CoatPhysics); bolts fly on their own (Bolt); how hurt and tired he is shows on his body (PlayerCondition).
 # Controls (GameInput): WASD jog (Ctrl walks, Shift sprints), mouse look, L lantern on the hook / in hand, C crouch,
-# F draw/sheathe, LMB slash, RMB overhead chop, Space dodge (+A/D: to that side), Q crossbow (R or LMB when empty
-# reloads, LMB looses), H hurt yourself (debug), Esc frees the mouse.
+# F draw/sheathe, LMB slash, RMB overhead chop, Space dodge (+A/D: to that side), Q the weapon wheel (WeaponWheel ->
+# equip; a tap = crossbow), R or LMB when empty reloads, LMB looses, H hurt yourself (debug), Esc frees the mouse.
 class_name Player
 extends CharacterBody3D
 
@@ -55,6 +55,7 @@ var action_len := 0.0
 var hit_done := false
 var swung := false        # the swing's whoosh has played (it leads the blow a little)
 var queued := ""
+var wanted := -1          # a Mode chosen on the weapon wheel, on its way (-1 = none)
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 var model: Node3D
@@ -135,8 +136,6 @@ func _unhandled_input(e: InputEvent) -> void:
 			dodge()
 		elif e.is_action_pressed("crouch"):
 			crouch()
-		elif e.is_action_pressed("crossbow"):
-			toggle_crossbow()
 		elif e.is_action_pressed("reload"):
 			reload()
 		elif e.is_action_pressed("lantern"):
@@ -157,6 +156,26 @@ func play(n: String, backward := false) -> void:
 func set_mode(m: Mode) -> void:
 	mode = m
 	tree.set("parameters/mode/transition_request", PlayerAnimation.MODE_INPUTS[m])
+
+
+## What to hold (the weapon wheel, Q): whatever is in his hands goes away first (sheathe / holster / stand up),
+## then the chosen one comes out, one clip after the other. EXPLORE = the lantern, no weapon.
+func equip(m: Mode) -> void:
+	wanted = m
+	_equip_next()
+
+
+func _equip_next() -> void:
+	if wanted < 0 or action != "" or mode == Mode.DEAD:
+		return
+	if mode == wanted:
+		wanted = -1
+	elif mode == Mode.COMBAT or (mode == Mode.EXPLORE and wanted == Mode.COMBAT):
+		toggle_weapon()
+	elif mode == Mode.XBOW or (mode == Mode.EXPLORE and wanted == Mode.XBOW):
+		toggle_crossbow()
+	elif mode == Mode.CROUCH:
+		crouch()
 
 
 func toggle_weapon() -> void:
@@ -373,6 +392,8 @@ func _tick_action(delta: float) -> void:
 		action = ""
 		if next != "":
 			play(next)
+		else:
+			_equip_next()
 
 
 func _process(delta: float) -> void:

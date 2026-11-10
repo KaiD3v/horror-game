@@ -100,6 +100,15 @@ Gancho da missão (a definir): o filho de Dona Firmina foi levado para a Colôni
 - **Sons:** moedas no balcão (`compra`) e o pano da atadura (`curativo`), do ElevenLabs.
 
 
+### A roda de armas (Q, `scripts/ui/weapon_wheel.gd`)
+
+- **Segurar Q** abre uma roda no centro da tela e deixa o tempo a 1/4. Ela tem três fatias: Lamparina (mãos livres) em cima, Facão embaixo à direita e Besta embaixo à esquerda, com os virotes que restam.
+- O mouse (ou WASD) aponta a fatia. **Soltar Q** põe a escolhida na mão. Soltar sem apontar não muda nada.
+- A troca é direta: do facão para a besta ele embainha e depois saca, sem passos no meio (`Player.equip`). Agachado, ele levanta primeiro.
+- Em âmbar fica o que está na mão; em vermelho, a fatia apontada.
+- **Um toque rápido** em Q, sem abrir a roda, faz o que o Q fazia antes: saca a besta, ou volta à lamparina.
+- A roda some se o jogo pausar (notas, loja) ou se ele morrer.
+
 ## Narrativa ambiental (o que aconteceu aqui, sem uma linha de texto de jogo)
 
 Alguém foi arrastado para a Colônia, e o vilarejo tentou se trancar.

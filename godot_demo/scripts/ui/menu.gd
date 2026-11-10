@@ -104,7 +104,7 @@ func _controls_panel() -> Control:
 	var p := ColorRect.new(); add_child(p); p.color = Color(0, 0, 0, 0.78); p.size = Vector2(960, 600); p.visible = false
 	var rows := [["WASD", "trotar"], ["Ctrl", "andar"], ["Shift", "correr"], ["Mouse", "olhar"], ["E", "entrar / interagir"],
 		["L", "guardar / acender a lamparina"], ["F", "sacar / guardar a faca"], ["Botão esquerdo", "golpe"],
-		["Botão direito", "golpe de cima"], ["Espaço", "esquiva"], ["C", "agachar"], ["Q", "besta"], ["R", "recarregar"], ["X", "curativo"], ["Tab", "notas"]]
+		["Botão direito", "golpe de cima"], ["Espaço", "esquiva"], ["C", "agachar"], ["Q", "armas (segurar: roda)"], ["R", "recarregar"], ["X", "curativo"], ["Tab", "notas"]]
 	var grid := GridContainer.new(); p.add_child(grid); grid.columns = 2
 	grid.add_theme_constant_override("h_separation", 28); grid.add_theme_constant_override("v_separation", 0)
 	var head := Label.new(); p.add_child(head); head.text = "Controles"; head.position = Vector2(338, 50)

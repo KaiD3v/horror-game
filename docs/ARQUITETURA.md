@@ -17,7 +17,7 @@ protagonista-terror/
       npcs/                   Npc
       shop/                   Shop (regras de compra), ShopMenu (a tela), ShopCounter (o "E · comprar" de um vendedor)
       world/                  Door, Footsteps, RandomEvents, Clima, Corvo
-      ui/                     Hud, menu, NotesReader, NotePaper
+      ui/                     Hud, menu, NotesReader, NotePaper, WeaponWheel (a roda de armas do Q)
       data/                   dados sem lógica: NpcCatalog, NotesData, Atmospheres, DayData, ItemCatalog, ShopCatalog
       levels/                 o script de cada fase: vilarejo, colonia, treino, interior (único para todos os interiores)
     shaders/                  sangue, visao, silhueta, neblina_bancos, poca, menu_neblina
@@ -79,6 +79,7 @@ Uma fase sobrescreve três métodos:
 | **algo para usar com E** | Um `Interactable` (prompt e raio) e o tratamento no sinal `used`, ou uma subclasse que sobrescreve `_use()`. Exemplos: `Door`, `NotePaper` e o ferrolho da Colônia. |
 | **uma porta entre cenas** | `Door.make(marcador, "E · entrar...", cena, chegada)`. |
 | **um evento ambiente aleatório** | `RandomEvents.add(nome, primeira, intervalo, função)`. |
+| **uma arma na roda (Q)** | Uma entrada em `WHEEL` de `weapon_wheel.gd` (modo, nome, nota). A roda divide o círculo entre as entradas sozinha. A arma em si é um `Player.Mode` com as animações de sacar e guardar; `Player.equip()` guarda o que estiver na mão antes de sacar a nova. |
 | **o dia e o clima numa fase** | Usar `day = DayCycle.outdoors(self, env, sol, materiais_de_silhueta, clima)` ao ar livre, ou `DayCycle.indoors(self, luzes_de_janela, vidros)` num interior. O relógio (`WorldTime`) e o clima (`Weather`) continuam entre as cenas. Horários, cores e chances ficam em `DayData`. |
 | **um som** | `Audio.play2d` / `play3d`, ou `loop_player` mais `fade` para um loop que entra e sai. |
 | **um ambiente (céu, neblina)** | Um preset em `Atmospheres` e `Looks.environment(self, preset)`. |
