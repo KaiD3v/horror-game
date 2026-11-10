@@ -112,6 +112,7 @@ func _ready() -> void:
 	tree = PlayerAnimation.build(model, Nodes.find_first(model, "AnimationPlayer"))
 	shot = tree.tree_root.get_node("shot"); aim_anim = tree.tree_root.get_node("aim")
 	carry_anim = tree.tree_root.get_node("x_carry")
+	tree.set("parameters/x_low/blend_amount", 1.0)  # the carried crossbow's bolt / string: always from x_carry
 	coat = CoatPhysics.setup(skeleton)
 	condition = PlayerCondition.new(self); add_child(condition)
 	hook = LanternHook.new(); hook.bone = skeleton.find_bone("lantern"); hook.active = false
@@ -443,7 +444,8 @@ func _physics_process(delta: float) -> void:
 		tree.set("parameters/%s_walk_ts/scale" % p, clamp(moving / WALK_SPEED, 1.0, JOG_SPEED / WALK_SPEED))
 		tree.set("parameters/%s_jog_ts/scale" % p, clamp(moving / JOG_SPEED, WALK_SPEED / JOG_SPEED, RUN_SPEED / JOG_SPEED))
 		tree.set("parameters/%s_run_ts/scale" % p, RUN_SPEED / RUN_STRIDE)
-		tree.set("parameters/%s_crouch/blend_amount" % p, clamp(moving / CROUCH_SPEED, 0.0, 1.0))
+		if p == "l" or p == "f":
+			tree.set("parameters/%s_crouch/blend_amount" % p, clamp(moving / CROUCH_SPEED, 0.0, 1.0))
 	# hung but the clip has it in hand (machete, crossbow, death): keep it on the hook
 	var own_clip := (action == "" or action == "Stow_Lantern" or action == "Crouch_Down_Free") 		and (mode == Mode.EXPLORE or mode == Mode.CROUCH)
 	hook.active = not lantern_out and not own_clip

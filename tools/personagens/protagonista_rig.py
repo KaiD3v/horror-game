@@ -478,15 +478,6 @@ pose([("spine", (0, 0.1, 1)), ("chest", (0, 0.2, 1)), ("neck", (0, 0.25, 1)), ("
 guard(10, swing=-6)
 guard(18)
 
-# carrying the machete (drawn, no guard up: RMB raises it): hanging in the left fist by his thigh, the tip down
-# and forward, the lantern still out in the right. The game plays it over the walk / jog / sprint legs.
-CARRY_M = ((0.3, -0.1, 0.9), (0.12, -0.55, -0.83), (0.05, -0.85, 0.5), (1, 0.4, -0.1))  # palm, blade, edge, pole
-act("Carry_Machete_Loop", 61, loop=True)
-for f, b in ((1, 0), (31, 1), (61, 0)):
-    aims = [(n, (d[0], d[1] + 0.08 * b if n in ("chest", "neck") else d[1], d[2])) for n, d in UPPER]
-    palm = Vector(CARRY_M[0]) + Vector((0, 0, 0.01 * b))
-    pose(aims + IDLE_LEGS, f, turns=[("head", "Z", -10)], left=(palm,) + CARRY_M[1:], armed=1)
-
 # block (RMB held): a high guard, the machete across in front of his face, the tip up to his right, the edge out
 BLOCK_HAND = ((0.16, -0.34, 1.34), (-0.8, -0.3, 0.5), (0.05, -0.85, 0.5), (1, 0.1, -0.8))  # palm, blade, edge, pole
 
@@ -692,21 +683,59 @@ for name, ld in (("Aim_Crossbow_Loop", 1), ("Aim_Crossbow_Empty_Loop", 0)):  # 2
     for f, b in ((1, 0), (31, 1), (61, 0)):
         aim_pose(f, breath=b, loaded=ld)
 
-# carrying the crossbow (drawn, not aiming: RMB raises it): low ready, both hands on it, pointed at the ground ahead.
-# The game plays these over the walk / jog / sprint legs.
+# --- a drawn weapon carried (not raised: RMB raises it), with its own idle / walk / jog / sprint, the same legs as
+# the lantern sets so the game moves him at the same speeds:
+#   machete: in the left fist, the arm out a little ahead and the blade up and forward, swinging with the step;
+#            the lantern stays out in the right hand
+#   crossbow: low ready, both hands on it, pointed at the ground ahead; the lantern on the hook. Whether a bolt sits
+#            on the rail is laid over by the game (Carry_Crossbow[_Empty]: only the string and the rail bolt count)
+CARRY_M = ((0.3, -0.38, 0.98), (0.12, -0.6, 0.79), (0.05, -0.75, -0.6), (1, 0.3, -0.6))  # palm, blade, edge, pole
 CARRY_X = xbow_frame((-0.14, -0.26, 1.0), (0.1, -1, -0.62))
 
 
-def carry_xbow(frame, breath=0.0, loaded=0.0):
-    aims = [(n, (d[0], d[1] + 0.06 * breath if n in ("chest", "neck") else d[1], d[2])) for n, d in UPPER[:4]]
-    pose(aims + UPPER[7:] + IDLE_LEGS, frame, turns=[("chest", "Z", 6), ("head", "Z", -4)], left=support(CARRY_X),
-         right=xbow_hold(CARRY_X, (-1, 0.2, -0.5)), xbow=1, lantern="hung", cock=loaded, loaded=loaded)
+def machete_carry(a=0.0, breath=0.0):  # a = arm phase (+1: the right arm forward, so the left one back)
+    palm = Vector(CARRY_M[0]) + Vector((0, 0.07 * a, 0.012 * breath - 0.02 * abs(a)))
+    blade = Vector(CARRY_M[1]) + Vector((0, 0.1 * a, 0))
+    return {"left": (palm, blade) + CARRY_M[2:], "armed": 1}
 
 
-for name, ld in (("Carry_Crossbow_Loop", 1), ("Carry_Crossbow_Empty_Loop", 0)):
-    act(name, 61, loop=True)
+def xbow_carry(a=0.0, breath=0.0):
+    m = Matrix.Translation((0, 0.015 * a, 0.01 * breath - 0.012 * abs(a))) @ CARRY_X
+    return {"left": support(m), "right": xbow_hold(m, (-1, 0.2, -0.5)), "xbow": 1, "lantern": "hung"}
+
+
+def no_arms(up):
+    return [(n, d) for n, d in up if not (n.startswith(("upper_arm.", "forearm.", "hand.")))]
+
+
+def carry_set(kind, hands, ups):  # ups = the torso for idle, walk, jog, run
+    act("Idle_%s_Loop" % kind, 61, loop=True)
     for f, b in ((1, 0), (31, 1), (61, 0)):
-        carry_xbow(f, breath=b, loaded=ld)
+        aims = [(n, (d[0], d[1] + 0.08 * b if n in ("chest", "neck") else d[1], d[2])) for n, d in ups[0]]
+        pose(aims + IDLE_LEGS, f, turns=[("head", "Z", -8)], **hands(0, b))
+    a = new_action("Walk_%s_Loop" % kind)
+    for frame, key, front, twist, swing in WALK:
+        pose(ups[1] + legs(key, front), frame, swing=swing, turns=[("chest", "Z", twist), ("head", "Z", -twist - 6)],
+             **hands(WALK_PHASE[frame]))
+    a.use_frame_range = True; a.frame_range = (1, 32)
+    a = new_action("Jog_%s_Loop" % kind)
+    for frame, key, front, twist, swing, lift, ph in JOG:
+        pose(ups[2] + legs(key, front), frame, swing=swing, lift=lift,
+             turns=[("chest", "Z", twist), ("head", "Z", -twist * 0.7)], **hands(ph))
+    a.use_frame_range = True; a.frame_range = (1, 30)
+    a = new_action("Run_%s_Loop" % kind)
+    for frame, key, front, twist, swing, lift in RUN:
+        pose(ups[3] + legs(key, front), frame, swing=swing, lift=lift,
+             turns=[("chest", "Z", twist), ("head", "Z", -twist * 0.6)], **hands(RUN_PHASE[frame]))
+    a.use_frame_range = True; a.frame_range = (1, 20)
+
+
+carry_set("Machete", machete_carry, [UPPER, UPPER, JOG_UP, RUN_UP])
+carry_set("Crossbow", xbow_carry, [no_arms(UPPER), no_arms(UPPER), no_arms(JOG_UP), no_arms(RUN_UP)])
+for name, ld in (("Carry_Crossbow_Loop", 1), ("Carry_Crossbow_Empty_Loop", 0)):  # the bolt / string overlay
+    act(name, 2)
+    for f in (1, 2):
+        pose(no_arms(UPPER) + IDLE_LEGS, f, cock=ld, loaded=ld, **xbow_carry())
 
 act("Shoot_Crossbow", 18)  # loaded -> the string snaps and the bolt leaves on frame 2; kick, settle, aim (empty)
 aim_pose(1, loaded=1)

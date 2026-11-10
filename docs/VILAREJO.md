@@ -119,7 +119,9 @@ Gancho da missão (a definir): o filho de Dona Firmina foi levado para a Colôni
 
 ### Combate (`scripts/player/player.gd`)
 
-- **Arma abaixada e arma erguida:** sacada, a arma vai abaixada na mão (`Carry_Machete` e `Carry_Crossbow`, do `protagonista_rig.py`): o facão pendurado junto da coxa, a besta apontada para o chão.
+- **Arma abaixada e arma erguida:** sacada, a arma vai na mão sem estar erguida. Cada arma tem os próprios ciclos de parado, andar, trotar e correr (`Idle/Walk/Jog/Run_Machete` e `_Crossbow`, do `protagonista_rig.py`), com as mesmas pernas da lamparina.
+  - O facão vai com o braço estendido à frente e a lâmina erguida, balançando com o passo; a lamparina segue na outra mão.
+  - A besta vai baixa, com as duas mãos, apontada para o chão à frente. O virote no trilho vem de `Carry_Crossbow[_Empty]`.
   - Assim ele anda, trota e corre como explorando, virando para onde vai, com a câmera normal.
   - **Segurar o botão direito ergue a arma.** O facão sobe na guarda de bloqueio; a besta sobe na mira, com a cruz, a câmera fechada e o passo lento de lado. Só mirando o botão esquerdo dispara.
   - Golpear com o facão ou travar a mira (E) também ergue a arma.

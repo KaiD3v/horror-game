@@ -2,7 +2,7 @@
 # sheathe, attacks, dodge, hit) play over the mode:
 #   idle --+                 guard / block (Blend2) --+
 #   walk/jog/sprint (x2: lantern in hand l_, on the hook f_) -- l_/f_explore -- hands (Blend2)       walk legs -----+-- combat (Blend2, legs only)
-#   machete / crossbow carried low over the c_/x_ legs <-> raised (combat / xbow): combat_ready, xbow_ready
+#   machete / crossbow carried low (c_/x_explore: their own idle/walk/jog/sprint) <-> raised: combat_ready, xbow_ready
 #   explore / combat_ready / death / crouch / xbow_ready -- mode (Transition) -- action (OneShot <- shot) -- output
 # Player drives it by the parameters: <l|f>_explore, _jog_mix, _run_mix, _walk_ts... (see player.gd).
 class_name PlayerAnimation
@@ -26,8 +26,8 @@ static func build(model: Node3D, ap: AnimationPlayer) -> AnimationTree:
 	bt.connect_node("hands", 0, "l_explore"); bt.connect_node("hands", 1, "f_explore")
 	bt.connect_node("crouch_hands", 0, "l_crouch"); bt.connect_node("crouch_hands", 1, "f_crouch")
 
-	for c in ["c", "x"]:  # the legs under a carried weapon (machete, crossbow): the hands-free set
-		_locomotion(bt, anim, c, "Free")
+	for c in [["c", "Machete"], ["x", "Crossbow"]]:  # a drawn weapon carried low: its own idle / walk / jog / sprint
+		_locomotion(bt, anim, c[0], c[1])
 	bt.add_node("guard", anim.call("Combat_Idle"))
 	bt.add_node("block_pose", anim.call("Block"))     # RMB held: the machete raised across
 	bt.add_node("block", AnimationNodeBlend2.new())
@@ -39,13 +39,17 @@ static func build(model: Node3D, ap: AnimationPlayer) -> AnimationTree:
 	bt.add_node("walk3", anim.call("Walk_Lantern"))
 	bt.add_node("xbow", _legs_only(ap))
 	bt.connect_node("xbow", 0, "aim"); bt.connect_node("xbow", 1, "walk3")
-	# drawn but not raised (RMB raises): the weapon carried low over the walk / jog / sprint legs
-	for w in [["c", "Carry_Machete", "combat"], ["x", "Carry_Crossbow_Empty", "xbow"]]:
-		bt.add_node(w[0] + "_carry", anim.call(w[1]))
-		bt.add_node(w[0] + "_low", _legs_only(ap))
-		bt.connect_node(w[0] + "_low", 0, w[0] + "_carry"); bt.connect_node(w[0] + "_low", 1, w[0] + "_explore")
-		bt.add_node(w[2] + "_ready", AnimationNodeBlend2.new())  # carried <-> raised
-		bt.connect_node(w[2] + "_ready", 0, w[0] + "_low"); bt.connect_node(w[2] + "_ready", 1, w[2])
+	# drawn but not raised (RMB raises): carried low (c_ / x_explore). On the carried crossbow, whether a bolt is on
+	# the rail comes from x_carry (Carry_Crossbow[_Empty]: only its string and rail bolt)
+	bt.add_node("x_carry", anim.call("Carry_Crossbow_Empty"))
+	var bolt := AnimationNodeBlend2.new(); bolt.filter_enabled = true
+	for b in ["xbow.string", "bolt.rail"]:
+		bolt.set_filter_path(NodePath("%s:%s" % [_skeleton_path(ap), b]), true)
+	bt.add_node("x_low", bolt)
+	bt.connect_node("x_low", 0, "x_explore"); bt.connect_node("x_low", 1, "x_carry")
+	for w in [["c_explore", "combat"], ["x_low", "xbow"]]:
+		bt.add_node(w[1] + "_ready", AnimationNodeBlend2.new())  # carried <-> raised
+		bt.connect_node(w[1] + "_ready", 0, w[0]); bt.connect_node(w[1] + "_ready", 1, w[1])
 
 	bt.add_node("death", anim.call("Death"))
 	var mode_node := AnimationNodeTransition.new(); mode_node.input_count = MODE_INPUTS.size(); mode_node.xfade_time = 0.2
@@ -81,6 +85,11 @@ static func _locomotion(bt: AnimationNodeBlendTree, anim: Callable, p: String, k
 	bt.connect_node(p + "_run_mix", 0, p + "_jog_mix"); bt.connect_node(p + "_run_mix", 1, p + "_run_ts")
 	bt.add_node(p + "_explore", AnimationNodeBlend2.new())   # standing <-> moving
 	bt.connect_node(p + "_explore", 0, p + "_idle"); bt.connect_node(p + "_explore", 1, p + "_run_mix")
+
+
+static func _skeleton_path(ap: AnimationPlayer) -> String:  # the tracks' skeleton, as Walk_Lantern names it
+	var walk_anim := ap.get_animation("Walk_Lantern")
+	return String(walk_anim.track_get_path(0)).get_slice(":", 0)
 
 
 ## Blend2 where only the legs (and the front/back coat flaps they push) follow the walk on input 1; the side flaps

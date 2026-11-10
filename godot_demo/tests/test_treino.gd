@@ -257,10 +257,15 @@ func carry_tests(in_hand: Callable, what: String) -> void:
 	var p0 := player.global_position; var r0 := player.rotation.y
 	await wait(0.5)
 	check(not player.raised and player.raise_amt < 0.01 and in_hand.call(), "the %s carried low, still in his fist" % what)
-	Input.action_press("right"); await wait(1.2); await shot("2h_carry_" + what)
+	Input.action_press("right"); await wait(0.8)
+	var sk := player.skeleton; var foot := sk.find_bone("foot.L")
+	var f0 := sk.get_bone_global_pose(foot).origin; await wait(0.25)
+	var stepped := sk.get_bone_global_pose(foot).origin.distance_to(f0)
+	await wait(0.15); await shot("2h_carry_" + what)
 	var v := Vector2(player.velocity.x, player.velocity.z).length()
 	var facing := (-player.global_basis.z).dot(player.pivot.global_basis.x)
 	Input.action_release("right"); await wait(0.4)
+	check(stepped > 0.1, "...his legs walk under it (a foot moved %.2f m in 0.25 s)" % stepped)
 	check(absf(v - Player.JOG_SPEED) < 0.05 and facing > 0.9 and absf(player.cam_now.fov - Player.CAM_EXPLORE.fov) < 1.0,
 		"...he jogs with it (%.2f m/s), turning where he goes (%.2f), the explore camera" % [v, facing])
 	player.global_position = p0; player.velocity = Vector3.ZERO; player.rotation.y = r0; player.coat.reset()
