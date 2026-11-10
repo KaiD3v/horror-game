@@ -2,9 +2,9 @@
 class_name GameInput
 
 const KEYS := {"forward": [KEY_W, KEY_UP], "back": [KEY_S, KEY_DOWN], "left": [KEY_A, KEY_LEFT],
-	"right": [KEY_D, KEY_RIGHT], "sprint": [KEY_SHIFT], "walk": [KEY_CTRL], "lantern": [KEY_L], "draw": [KEY_F],
+	"right": [KEY_D, KEY_RIGHT], "sprint": [KEY_SHIFT], "walk": [KEY_CTRL], "draw": [KEY_1], "crossbow": [KEY_2], "lantern": [KEY_3],
 	"dodge": [KEY_SPACE], "crouch": [KEY_C], "weapons": [KEY_Q], "interact": [KEY_E], "debug_hurt": [KEY_H],
-	"reload": [KEY_R], "restart": [KEY_ENTER], "notes": [KEY_TAB], "debug_time": [KEY_T], "heal": [KEY_X]}
+	"reload": [KEY_R], "restart": [KEY_ENTER], "notes": [KEY_TAB], "debug_time": [KEY_T], "heal": [KEY_F]}
 const BUTTONS := {"attack": MOUSE_BUTTON_LEFT, "heavy": MOUSE_BUTTON_RIGHT}
 
 

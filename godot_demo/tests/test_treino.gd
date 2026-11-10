@@ -93,8 +93,8 @@ func run() -> void:
 	player.global_position = l0; player.velocity = Vector3.ZERO; player.rotation.y = 0.0; player.coat.reset()
 	await wait(0.3)
 
-	await tap("weapons"); await wait(1.4); await shot("2f_crossbow")
-	check(player.mode == Player.Mode.XBOW and player.crossbow_in_hand(), "Q draws the crossbow into the right fist")
+	await tap("crossbow"); await wait(1.4); await shot("2f_crossbow")
+	check(player.mode == Player.Mode.XBOW and player.crossbow_in_hand(), "2 draws the crossbow into the right fist")
 	check(player.lantern_hung(), "...the lantern hangs on its belt hook meanwhile")
 	check(not player.loaded, "...and it comes out unloaded")
 	await tap("reload"); await wait(0.9); await shot("2f_reload"); await wait(1.3)
@@ -110,9 +110,9 @@ func run() -> void:
 	check(not player.loaded, "...and leaves it empty")
 	L.dummy.hits = 0; L.dummy.damage = 0
 	player.pivot.rotation.y = 0.0; await wait(0.3)
-	await tap("weapons"); await wait(1.4)
+	await tap("crossbow"); await wait(1.4)
 	check(player.mode == Player.Mode.EXPLORE and not player.crossbow_in_hand() and not player.lantern_hung(),
-		"Q again holsters it and the lantern is back in hand")
+		"2 again holsters it and the lantern is back in hand")
 	await wheel_tests()
 
 	await tap("draw"); await wait(0.45); await shot("3_drawing"); await wait(0.7)
@@ -142,7 +142,7 @@ func run() -> void:
 	check(player.health == 2 and player.mode == Player.Mode.COMBAT, "hit react keeps fighting (hp=%d)" % player.health)
 
 	await tap("draw"); await wait(1.2); await shot("8_sheathed")
-	check(player.mode == Player.Mode.EXPLORE, "F again sheathes -> explore mode")
+	check(player.mode == Player.Mode.EXPLORE, "1 again sheathes -> explore mode")
 	check(not player.machete_in_hand(), "machete back in the sheath")
 
 	# phase B: the mutant, straight ahead, awake
@@ -239,39 +239,53 @@ func wound_tests() -> void:
 	player.pivot.rotation.y = player.rotation.y; lamp.queue_free()
 
 
-## Q held: the weapon wheel (WeaponWheel). Slows time, the mouse picks a slice, letting go puts it in his hands,
-## swapping straight from one weapon to the other.
+## Q held: the weapon wheel (WeaponWheel). Slows time, the mouse picks a tablet, letting go puts it in his hands,
+## swapping straight from one weapon to the other. Then the number keys do the same without it.
 func wheel_tests() -> void:
 	var W: WeaponWheel = L.wheel
 	check(WeaponWheel.slice_at(Vector2(0, -60)) == 0 and WeaponWheel.slice_at(Vector2(60, 35)) == 1
 		and WeaponWheel.slice_at(Vector2(-60, 35)) == 2 and WeaponWheel.slice_at(Vector2(5, 5)) == -1,
-		"the slices: lantern up, machete lower right, crossbow lower left, nothing in the middle")
-	var yaw := player.pivot.rotation.y
-	Input.action_press("weapons"); await wait(0.1)
-	check(not W.open, "...not open on a tap's length")
-	await wait(0.1)
+		"the tablets: machete up, crossbow lower right, lantern lower left, nothing in the middle")
+	var yaw := player.pivot.rotation.y; var p0 := player.global_position; var r0 := player.rotation.y
+	Input.action_press("weapons"); await get_tree().process_frame; await get_tree().process_frame
 	check(W.open and Engine.time_scale == WeaponWheel.SLOW and W.ring.visible, "Q held opens the wheel, time slows (x%.2f)" % Engine.time_scale)
-	await _swipe(1); await shot("2w_wheel")
-	check(W.picked == 1 and W.centre.text == "Facão" and player.pivot.rotation.y == yaw,
+	await _swipe(0); await wait(0.05); await shot("2w_wheel")
+	check(W.picked == 0 and W.centre.text == "Facão" and player.pivot.rotation.y == yaw,
 		"the mouse points at the machete (the camera stays put)")
 	Input.action_release("weapons"); await get_tree().process_frame; await get_tree().process_frame
 	check(not W.open and Engine.time_scale == 1.0, "letting go closes it, time back to normal")
 	await wait(1.3)
 	check(player.mode == Player.Mode.COMBAT and player.machete_in_hand(), "...and the machete comes out")
-	Input.action_press("weapons"); await wait(0.25); await _swipe(2)
+	Input.action_press("weapons"); await wait(0.1); await _swipe(1); await shot("2w_wheel_held")
+	check(W.note.text == "virotes: %d" % Inventory.count("virote"), "the crossbow's tablet says the bolts left (%s)" % W.note.text)
 	Input.action_release("weapons"); await wait(2.8)
 	check(player.mode == Player.Mode.XBOW and player.crossbow_in_hand() and not player.machete_in_hand() and player.wanted == -1,
 		"machete -> crossbow in one pick: sheathed, then the crossbow drawn")
-	Input.action_press("weapons"); await wait(0.25)
-	Input.action_press("forward"); await get_tree().process_frame; await get_tree().process_frame
+	Input.action_press("weapons"); await wait(0.1)
+	Input.action_press("left"); Input.action_press("back"); await get_tree().process_frame; await get_tree().process_frame
 	var by_keys := W.picked
-	Input.action_release("forward"); Input.action_release("weapons"); await wait(1.5)
-	check(by_keys == 0 and player.mode == Player.Mode.EXPLORE and not player.crossbow_in_hand() and not player.lantern_hung(),
-		"W points at the lantern: the crossbow holstered, the lantern back in hand")
-	Input.action_press("weapons"); await wait(0.25)
+	Input.action_release("left"); Input.action_release("back"); Input.action_release("weapons"); await wait(1.5)
+	check(by_keys == 2 and player.mode == Player.Mode.EXPLORE and not player.crossbow_in_hand() and not player.lantern_hung(),
+		"A+S points at the lantern: the crossbow holstered, the lantern back in hand")
+	Input.action_press("weapons"); await wait(0.1)
 	Input.action_release("weapons"); await wait(0.4)
 	check(player.mode == Player.Mode.EXPLORE and player.action == "", "let go without pointing: nothing changes")
+
+	var keys := {}
+	for a in ["draw", "crossbow", "lantern", "heal", "weapons"]:
+		keys[a] = (InputMap.action_get_events(a)[0] as InputEventKey).physical_keycode
+	check(keys == {"draw": KEY_1, "crossbow": KEY_2, "lantern": KEY_3, "heal": KEY_F, "weapons": KEY_Q},
+		"keys: 1 machete, 2 crossbow, 3 lantern, F bandage, Q the wheel")
+	await tap("crossbow"); await wait(1.4)
+	await tap("draw"); await wait(2.8)
+	check(player.mode == Player.Mode.COMBAT and player.machete_in_hand() and not player.crossbow_in_hand(),
+		"crossbow out, 1: holstered and the machete drawn")
+	await tap("lantern"); await wait(1.3)
+	check(player.mode == Player.Mode.EXPLORE and not player.machete_in_hand() and not player.lantern_hung(),
+		"3 with the machete out: sheathed, the lantern in hand")
 	player.velocity = Vector3.ZERO
+	player.global_position = p0; player.rotation.y = r0; player.pivot.rotation.y = yaw; player.coat.reset()
+	await wait(0.3)
 
 
 func _swipe(i: int) -> void:  # the mouse dragged towards slice i
@@ -305,11 +319,11 @@ func inventory_tests() -> void:
 	if player.mode == Player.Mode.COMBAT:
 		await tap("draw"); await wait(1.2)
 	Inventory.items["virote"] = 1
-	await tap("weapons"); await wait(1.4)
+	await tap("crossbow"); await wait(1.4)
 	await tap("reload"); await wait(2.2)
 	check(player.loaded and Inventory.count("virote") == 0 and L.hud.ammo.visible, "a reload takes a bolt from the quiver (%d left)" % Inventory.count("virote"))
 	await tap("attack"); await wait(0.6)
 	await tap("reload"); await wait(0.3)
 	check(not player.loaded and player.action == "" and L.hud.message.text == "Sem virotes.", "no bolts, no reload: \"%s\"" % L.hud.message.text)
-	await tap("weapons"); await wait(1.4)
+	await tap("crossbow"); await wait(1.4)
 	Inventory.reset()

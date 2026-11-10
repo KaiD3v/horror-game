@@ -3,9 +3,10 @@
 # (draw, sheathe, attacks, dodge, hit) play over the mode (PlayerAnimation). Camera over the right shoulder; drawing
 # the machete eases it closer/lower, crouching drops it with his head. The coat flaps have spring physics
 # (CoatPhysics); bolts fly on their own (Bolt); how hurt and tired he is shows on his body (PlayerCondition).
-# Controls (GameInput): WASD jog (Ctrl walks, Shift sprints), mouse look, L lantern on the hook / in hand, C crouch,
-# F draw/sheathe, LMB slash, RMB overhead chop, Space dodge (+A/D: to that side), Q the weapon wheel (WeaponWheel ->
-# equip; a tap = crossbow), R or LMB when empty reloads, LMB looses, H hurt yourself (debug), Esc frees the mouse.
+# Controls (GameInput): WASD jog (Ctrl walks, Shift sprints), mouse look, C crouch, 1 machete, 2 crossbow (each again:
+# away), 3 lantern (armed: the weapon away; exploring: on the hook / in hand), Q the weapon wheel (WeaponWheel ->
+# equip), LMB slash, RMB overhead chop, Space dodge (+A/D: to that side), R or LMB when empty reloads, LMB looses,
+# F dresses a wound, H hurt yourself (debug), Esc frees the mouse.
 class_name Player
 extends CharacterBody3D
 
@@ -126,8 +127,10 @@ func _unhandled_input(e: InputEvent) -> void:
 	elif e.is_action_pressed("debug_hurt"):
 		take_damage(1)
 	elif mode != Mode.DEAD:
-		if e.is_action_pressed("draw"):
-			toggle_weapon()
+		if e.is_action_pressed("draw"):  # 1, 2: that weapon out, or away again if it is the one in hand
+			equip(Mode.EXPLORE if mode == Mode.COMBAT else Mode.COMBAT)
+		elif e.is_action_pressed("crossbow"):
+			equip(Mode.EXPLORE if mode == Mode.XBOW else Mode.XBOW)
 		elif e.is_action_pressed("attack"):
 			attack("Attack_Slash")
 		elif e.is_action_pressed("heavy"):
@@ -138,8 +141,11 @@ func _unhandled_input(e: InputEvent) -> void:
 			crouch()
 		elif e.is_action_pressed("reload"):
 			reload()
-		elif e.is_action_pressed("lantern"):
-			toggle_lantern()
+		elif e.is_action_pressed("lantern"):  # 3: armed, the weapon away; exploring, the lantern on / off the hook
+			if mode == Mode.COMBAT or mode == Mode.XBOW:
+				equip(Mode.EXPLORE)
+			else:
+				toggle_lantern()
 		elif e.is_action_pressed("heal"):
 			use_cure()
 
@@ -265,7 +271,7 @@ func heal(n: int) -> void:
 	health = mini(max_health, health + n)
 
 
-## X: dresses a wound with the first healing item carried (Inventory).
+## F: dresses a wound with the first healing item carried (Inventory).
 func use_cure() -> void:
 	var id := Inventory.first_cure()
 	if id == "":

@@ -2,7 +2,7 @@
 # many you have; a shop (ShopCatalog) sells them. A new item = an entry here; a new kind of effect = a `tipo` that
 # Inventory.use() knows.
 #   tipo "municao"   ammunition, spent by a weapon (virote: one per crossbow reload)
-#   tipo "cura"      used with X: heals `cura` points of health
+#   tipo "cura"      used with F: heals `cura` points of health
 class_name ItemCatalog
 
 const MONEY := "Cr$"   # 1974: cruzeiros

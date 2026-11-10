@@ -31,7 +31,7 @@ protagonista-terror/
     personagens/              protagonista_build + protagonista_rig, monster_build, enfermeira_build,
                               npcs_build (roda npcs/<quem>.py)
     cenarios/                 vilarejo_build (+ pacote vilarejo/), armaria_build, venda_build, capela_build
-    texturas/                 scenery_textures, notas_papeis, fonte
+    texturas/                 scenery_textures, notas_papeis, fonte, roda_armas (o terço e as plaquinhas da roda)
     sons/                     sounds_import (ElevenLabs), clima_sons, enfermeira_sons, ferido_sons, sounds_build
     renders/                  renders de conferência (protagonista, mutante, vilarejo, NPCs lado a lado)
   blender/                    .blend salvos pelos builds: personagens/, npcs/, cenarios/
@@ -74,12 +74,12 @@ Uma fase sobrescreve três métodos:
 | **um inimigo** | Estender `Enemy` e preencher os atributos em `_init()`: modelo, vida, velocidade, alcance e tempo do golpe, cooldown. Depois, escrever só o `_decide()`, o que ele faz parado, alerta e perseguindo. O golpe, o atordoamento, o navmesh e a morte já vêm da base. Ver `Mutante` (30 linhas) e `Enfermeira`. |
 | **um interior** | 1. O build em `tools/cenarios/<nome>_build.py`, com `vila_kit.Room` e os marcadores `entrada`, `porta`, `luz_*`, `npc_*`, `som_*` e `teto`. 2. Uma cena `scenes/interiors/<nome>.tscn` com o script `interior.gd` e as configurações (modelo, porta, título, chão, ambiente). **Não precisa de código.** 3. Um `porta_<nome>` no vilarejo e uma linha em `DOORS` de `vilarejo.gd`. |
 | **um vendedor** | Pôr `"loja": "<id>"` na entrada do NPC em `NpcCatalog` e criar a loja em `ShopCatalog` (título, fala, ofertas com item, quantidade, preço e estoque). O NPC ganha "E · comprar com <nome>" e a tela de compra. **Sem código.** |
-| **um item** | Uma entrada em `ItemCatalog` com nome, descrição e `tipo`. Os tipos de hoje são `"cura"` (usado com X) e `"municao"` (o virote, gasto pela besta). Um tipo novo de efeito é um caso a mais em `Inventory.use()`. |
+| **um item** | Uma entrada em `ItemCatalog` com nome, descrição e `tipo`. Os tipos de hoje são `"cura"` (usado com F) e `"municao"` (o virote, gasto pela besta). Um tipo novo de efeito é um caso a mais em `Inventory.use()`. |
 | **uma nota** | Uma entrada em `NotesData`: cena, posição, papel e texto. Ela aparece no chão, tem leitor e entra na coleção. |
 | **algo para usar com E** | Um `Interactable` (prompt e raio) e o tratamento no sinal `used`, ou uma subclasse que sobrescreve `_use()`. Exemplos: `Door`, `NotePaper` e o ferrolho da Colônia. |
 | **uma porta entre cenas** | `Door.make(marcador, "E · entrar...", cena, chegada)`. |
 | **um evento ambiente aleatório** | `RandomEvents.add(nome, primeira, intervalo, função)`. |
-| **uma arma na roda (Q)** | Uma entrada em `WHEEL` de `weapon_wheel.gd` (modo, nome, nota). A roda divide o círculo entre as entradas sozinha. A arma em si é um `Player.Mode` com as animações de sacar e guardar; `Player.equip()` guarda o que estiver na mão antes de sacar a nova. |
+| **uma arma na roda (Q)** | Uma entrada em `WHEEL` de `weapon_wheel.gd` (modo, nome, nota, arte, tecla) e a plaquinha dela em `tools/texturas/roda_armas.py` (uma função que desenha a figura pirografada e um ângulo em `SLOTS`). Com uma tecla própria, mais uma linha em `GameInput.KEYS` e em `Player._unhandled_input`. A arma em si é um `Player.Mode` com as animações de sacar e guardar; `Player.equip()` guarda o que estiver na mão antes de sacar a nova. |
 | **o dia e o clima numa fase** | Usar `day = DayCycle.outdoors(self, env, sol, materiais_de_silhueta, clima)` ao ar livre, ou `DayCycle.indoors(self, luzes_de_janela, vidros)` num interior. O relógio (`WorldTime`) e o clima (`Weather`) continuam entre as cenas. Horários, cores e chances ficam em `DayData`. |
 | **um som** | `Audio.play2d` / `play3d`, ou `loop_player` mais `fade` para um loop que entra e sai. |
 | **um ambiente (céu, neblina)** | Um preset em `Atmospheres` e `Looks.environment(self, preset)`. |

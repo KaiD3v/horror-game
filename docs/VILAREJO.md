@@ -95,19 +95,26 @@ Gancho da missão (a definir): o filho de Dona Firmina foi levado para a Colôni
 - **O inventário** (`Inventory`) continua entre as cenas e volta ao início num jogo novo. O estoque das lojas também.
   - Um jogo novo começa com Cr$ 40, 6 virotes e 1 atadura.
   - Cada recarga da besta tira um virote da aljava. Sem virotes não há recarga, e a mira mostra quantos restam.
-  - X usa o primeiro curativo que tiver.
+  - F usa o primeiro curativo que tiver.
 - **Ainda não dá para ganhar dinheiro.** Isso fica para depois, por exemplo com saques, missões ou o corpo dos mutantes.
 - **Sons:** moedas no balcão (`compra`) e o pano da atadura (`curativo`), do ElevenLabs.
 
 
-### A roda de armas (Q, `scripts/ui/weapon_wheel.gd`)
+### As armas: teclas e a roda (Q, `scripts/ui/weapon_wheel.gd`)
 
-- **Segurar Q** abre uma roda no centro da tela e deixa o tempo a 1/4. Ela tem três fatias: Lamparina (mãos livres) em cima, Facão embaixo à direita e Besta embaixo à esquerda, com os virotes que restam.
-- O mouse (ou WASD) aponta a fatia. **Soltar Q** põe a escolhida na mão. Soltar sem apontar não muda nada.
-- A troca é direta: do facão para a besta ele embainha e depois saca, sem passos no meio (`Player.equip`). Agachado, ele levanta primeiro.
-- Em âmbar fica o que está na mão; em vermelho, a fatia apontada.
-- **Um toque rápido** em Q, sem abrir a roda, faz o que o Q fazia antes: saca a besta, ou volta à lamparina.
-- A roda some se o jogo pausar (notas, loja) ou se ele morrer.
+- **Teclas:**
+  - **1** saca o facão. **2** saca a besta. Apertar de novo guarda a arma.
+  - **3**, com uma arma na mão, guarda a arma e volta para a lamparina. Sem arma, pendura a lamparina no gancho do cinto ou a tira de lá (antes era o L).
+  - **F** usa o curativo (antes era o X).
+- **A troca é direta:** do facão para a besta ele embainha e depois saca (`Player.equip`). Agachado, ele levanta primeiro.
+- **A roda (segurar Q):** o tempo cai para 1/4 e aparece um terço de contas de madeira com o crucifixo pendurado embaixo.
+  - Sobre o terço ficam três plaquinhas de madeira com a arma pirografada, como os ex-votos de uma sala de milagres: Facão em cima, Besta à direita e Lamparina à esquerda, cada uma com a sua tecla.
+  - O mouse (ou WASD) aponta uma plaquinha, e acende atrás dela uma luz de vela que tremula. No centro aparecem o nome e uma nota (os virotes que restam, na besta).
+  - Soltar o Q põe a apontada na mão. Soltar sem apontar não muda nada.
+  - Uma fitinha vermelha amarrada marca o que ele tem na mão.
+  - A roda some se o jogo pausar (notas, loja) ou se ele morrer.
+- **Por que um terço:** é a fé popular do lugar (a benzedeira, a capela de Santa Clara, os ex-votos) feita interface. A arte é pixel art em 2x, como as notas e a fonte, gerada por `tools/texturas/roda_armas.py`.
+- **Referências que guiaram:** a roda sai do centro e se escolhe arrastando nessa direção, o gesto padrão das rodas de arma. O jogo fica bem mais lento enquanto ela está aberta, como em GTA V e The Witcher 2. E o visual é um objeto do mundo, não um painel de interface, na linha das interfaces diegéticas de Dead Space.
 
 ## Narrativa ambiental (o que aconteceu aqui, sem uma linha de texto de jogo)
 
