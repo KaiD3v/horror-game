@@ -5,7 +5,9 @@
 # (CoatPhysics); bolts fly on their own (Bolt); how hurt and tired he is shows on his body (PlayerCondition).
 # Controls (GameInput): WASD jog (Ctrl walks, Shift sprints), mouse look, C crouch, 1 machete, 2 crossbow (each again:
 # away), 3 lantern (armed: the weapon away; exploring: on the hook / in hand), Q the weapon wheel (WeaponWheel ->
-# equip), LMB slash (again in its follow-through: the overhead chop), RMB held blocks, E locks on the nearest enemy
+# equip). A drawn weapon is carried low (walks, jogs, sprints freely); RMB held raises it: the machete blocks, the
+# crossbow aims (strafing, the tight camera, the crosshair; only then LMB looses). LMB slash (again in its
+# follow-through: the overhead chop), E locks on the nearest enemy
 # ahead (armed; again releases it), Space dodge (+A/D: to that side), R or LMB when empty reloads, LMB looses,
 # F dresses a wound, H hurt yourself (debug), Esc frees the mouse. Swings and dodges spend stamina (COST).
 class_name Player
@@ -67,6 +69,10 @@ var swung := false        # the swing's whoosh has played (it leads the blow a l
 var queued := ""
 var wanted := -1          # a Mode chosen on the weapon wheel, on its way (-1 = none)
 var blocking := false     # RMB held with the machete out
+var aiming := false       # RMB held (or locked on) with the crossbow out
+var raised := false       # the weapon up (guard / aim): strafing at combat pace; down = carried, walking freely
+var raise_amt := 0.0      # carried <-> raised blend, eased
+var carry_anim: AnimationNodeAnimation
 var block_amt := 0.0      # the guard's blend, eased
 var lock: Node3D          # the enemy the camera is locked on (E), null = free look
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -105,6 +111,7 @@ func _ready() -> void:
 	skeleton = Nodes.find_first(model, "Skeleton3D")
 	tree = PlayerAnimation.build(model, Nodes.find_first(model, "AnimationPlayer"))
 	shot = tree.tree_root.get_node("shot"); aim_anim = tree.tree_root.get_node("aim")
+	carry_anim = tree.tree_root.get_node("x_carry")
 	coat = CoatPhysics.setup(skeleton)
 	condition = PlayerCondition.new(self); add_child(condition)
 	hook = LanternHook.new(); hook.bone = skeleton.find_bone("lantern"); hook.active = false
@@ -209,7 +216,7 @@ func attack(n: String) -> void:
 	if mode == Mode.CROUCH:
 		return
 	if mode == Mode.XBOW:
-		if action == "" and n == "Attack_Slash":
+		if action == "" and n == "Attack_Slash" and aiming:  # carried low it does not shoot
 			if loaded:
 				play("Shoot_Crossbow")
 			else:
@@ -315,6 +322,7 @@ func reload() -> void:
 func _set_loaded(v: bool) -> void:
 	loaded = v
 	aim_anim.animation = "Aim_Crossbow" if v else "Aim_Crossbow_Empty"  # the bolt on the rail, or not
+	carry_anim.animation = "Carry_Crossbow" if v else "Carry_Crossbow_Empty"
 
 
 func crouch() -> void:  # exploring only; standing up = Crouch_Down backwards
@@ -393,6 +401,11 @@ func _physics_process(delta: float) -> void:
 		_tick_action(delta)
 	blocking = mode == Mode.COMBAT and Input.is_action_pressed("block") and (action == "" or action == "Block_Hit")
 	block_amt = move_toward(block_amt, 1.0 if blocking else 0.0, BLOCK_RAISE * delta)
+	aiming = mode == Mode.XBOW and (Input.is_action_pressed("block") or lock != null)
+	raised = aiming or (mode == Mode.XBOW and action == "Shoot_Crossbow") or (mode == Mode.COMBAT and (blocking or lock != null or action != ""))
+	raise_amt = move_toward(raise_amt, 1.0 if raised else 0.0, BLOCK_RAISE * delta)
+	for n in ["combat_ready", "xbow_ready"]:
+		tree.set("parameters/%s/blend_amount" % n, raise_amt)
 	tree.set("parameters/block/blend_amount", block_amt)
 	if action == "" and mode != Mode.DEAD:
 		var input := Input.get_vector("left", "right", "forward", "back")
@@ -401,7 +414,7 @@ func _physics_process(delta: float) -> void:
 		move = move.normalized() * min(input.length(), 1.0)
 		if mode == Mode.CROUCH:
 			speed = CROUCH_SPEED
-		elif mode == Mode.COMBAT or mode == Mode.XBOW:
+		elif raised:
 			speed = BLOCK_SPEED if blocking else COMBAT_SPEED
 		else:
 			speed = RUN_SPEED if _sprinting(input) else (WALK_SPEED if Input.is_action_pressed("walk") else JOG_SPEED)
@@ -416,14 +429,14 @@ func _physics_process(delta: float) -> void:
 
 	# facing: exploring turns towards the movement, combat faces where the camera looks (strafe)
 	var target := rotation.y
-	if (mode == Mode.COMBAT or mode == Mode.XBOW) and not DODGE_DIR.has(action):
+	if raised and not DODGE_DIR.has(action):
 		target = pivot.rotation.y
 	elif move.length() > 0.1:
 		target = atan2(-move.x, -move.z)
 	rotation.y = lerp_angle(rotation.y, target, TURN_SPEED * delta)
 
 	var moving := Vector2(velocity.x, velocity.z).length()
-	for p in ["l", "f"]:
+	for p in ["l", "f", "c", "x"]:
 		tree.set("parameters/%s_explore/blend_amount" % p, clamp(moving / WALK_SPEED, 0.0, 1.0))
 		tree.set("parameters/%s_jog_mix/blend_amount" % p, clamp((moving - WALK_SPEED) / (JOG_SPEED - WALK_SPEED), 0.0, 1.0))
 		tree.set("parameters/%s_run_mix/blend_amount" % p, clamp((moving - JOG_SPEED) / (RUN_SPEED - JOG_SPEED), 0.0, 1.0))
@@ -487,7 +500,7 @@ func _tick_action(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	_track_lock(delta)
-	var goal: Dictionary = CAM_COMBAT if mode == Mode.COMBAT else CAM_AIM if mode == Mode.XBOW \
+	var goal: Dictionary = CAM_COMBAT if mode == Mode.COMBAT and raised else CAM_AIM if mode == Mode.XBOW and raised \
 		else CAM_CROUCH if mode == Mode.CROUCH else CAM_EXPLORE
 	for k in goal:
 		cam_now[k] = lerp(float(cam_now[k]), float(goal[k]), min(1.0, CAM_BLEND * delta))

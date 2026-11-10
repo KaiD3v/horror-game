@@ -478,6 +478,15 @@ pose([("spine", (0, 0.1, 1)), ("chest", (0, 0.2, 1)), ("neck", (0, 0.25, 1)), ("
 guard(10, swing=-6)
 guard(18)
 
+# carrying the machete (drawn, no guard up: RMB raises it): hanging in the left fist by his thigh, the tip down
+# and forward, the lantern still out in the right. The game plays it over the walk / jog / sprint legs.
+CARRY_M = ((0.3, -0.1, 0.9), (0.12, -0.55, -0.83), (0.05, -0.85, 0.5), (1, 0.4, -0.1))  # palm, blade, edge, pole
+act("Carry_Machete_Loop", 61, loop=True)
+for f, b in ((1, 0), (31, 1), (61, 0)):
+    aims = [(n, (d[0], d[1] + 0.08 * b if n in ("chest", "neck") else d[1], d[2])) for n, d in UPPER]
+    palm = Vector(CARRY_M[0]) + Vector((0, 0, 0.01 * b))
+    pose(aims + IDLE_LEGS, f, turns=[("head", "Z", -10)], left=(palm,) + CARRY_M[1:], armed=1)
+
 # block (RMB held): a high guard, the machete across in front of his face, the tip up to his right, the edge out
 BLOCK_HAND = ((0.16, -0.34, 1.34), (-0.8, -0.3, 0.5), (0.05, -0.85, 0.5), (1, 0.1, -0.8))  # palm, blade, edge, pole
 
@@ -682,6 +691,22 @@ for name, ld in (("Aim_Crossbow_Loop", 1), ("Aim_Crossbow_Empty_Loop", 0)):  # 2
     act(name, 61, loop=True)
     for f, b in ((1, 0), (31, 1), (61, 0)):
         aim_pose(f, breath=b, loaded=ld)
+
+# carrying the crossbow (drawn, not aiming: RMB raises it): low ready, both hands on it, pointed at the ground ahead.
+# The game plays these over the walk / jog / sprint legs.
+CARRY_X = xbow_frame((-0.14, -0.26, 1.0), (0.1, -1, -0.62))
+
+
+def carry_xbow(frame, breath=0.0, loaded=0.0):
+    aims = [(n, (d[0], d[1] + 0.06 * breath if n in ("chest", "neck") else d[1], d[2])) for n, d in UPPER[:4]]
+    pose(aims + UPPER[7:] + IDLE_LEGS, frame, turns=[("chest", "Z", 6), ("head", "Z", -4)], left=support(CARRY_X),
+         right=xbow_hold(CARRY_X, (-1, 0.2, -0.5)), xbow=1, lantern="hung", cock=loaded, loaded=loaded)
+
+
+for name, ld in (("Carry_Crossbow_Loop", 1), ("Carry_Crossbow_Empty_Loop", 0)):
+    act(name, 61, loop=True)
+    for f, b in ((1, 0), (31, 1), (61, 0)):
+        carry_xbow(f, breath=b, loaded=ld)
 
 act("Shoot_Crossbow", 18)  # loaded -> the string snaps and the bolt leaves on frame 2; kick, settle, aim (empty)
 aim_pose(1, loaded=1)

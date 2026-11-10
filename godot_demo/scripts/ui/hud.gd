@@ -4,7 +4,7 @@
 class_name Hud
 extends CanvasLayer
 
-const CONTROLS := "WASD trotar · Ctrl andar · Shift correr · E usar · 1 facão · 2 besta · 3 lamparina · Q roda (toque: guardar) · LMB golpe (2x: de cima) · RMB bloquear · E travar mira · Espaço esquiva (+A/D lateral) · C agachar · R recarregar · F curativo · Tab notas"
+const CONTROLS := "WASD trotar · Ctrl andar · Shift correr · E usar · 1 facão · 2 besta · 3 lamparina · Q roda (toque: guardar) · LMB golpe (2x: de cima) · RMB erguer (bloquear / mirar) · E travar mira · Espaço esquiva (+A/D lateral) · C agachar · R recarregar · F curativo · Tab notas"
 const DEATH := "Morreu. Enter para recomeçar."
 
 var player: Player
@@ -70,7 +70,7 @@ func say(t: String, seconds := 3.5) -> void:
 func _process(delta: float) -> void:
 	_message_t -= delta
 	message.visible = _message_t > 0.0
-	crosshair.visible = player.mode == Player.Mode.XBOW and player.action == ""
+	crosshair.visible = player.aiming and player.action == ""
 	ammo.visible = player.mode == Player.Mode.XBOW
 	ammo.text = "virotes %d%s" % [Inventory.count("virote"), " · armada" if player.loaded else ""]
 	var at := Vector3.ZERO if player.lock == null else player.lock.global_position + Vector3(0, 2.25, 0)

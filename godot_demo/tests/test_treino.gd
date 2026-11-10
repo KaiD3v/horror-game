@@ -103,11 +103,19 @@ func run() -> void:
 		sk.get_bone_global_pose(sk.find_bone("crossbow")).origin)
 	check(player.loaded and player.action == "" and drawn < 0.12,
 		"R reloads: string drawn back (%.2f m from the butt), a bolt from the quiver on the rail" % drawn)
+	await carry_tests(func(): return player.crossbow_in_hand(), "crossbow")
+	await tap("attack"); await wait(0.3)
+	check(player.loaded and player.action == "" and get_tree().get_nodes_in_group("bolt").is_empty(), "carried low, LMB does not shoot")
+	Input.action_press("block"); await wait(0.6)
+	check(player.aiming and L.hud.crosshair.visible and player.cam_now.fov < Player.CAM_EXPLORE.fov - 8.0,
+		"RMB held raises it to the aim: the crosshair, the tight camera (fov %.0f)" % player.cam_now.fov)
 	var target: Vector3 = L.dummy.global_position + Vector3(0, 1.0, 0) - player.cam.global_position  # crosshair on the dummy
 	player.pivot.rotation.y = atan2(-target.x, -target.z); await wait(0.6)
 	await tap("attack"); await wait(0.1); await shot("2g_loose"); await wait(0.5)
 	check(L.dummy.hits == 1 and get_tree().get_nodes_in_group("bolt").size() == 1, "LMB looses a bolt into the dummy (hits=%d)" % L.dummy.hits)
 	check(not player.loaded, "...and leaves it empty")
+	Input.action_release("block"); await wait(0.4)
+	check(not player.aiming and not L.hud.crosshair.visible, "letting go of RMB lowers it")
 	L.dummy.hits = 0; L.dummy.damage = 0
 	player.pivot.rotation.y = 0.0; await wait(0.3)
 	await tap("crossbow"); await wait(1.4)
@@ -118,6 +126,7 @@ func run() -> void:
 	await tap("draw"); await wait(0.45); await shot("3_drawing"); await wait(0.7)
 	check(player.mode == Player.Mode.COMBAT, "draw -> combat mode")
 	check(player.machete_in_hand(), "machete in the left hand after drawing")
+	await carry_tests(func(): return player.machete_in_hand(), "machete")
 
 	await tap("attack"); await wait(0.33); await shot("4_slash"); await wait(0.6)
 	check(L.dummy.hits == 1, "slash hits the dummy (hits=%d)" % L.dummy.hits)
@@ -243,6 +252,21 @@ func wound_tests() -> void:
 	player.pivot.rotation.y = player.rotation.y; lamp.queue_free()
 
 
+## A drawn weapon, not raised: carried low, he jogs with it and turns where he goes (no strafing, the explore camera).
+func carry_tests(in_hand: Callable, what: String) -> void:
+	var p0 := player.global_position; var r0 := player.rotation.y
+	await wait(0.5)
+	check(not player.raised and player.raise_amt < 0.01 and in_hand.call(), "the %s carried low, still in his fist" % what)
+	Input.action_press("right"); await wait(1.2); await shot("2h_carry_" + what)
+	var v := Vector2(player.velocity.x, player.velocity.z).length()
+	var facing := (-player.global_basis.z).dot(player.pivot.global_basis.x)
+	Input.action_release("right"); await wait(0.4)
+	check(absf(v - Player.JOG_SPEED) < 0.05 and facing > 0.9 and absf(player.cam_now.fov - Player.CAM_EXPLORE.fov) < 1.0,
+		"...he jogs with it (%.2f m/s), turning where he goes (%.2f), the explore camera" % [v, facing])
+	player.global_position = p0; player.velocity = Vector3.ZERO; player.rotation.y = r0; player.coat.reset()
+	await wait(0.4)
+
+
 ## Stamina for swings and dodges, the block (RMB) and the lock-on (E), against the dummy in front.
 func combat_tests() -> void:
 	player.stamina = Player.STAMINA_MAX; player.rest = 0.0
@@ -277,10 +301,11 @@ func combat_tests() -> void:
 	player.health = player.max_health
 
 	var dummy: Node3D = L.dummy  # (in the group "enemy" like the creatures)
-	player.pivot.rotation.y = PI; await wait(0.2)  # looking back the way he came
+	var here := player.global_position
+	player.global_position = here + Vector3(0, 0, Player.LOCK_RANGE + 2.0); await wait(0.3)  # out of reach
 	await tap("interact"); await wait(0.1)
-	check(player.lock != dummy, "E with the dummy out of view: not locked on it")
-	player.lock = null
+	check(player.lock != dummy, "E with the dummy past %.0f m: not locked on it" % Player.LOCK_RANGE)
+	player.lock = null; player.global_position = here
 	player.pivot.rotation.y = 0.35; await wait(0.2)
 	await tap("interact"); await wait(0.8); await shot("5d_lock")
 	var to := player._lock_point(dummy) - player.cam.global_position
@@ -309,7 +334,7 @@ func wheel_tests() -> void:
 	check(W.open and Engine.time_scale == WeaponWheel.SLOW and W.ring.visible, "Q held opens the wheel, time slows (x%.2f)" % Engine.time_scale)
 	await _swipe(0); await wait(0.05); await shot("2w_wheel")
 	check(W.picked == 0 and W.centre.text == "Facão" and player.pivot.rotation.y == yaw,
-		"the mouse points at the machete (the camera stays put)")
+		"the mouse points at the machete (the camera stays put) picked=%d text=%s yaw=%.3f/%.3f" % [W.picked, W.centre.text, player.pivot.rotation.y, yaw])
 	Input.action_release("weapons"); await get_tree().process_frame; await get_tree().process_frame
 	check(not W.open and Engine.time_scale == 1.0, "letting go closes it, time back to normal")
 	await wait(1.3)
@@ -387,7 +412,9 @@ func inventory_tests() -> void:
 	await tap("crossbow"); await wait(1.4)
 	await tap("reload"); await wait(2.2)
 	check(player.loaded and Inventory.count("virote") == 0 and L.hud.ammo.visible, "a reload takes a bolt from the quiver (%d left)" % Inventory.count("virote"))
+	Input.action_press("block"); await wait(0.3)
 	await tap("attack"); await wait(0.6)
+	Input.action_release("block")
 	await tap("reload"); await wait(0.3)
 	check(not player.loaded and player.action == "" and L.hud.message.text == "Sem virotes.", "no bolts, no reload: \"%s\"" % L.hud.message.text)
 	await tap("crossbow"); await wait(1.4)
