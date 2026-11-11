@@ -313,7 +313,7 @@ Tudo segue um vento só: desce da Colônia, ao norte, em direção à ravina.
   face na escala do mundo (como o triplanar da Colônia); exporta `godot_demo/models/levels/vilarejo.glb`.
 - Colisão pelo sufixo do nome no Blender: `-col` (terreno, casas, cercas, objetos) e `-colonly` (troncos das árvores).
 - `godot_demo/scripts/levels/vilarejo.gd`: carrega o GLB, filtra as texturas como N64 (nearest), neblina, luz, navmesh
-  em tempo de execução (célula de 0,25 m, rampas até 40°), o jogador na chegada e um mutante no largo.
+  em tempo de execução (célula de 0,25 m, rampas até 40°), o jogador na chegada. De dia não há inimigo no vilarejo: o Mutante aparece primeiro na Colônia (o manicômio); à noite vêm só os mutantes noturnos.
 - Texturas novas em `scenery_textures.py`: capim seco, lama da estrada, telha, caiação, tábua vertical,
   janela, veneziana, porta, rocha; e para os objetos: pano, estopa, feno e as placas pintadas.
 
@@ -332,7 +332,7 @@ volta para a frente dela. Por isso as casas por fora continuam fechadas; as port
   prateleiras, armadilha de urso, couro esticado, fogão a lenha com brasa, barris, caixotes, sacos, tapete,
   lampião no meio; a porta trancada de um depósito com uma mancha escura no chão.
 - **Porta (estilo Zelda):** E ao pé da escada entra (fade para preto); E na porta de dentro devolve você à escada da
-  loja. O vilarejo recarrega ao voltar (o mutante volta ao largo).
+  loja. O vilarejo recarrega ao voltar.
 - O kit (materiais, construtor, peças) agora mora em `vila_kit.py`, usado pelo vilarejo e pelos interiores.
 
 ### Segundo interior: a Venda do Seu Bento

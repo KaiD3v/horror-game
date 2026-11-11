@@ -1,5 +1,5 @@
 # The village (scenes/levels/vilarejo.tscn): the GLB's colliders and navmesh, sounds, NPCs, walking it, the doors in
-# and out, the story pieces, weather and crows, the finish, the chase, the notes.
+# and out, the story pieces, weather and crows, the finish, the notes, the night mutants.
 extends AutoTest
 
 
@@ -96,14 +96,9 @@ func run() -> void:
 	put(player, L.ground(4.6, 30.6), -PI / 2); await wait(0.6); await shot("v18_acorrentada")  # chained from outside
 	put(player, L.ground(1.0, 45.3), PI); await wait(0.6); await shot("v19_ponte")             # the way out, fallen, fenced off
 
-	# it gives chase across the square and up the road, over the slope
-	player.health = 99
-	put(player, L.ground(0.0, 12.0), PI); put(L.enemy, L.ground(4.5, 0.0), PI)
-	L.enemy.target = player; L.enemy.active = true; L.enemy.go(Enemy.State.CHASE, "Walk")
-	var ok = await until(func(): return L.enemy.global_position.distance_to(player.global_position) < 2.2, 20.0)
-	await shot("v7_perseguicao")
-	check(ok, "the mutant follows the navmesh over the terrain to you (%.1f m away)" % L.enemy.global_position.distance_to(player.global_position))
-	L.enemy.active = false; put(L.enemy, L.ground(-30.0, 40.0), 0.0)
+	# by day the village is empty of hunters: the Mutante first shows in the Colônia (only the night brings any here)
+	check(L.find_children("*", "Mutante", true, false).is_empty() and get_tree().get_nodes_in_group("enemy").is_empty(),
+		"no enemy in the village by day")
 	await notes_suite()
 	await chest_suite()
 	await day_tests()

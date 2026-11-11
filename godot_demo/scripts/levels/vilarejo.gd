@@ -1,8 +1,8 @@
 # Vila de Santa Clara (../docs/VILAREJO.md): the village modelled by ../tools/cenarios/vilarejo (vilarejo.glb).
 # Colliders come from the GLB's name suffixes (-col, -colonly); the navmesh is baked at load over the playable
 # area. Fog does the rest: about 25 m of sight, thicker down in the valley. The GLB's markers place everything:
-# spawn_jogador, spawn_mutante, npc_<who>, porta_<interior>, corvo_NN, varal_*, marca_carcaca.
-# At night (noite, madrugada) the night mutants come (../docs/MUTANTES_NOITE.md): A Bruxa on the roof ridges, O Poceiro
+# spawn_jogador, spawn_mutante (the square, by the well: the tests' reference point), npc_<who>, porta_<interior>, corvo_NN, varal_*, marca_carcaca.
+# Nobody hunts here by day (the Mutante first shows in the Colônia, the asylum). At night (noite, madrugada) the night mutants come (../docs/MUTANTES_NOITE.md): A Bruxa on the roof ridges, O Poceiro
 # up out of the well, A Carpideira weeping down the alleys; her scream calls the other two (_alarm).
 extends Level
 
@@ -24,7 +24,6 @@ const HAZE := {"silhueta_colonia": [Color(0.09, 0.10, 0.12), 0.5, 0.012], "silhu
 	"silhueta_longe": [Color(0.09, 0.10, 0.12), 0.8, 0.0], "silhueta_luz": [Color(1.0, 0.66, 0.32), 0.3, 0.008]}
 
 var village: Node3D
-var enemy: Mutante
 var clima: Clima
 var crows: Array[Corvo] = []
 var events: RandomEvents
@@ -60,7 +59,6 @@ func _build() -> void:
 	var g := marker(GATE)
 	Gate.make(self, g.position, g.rotation.y, GATE, "chave_portao", Paths.COLONIA, "E · entrar na Colônia")  # before the navmesh: its leaves cut it
 	bake_navmesh({"cell": 0.25, "cell_h": 0.1, "climb": 0.4, "slope": 40.0, "aabb": PLAY})  # after the NPCs: they stand in it
-	enemy = Mutante.new(); add_enemy(enemy, marker("spawn_mutante").position + Vector3(0, 0.3, 0), PI)  # by the well, facing the road
 	for d in DOORS:
 		Door.make(marker("porta_" + d), DOORS[d], Paths.interior(d), d)
 

@@ -139,7 +139,7 @@ func map_shot(name: String, at: Vector3, size: float, light: float, hide: Array 
 
 
 ## Every note of this scene (NotesData): lies on something solid, E beside it reads it (paused), it is kept,
-## Tab rereads them.
+## Tab lists them in the notebook.
 func notes_suite() -> void:
 	var mine = NotesData.in_scene(L.scene_id)
 	var papers := {}
@@ -171,10 +171,11 @@ func notes_suite() -> void:
 		await tap("interact"); await wait(0.3)
 		check(not get_tree().paused and not is_instance_valid(paper) and n.id in NotesReader.read,
 			"closed, kept: %d read" % NotesReader.read.size())
+	Caderno.section = 2  # Tab: the notebook (Caderno), its Notas page lists them, E there rereads one
 	await tap("notes"); await wait(0.2)
-	var reread: bool = L.notes.showing == NotesReader.read.size() - 1 and get_tree().paused
+	var listed: bool = L.caderno.visible and get_tree().paused and L.caderno.rows.size() == NotesReader.read.size()
 	await tap("notes"); await wait(0.2)
-	check(reread and not get_tree().paused, "Tab rereads the notes found, Tab closes")
+	check(listed and not L.caderno.visible and not get_tree().paused, "Tab: the notes found listed in the notebook, Tab closes")
 
 
 ## Every trunk ChestData puts here: on the ground, with clear floor in front of it where he kneels; a capture of it.
