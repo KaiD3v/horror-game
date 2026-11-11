@@ -363,6 +363,13 @@ volta para a frente dela. Por isso as casas por fora continuam fechadas; as port
 
 ## Sons
 
+**Música tema** ("Fog Over Pedra Fria", ElevenLabs Music, gerada pelo autor; `music/vilarejo.mp3`, 2:00):
+- Toca em loop e só de dia, a -12 dB (o arquivo já é baixo), entrando devagar em 8 s por baixo do vento.
+- Ao anoitecer, some em 6 s: à noite, só os mutantes. De manhã, volta.
+- Num jogo novo, entra depois da introdução. Ao passar por uma porta para um interior, some, porque o interior tem o
+  som dele.
+- `vilarejo.gd` `theme()`, `Audio.music_play(..., loop)`. Teste: `test_vilarejo.gd` `theme_tests`.
+
 Gerados no **ElevenLabs** (fluxo "Vila de Santa Clara — sons", efeitos com `eleven_text_to_sound_v2`; loops com a
 opção de loop sem emenda do modelo). O jogo **não terá dublagem**: a reza da Dona Firmina é um murmúrio sem palavras.
 Os MP3 baixados ficam em `audio_fontes/elevenlabs/`; `tools/sons/sounds_import.py` (ffmpeg) converte para `godot_demo/sounds/*.wav`

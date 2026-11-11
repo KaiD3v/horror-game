@@ -64,15 +64,19 @@ static func _keep(p: Node, loop: bool) -> void:
 
 
 # --- music: one track at a time, on the root, so it plays on across a change of scene (the opening's runs from
-# Abertura into the village's Intro). No file yet: silence.
+# Abertura into the village's Intro). No file yet: silence. `loop`: round and round (the village's theme).
 static var music: AudioStreamPlayer
+static var music_name := ""   # the track playing ("" = none)
 
 
-static func music_play(from: Node, n: String, db := -8.0, fade_in := 2.0) -> void:
-	if not ResourceLoader.exists(Paths.MUSIC % n):
+static func music_play(from: Node, n: String, db := -8.0, fade_in := 2.0, loop := false) -> void:
+	if not ResourceLoader.exists(Paths.MUSIC % n) or (n == music_name and is_instance_valid(music)):
 		return
 	music_stop(0.0)
-	music = AudioStreamPlayer.new(); music.stream = load(Paths.MUSIC % n); music.process_mode = Node.PROCESS_MODE_ALWAYS
+	var st: AudioStream = load(Paths.MUSIC % n)
+	if st is AudioStreamMP3:
+		st.loop = loop
+	music = AudioStreamPlayer.new(); music.stream = st; music.process_mode = Node.PROCESS_MODE_ALWAYS; music_name = n
 	music.volume_db = -60.0; music.autoplay = true
 	var m := music  # (deferred: a scene starting it from its _ready finds the root still busy)
 	m.tree_entered.connect(func(): m.create_tween().tween_property(m, "volume_db", db, fade_in), CONNECT_ONE_SHOT)
@@ -83,7 +87,7 @@ static func music_play(from: Node, n: String, db := -8.0, fade_in := 2.0) -> voi
 static func music_stop(fade_out := 3.0) -> void:
 	if music == null or not is_instance_valid(music):
 		return
-	var m := music; music = null
+	var m := music; music = null; music_name = ""
 	if fade_out <= 0.0:
 		m.queue_free()
 		return

@@ -673,3 +673,19 @@ func intro_tests() -> void:
 		await walk(1.0)
 		check(player.global_position.z < spawn.origin.z - 0.3, "%s: he walks again" % how)
 	await shot("intro_fim")
+
+
+# The village's theme (music/vilarejo.mp3): by day, looping, low under the ambience; the night stops it. (No file yet:
+# nothing to check.)
+func theme_tests() -> void:
+	if not ResourceLoader.exists(Paths.MUSIC % L.THEME):
+		print("AUTOTEST (no music/%s.mp3 yet: theme_tests skipped)" % L.THEME)
+		return
+	L.theme(); await wait(9.0)  # (it comes in over 8 s)
+	check(Audio.music_name == L.THEME and Audio.music.playing and Audio.music.stream.loop and absf(Audio.music.volume_db - L.THEME_DB) < 0.5,
+		"by day the theme plays, looping, at its level (%.1f dB)" % Audio.music.volume_db)
+	L.night_watch = true; WorldTime.minutes = 20 * 60; await wait(0.5)
+	check(Audio.music_name == "", "the night stops it")
+	WorldTime.minutes = 9 * 60; await wait(0.5)
+	check(Audio.music_name == L.THEME, "morning: it comes back")
+	L.night_watch = false

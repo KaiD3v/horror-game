@@ -15,6 +15,8 @@ const PLAY := AABB(Vector3(-50, -10, -61), Vector3(100, 40, 115))  # the navmesh
 # (None south of the ravine: the intro walks him up the road there, and the fence keeps him out of it after.)
 const WALLS := [[Vector3(-54, 0, 0), Vector3(1, 80, 200)], [Vector3(54, 0, 0), Vector3(1, 80, 200)],
 	[Vector3(0, 0, -63), Vector3(200, 80, 1)]]
+const THEME := "vilarejo"       # its music (music/vilarejo.mp3, ../docs/VILAREJO.md "Sons"): by day only, low, looping
+const THEME_DB := -12.0         # (the track itself is quiet: about half the opening's level)
 const GATE := "portao_colonia"  # the Colônia's gate: locked (chave_portao); open, E takes you up to the Colônia
 # Doors into interiors (porta_<name> markers at the foot of the steps): E takes you in; coming out puts you back here.
 const DOORS := {"armaria": "E · entrar na Armaria do Tenório", "venda": "E · entrar na Venda do Seu Bento",
@@ -76,8 +78,10 @@ func _started() -> void:
 	_ambience()
 	_life()
 	day = DayCycle.outdoors(self, env, sun, haze, clima)  # the hour and the weather light it from here on
-	if Intro.pending:  # a new game: the opening (../docs/INTRODUCAO.md)
-		var intro := Intro.new(self); add_child(intro); intro.run()
+	if Intro.pending:  # a new game: the opening (../docs/INTRODUCAO.md); then the theme
+		var intro := Intro.new(self); add_child(intro); intro.finished.connect(theme); intro.run()
+	elif not WorldTime.is_night():
+		theme()
 	elif Story.has("intro:vista"):  # the beam he climbed lies in the ravine (once the colliders are in: it asks the ground)
 		(func(): marker("ponte_viga_solta").global_transform = Intro.fallen(self)).call_deferred()
 
@@ -87,7 +91,9 @@ func _process(_delta: float) -> void:
 		night = not night
 		if night:
 			_nightfall()
+			Audio.music_stop(6.0)  # the night has no music: only them
 		else:
+			theme()
 			for b in bruxas:
 				if is_instance_valid(b):
 					b.leave()
@@ -145,6 +151,16 @@ func _alarm(at: Vector3) -> void:
 	for b in bruxas:
 		if is_instance_valid(b):
 			b.call_to(at)
+
+
+## The village's theme, coming in slowly under the wind (already on: left as it is).
+func theme() -> void:
+	Audio.music_play(self, THEME, THEME_DB, 8.0, true)
+
+
+func _exit_tree() -> void:  # through a door: the theme stays out here (an interior has its own sound)
+	if Audio.music_name == THEME:
+		Audio.music_stop(1.0)
 
 
 func marker(n: String) -> Node3D:  # the village GLB sits at the origin: its markers' positions are world positions
