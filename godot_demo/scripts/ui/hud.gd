@@ -1,14 +1,12 @@
-# What is on screen over the game, for every level: the controls line, the crosshair (crossbow up), the prompt of
-# whatever you can use, short messages (say), the body's state at the screen's edges (visao.gdshader: hurt and
+# What is on screen over the game, for every level: the crosshair (crossbow up), the prompt of whatever you can use
+# (or else a situational line, Hints), short messages (say), the body's state at the screen's edges (visao.gdshader: hurt and
 # tired), the hearts / breath / what he carries in the corners when they change (HudStatus) and the fade in from
-# black after a scene change. (Dying: GameMenu.)
+# black after a scene change. (Dying: GameMenu.) No controls line: they are in the pause menu's Controles
+# (../docs/TUTORIAL_VILAREJO.md).
 class_name Hud
 extends CanvasLayer
 
-const CONTROLS := "WASD trotar · Ctrl andar · Shift correr · E usar · 1 facão · 2 besta · 3 lamparina · 4 picareta · Q roda (toque: guardar) · LMB golpe (2x: de cima) · RMB erguer (bloquear / mirar) · E travar mira · Espaço esquiva (+A/D lateral) · C agachar · R recarregar · F curativo · Tab caderno"
-
 var player: Player
-var legend: Label
 var crosshair: Label
 var status: HudStatus  # hearts, breath, ammo and counts, shown when they matter
 var prompt: Label
@@ -16,19 +14,20 @@ var message: Label
 var vision: ColorRect
 var lock_mark: Control  # over the enemy the camera is locked on (E)
 var _message_t := 0.0
+var _hint := ""               # a situational line (Hints) and what it asks him to do
+var _hint_for := ""
+var _hint_t := 0.0
 
 
-func _init(p: Player, title: String, extra := "") -> void:
+func _init(p: Player) -> void:
 	player = p
-	_build(title + " · " + CONTROLS + (" · " + extra if extra != "" else ""))
+	_build()
 
 
-func _build(controls: String) -> void:
+func _build() -> void:
 	vision = ColorRect.new(); add_child(vision); vision.set_anchors_preset(Control.PRESET_FULL_RECT)
 	vision.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vision.material = ShaderMaterial.new(); vision.material.shader = Paths.shader("visao")
-	legend = Label.new(); add_child(legend); legend.position = Vector2(10, 8); legend.text = controls
-	legend.add_theme_font_size_override("font_size", 12)  # the game font at 1x: the controls line fits
 	crosshair = _centred("+", 0.48); crosshair.visible = false
 	status = HudStatus.new(player); add_child(status)
 	message = _centred("", 0.83); message.visible = false
@@ -48,7 +47,6 @@ func _centred(t: String, at: float) -> Label:  # a line across the screen, at a 
 
 
 func _ready() -> void:
-	player.died.connect(func(): legend.visible = false)
 	player.notice.connect(say.bind(2.5))
 	var arrival := SceneRouter.take_arrival()
 	if arrival[0]:  # came through a door: it creaks and shuts behind you
@@ -59,8 +57,15 @@ func _ready() -> void:
 		var tw := create_tween(); tw.tween_property(black, "color:a", 0.0, 0.35); tw.tween_callback(black.queue_free)
 
 
-func set_prompt(t: String) -> void:
+func set_prompt(t: String) -> void:  # (the Interactor, every frame: nothing to use leaves the line to a hint)
+	if t == "" and _hint_t > 0.0 and not Hints.learned(_hint_for):  # (done meanwhile: gone at once)
+		t = _hint
 	prompt.visible = t != ""; prompt.text = t
+
+
+func hint(action: String, seconds: float) -> void:  # Hints: a situational line, under the prompt of what E would use
+	_hint_t = maxf(_hint_t, seconds) if action == _hint_for else seconds
+	_hint_for = action; _hint = Hints.TEXT[action]
 
 
 func say(t: String, seconds := 3.5) -> void:
@@ -69,6 +74,7 @@ func say(t: String, seconds := 3.5) -> void:
 
 func _process(delta: float) -> void:
 	_message_t -= delta
+	_hint_t -= delta
 	message.visible = _message_t > 0.0
 	crosshair.visible = player.aiming and player.action == ""
 	var at := Vector3.ZERO if player.lock == null else player.lock.global_position + Vector3(0, 2.25, 0)

@@ -429,6 +429,8 @@ func toggle_lantern() -> void:
 		return
 	play("Stow_Lantern", not lantern_out)
 	_set_lantern(not lantern_out)
+	if not lantern_out:
+		Hints.did("lamparina")
 	sfx("lamparina", -6.0)
 
 
@@ -451,6 +453,7 @@ func use_cure() -> void:
 		notice.emit("Não está ferido.")
 	elif Inventory.use(id, self):
 		sfx("curativo", -3.0)
+		Hints.did("curativo")
 
 
 ## A blow (from = who struck it). Blocking with it in front, the machete takes it: only BLOCK_CHIP gets through.
@@ -468,6 +471,8 @@ func take_damage(n: float, from: Node3D = null) -> void:
 	else:
 		health -= n
 		shake = 0.25; flicker = 0.4
+		if health > 0.0 and Inventory.first_cure() != "":
+			Hints.want(self, "curativo", 4.0)
 		sfx("dano", -2.0)
 	if health <= 0.0:
 		stop_action()
@@ -499,6 +504,16 @@ func sfx(n: String, db := 0.0, pitch := 1.0) -> void:
 
 
 # --- per frame -------------------------------------------------------------------------------------
+## The situational lines (Hints) his own state asks for: the crossbow out and not aimed; and what he has just done.
+func _hints(was: Array) -> void:
+	if blocking and not was[0] and held == "facao":
+		Hints.did("bloquear")
+	if aiming and not was[1]:
+		Hints.did("mirar")
+	if mode == Mode.XBOW and not aiming and action == "":
+		Hints.want(self, "mirar")
+
+
 func _physics_process(delta: float) -> void:
 	var led := busy and walk_to != Vector3.INF  # walked by a script: physics as usual, the input ignored
 	if not is_on_floor() and (not busy or led):
@@ -507,9 +522,11 @@ func _physics_process(delta: float) -> void:
 	var speed := 0.0
 	if action != "":
 		_tick_action(delta)
+	var was := [blocking, aiming]
 	blocking = mode == Mode.COMBAT and Input.is_action_pressed("block") and (action == "" or action == "Block_Hit")
 	block_amt = move_toward(block_amt, 1.0 if blocking else 0.0, BLOCK_RAISE * delta)
 	aiming = mode == Mode.XBOW and (Input.is_action_pressed("block") or lock != null)
+	_hints(was)
 	raised = aiming or (mode == Mode.XBOW and action == "Shoot_Crossbow") \
 		or (mode == Mode.COMBAT and (blocking or lock != null or (action != "" and not LAYER.has(action))))  # mid-swing
 	raise_amt = move_toward(raise_amt, 1.0 if raised else 0.0, BLOCK_RAISE * delta)

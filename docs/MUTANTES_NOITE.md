@@ -2,6 +2,9 @@
 
 São três mutantes que só saem à noite no vilarejo, das 18:00 às 05:59 (Noite e Madrugada). De dia o vilarejo continua como está, só com o Interno no largo.
 
+Quem sai depende do que o jogador já tem (`vilarejo.gd` `roster()`, ver [TUTORIAL_VILAREJO.md](TUTORIAL_VILAREJO.md)):
+sem o facão, uma Bruxa; com o facão, as duas Bruxas e o Poceiro; com a besta, também a Carpideira.
+
 ## Análise
 
 À noite, no vilarejo, o jogador enxerga pouco: a névoa é azulada, a lua é fraca e a única luz forte é a lamparina. Por isso os três mutantes foram desenhados em torno dos sentidos de quem caça no escuro:

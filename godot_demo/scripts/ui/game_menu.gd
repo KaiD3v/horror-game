@@ -55,7 +55,8 @@ func pause(on: bool) -> void:
 	veil.visible = on
 	if on:
 		veil.color = Color(0, 0, 0, 0.62)
-		_fill("Pausa", BONE, "", [["Continuar", pause.bind(false)], ["Controles", _show_controls.bind(true)]]
+		var l := get_tree().get_first_node_in_group("level")
+		_fill("Pausa", BONE, "teste: " + l.controls_extra if l and l.controls_extra != "" else "", [["Continuar", pause.bind(false)], ["Controles", _show_controls.bind(true)]]
 			+ _saved() + [["Voltar ao menu", _to_menu], ["Sair do jogo", get_tree().quit]])
 
 
@@ -72,7 +73,7 @@ func _on_died() -> void:
 	tw.tween_property(veil, "color:a", 0.86, FADE); tw.tween_property(veil, "modulate:a", 1.0, FADE)
 
 
-func _where() -> String:  # the level's title, its first words on the HUD
+func _where() -> String:  # the level's name (Level.title)
 	var l := get_tree().get_first_node_in_group("level")
 	return l.title if l and l.title != "" else "Santa Clara"
 

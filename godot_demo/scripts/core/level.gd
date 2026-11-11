@@ -6,9 +6,9 @@
 class_name Level
 extends Node3D
 
-@export var title := ""            # the HUD's first words
+@export var title := ""            # its name (the death menu says where)
 @export var floor_kind := "terra"  # footsteps: terra, madeira, ladrilho
-var controls_extra := ""           # added to the HUD's controls line
+var controls_extra := ""           # its test keys: under "Pausa" in the pause menu
 var scene_id := ""                 # this scene's file name (vilarejo, armaria...): notes and tests key on it
 var player: Player
 var hud: Hud
@@ -38,7 +38,7 @@ func _ready() -> void:
 	SceneRouter.arriving = ""
 	add_child(player)
 	SaveGame.settle(player, scene_file_path)  # a restored game: his health, his lantern; and this scene's return point
-	hud = Hud.new(player, title, controls_extra); add_child(hud)
+	hud = Hud.new(player); add_child(hud)
 	interactor = Interactor.new(player, hud); add_child(interactor)
 	footsteps = Footsteps.new(player, floor_kind); add_child(footsteps)
 	notes = NotesReader.new(); add_child(notes)

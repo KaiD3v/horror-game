@@ -73,6 +73,8 @@ func go(s: State, anim: String, blend := 0.2) -> void:
 	ap.play(anim, blend, speed / stride if anim == "Walk" else 1.0)
 	ap.speed_scale = 1.0
 	say({State.ALERT: "alert", State.ATTACK: "attack", State.HIT: "hurt", State.DEAD: "death"}.get(s, ""))
+	if s == State.ATTACK and target is Player and target.mode == Player.Mode.COMBAT and target.held == "facao":
+		Hints.want(self, "bloquear", 1.2)  # a blow coming at the machete: the first times, the key to take it on it
 
 
 ## Its sound for an event (voice), from its head (its feet for the steps).

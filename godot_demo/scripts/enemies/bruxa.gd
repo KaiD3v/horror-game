@@ -93,6 +93,8 @@ func _decide(to: Vector3, dist: float, delta: float) -> void:
 				_face(l, delta * 0.5); watching += delta
 				if watching >= WATCH:
 					watching = 0.0; lamp = lure; go(State.ALERT, "Alert", 0.15)
+					if lamp == target:
+						Hints.want(self, "lamparina", 4.0)  # the light called her: the key that puts it out of sight
 			else:
 				watching = 0.0
 		State.ALERT:  # wings open, then down to the light

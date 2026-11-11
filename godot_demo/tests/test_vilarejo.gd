@@ -675,6 +675,27 @@ func intro_tests() -> void:
 	await shot("intro_fim")
 
 
+# Who comes at night grows with what he has (../docs/TUTORIAL_VILAREJO.md "As noites"): nothing, one Bruxa; the
+# machete, both and O Poceiro; the crossbow, A Carpideira too.
+func roster_tests() -> void:
+	player.health = 99
+	put(player, L.ground(0.0, 40.0), PI)
+	for kit in [[], ["facao"], ["facao", "besta"]]:
+		Inventory.reset()
+		for k in kit:
+			Inventory.add(k)
+		WorldTime.reset(10 * 60); L.day._step(0.0); L.night_watch = true; await wait(0.4)
+		WorldTime.reset(21 * 60); L.day._step(0.0); await wait(0.6)
+		var b: int = L.bruxas.filter(func(x): return is_instance_valid(x)).size()
+		var p: bool = is_instance_valid(L.poceiro); var c: bool = is_instance_valid(L.carpideira)
+		var want: Dictionary = L.roster()
+		check(b == want.bruxas and p == want.poceiro and c == want.carpideira and b == (1 if kit.is_empty() else 2)
+			and p == not kit.is_empty() and c == kit.has("besta"),
+			"with %s: %d bruxa(s), Poceiro %s, Carpideira %s" % [kit, b, p, c])
+	WorldTime.reset(10 * 60); L.day._step(0.0); await wait(0.4)
+	L.night_watch = false; Inventory.reset(); Inventory.give_tools()
+
+
 # The village's theme (music/vilarejo.mp3): by day, looping, low under the ambience; the night stops it. (No file yet:
 # nothing to check.)
 func theme_tests() -> void:

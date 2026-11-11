@@ -191,7 +191,7 @@ Os principais problemas encontrados e o que foi feito com cada um:
 | Três scripts de interior só para mudar constantes | Um `interior.gd`. Cada sala é configurada no próprio `.tscn`. |
 | `put`, `walk`, `check`, o bake do navmesh, `reachable`, `ground` e a captura do mapa estavam copiados em várias fases | Estão uma vez só, no `Level` ou no `AutoTest`. |
 | Shaders escritos como texto dentro dos scripts | São arquivos em `shaders/`. |
-| A linha de controles e a mensagem de morte repetidas em quatro cenas | Ficam no `Hud`. |
+| A linha de controles e a mensagem de morte repetidas em quatro cenas | Ficam no `Hud` (a linha de controles saiu dele depois: está no menu de pausa, e as dicas de tecla vêm de `Hints`). |
 | Caminhos fixos `C:\Users\...` em 8 scripts Python e `res://` espalhados pelo código | Passam por `paths.py` e `Paths`. |
 | `save()` e `sos()` copiados em 5 scripts de som | Ficam em `audio.py`. `V()` estava em 3 builds e foi para `lowpoly.py`. `lin` e `new_image` do protagonista agora vêm do `lowpoly`. |
 | Os 3 NPCs num arquivo só, com o kit misturado | O kit foi para `npc_kit.py`, com um arquivo por NPC. |

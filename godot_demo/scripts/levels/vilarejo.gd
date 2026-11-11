@@ -35,7 +35,7 @@ var haze: Array[ShaderMaterial] = []  # the far shapes' materials (DayCycle move
 var wind: AudioStreamPlayer
 var bell_at: Vector3          # up in the chapel tower
 var creakers: Array[Vector3] = []
-const BRUXAS := 2             # perched on the roofs each night
+const BRUXAS := 2             # perched on the roofs each night (one, before he has the machete: roster())
 var bruxas: Array[Bruxa] = []
 var perches: Array[Vector3] = []  # the roof ridges (found at the first nightfall, once the colliders are in)
 var poceiro: Poceiro
@@ -103,9 +103,18 @@ func _process(_delta: float) -> void:
 				carpideira.go_home(marker("porta_capela").position)
 
 
+## Who comes out tonight (../docs/TUTORIAL_VILAREJO.md "As noites"): each when he has the answer to it. With nothing,
+## one Bruxa (hang the lantern up and she cannot find you); with the machete, both and O Poceiro; with the crossbow,
+## A Carpideira too (killed from afar, in silence).
+static func roster() -> Dictionary:
+	var blade := Inventory.has("facao")
+	return {"bruxas": BRUXAS if blade else 1, "poceiro": blade, "carpideira": Inventory.has("besta")}
+
+
 ## The bruxas settle on roofs away from the player, O Poceiro climbs out of the well, A Carpideira starts down an
-## alley far from the player (last night's dead are cleared away).
+## alley far from the player (last night's dead are cleared away); who of them comes: roster().
 func _nightfall() -> void:
+	var who := roster()
 	if perches.is_empty():
 		for c in Nodes.children_named(village, "casa_"):
 			var hit := ray(c.position.x, c.position.z)
@@ -123,22 +132,24 @@ func _nightfall() -> void:
 		var g: Vector3 = ground(WELL.x, WELL.y + 1.8)
 		well_out = NavigationServer3D.map_get_closest_point(get_world_3d().navigation_map, g)
 	var mouth := Vector3(WELL.x, well_out.y + 0.85, WELL.y + 0.35)  # on the rim
-	poceiro = Poceiro.new()
-	add_enemy(poceiro, mouth - Vector3(0, 2.4, 0), 0.0)
-	poceiro.emerge(mouth, well_out)
+	if who.poceiro:
+		poceiro = Poceiro.new()
+		add_enemy(poceiro, mouth - Vector3(0, 2.4, 0), 0.0)
+		poceiro.emerge(mouth, well_out)
 	if alleys.is_empty():
 		var map := get_world_3d().navigation_map
 		for c in Nodes.children_named(village, "casa_"):
 			var a := NavigationServer3D.map_get_closest_point(map, c.position)
 			if a.distance_to(c.position) < 8.0:
 				alleys.append(a)
-	var start := alleys.filter(func(a): return a.distance_to(player.global_position) > 18.0)
-	carpideira = Carpideira.new(); carpideira.walks = alleys
-	add_enemy(carpideira, start.pick_random() if start else alleys[0], randf() * TAU)
-	carpideira.screamed.connect(_alarm)
+	if who.carpideira:
+		var start := alleys.filter(func(a): return a.distance_to(player.global_position) > 18.0)
+		carpideira = Carpideira.new(); carpideira.walks = alleys
+		add_enemy(carpideira, start.pick_random() if start else alleys[0], randf() * TAU)
+		carpideira.screamed.connect(_alarm)
 	var far := perches.filter(func(p): return p.distance_to(player.global_position) > 12.0)
 	far.shuffle()
-	for p in far.slice(0, BRUXAS):
+	for p in far.slice(0, who.bruxas):
 		var b := Bruxa.new(); b.roosts = perches
 		add_enemy(b, p, randf() * TAU); b.perch_on(p)
 		bruxas.append(b)

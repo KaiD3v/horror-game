@@ -28,7 +28,6 @@ func _ready() -> void:
 		if L.day:
 			L.day._step(0.0)
 		player = L.player
-		L.hud.legend.visible = false
 		for e in get_tree().get_nodes_in_group("enemy"):
 			if e is Enemy:
 				e.active = false  # dormant until a test wakes it

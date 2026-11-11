@@ -200,6 +200,7 @@ func run() -> void:
 	await keys_tests()
 	await caderno_tests()
 	await progression_tests()
+	await hints_tests()
 	player.health = 2
 
 	player.take_damage(2); await wait(1.8); await shot("9_dead")
@@ -876,12 +877,55 @@ func equip_tests() -> void:
 
 
 ## Esc: the pause menu stops the game; Esc again (or Continuar) goes back; Controles over it; not over the notes.
+# --- Hints (../docs/TUTORIAL_VILAREJO.md): no controls line; a key on the prompt line when the world asks for it,
+# until he has done it twice, then never again ----------------------------------------------------------------------
+func hints_tests() -> void:
+	Story.reset(); Inventory.give_tools()
+	var line: Label = L.hud.prompt
+	check(L.hud.get("legend") == null, "no controls line on the HUD (they are in the pause menu)")
+	put(player, Vector3(-3.0, 0.0, -6.0), 0.0); await wait(0.4)
+	check(not line.visible, "nothing asked: an empty prompt line")
+	await tap("crossbow"); await wait(1.4)
+	check(line.visible and line.text == Hints.TEXT.mirar, "the crossbow out, not aimed: \"%s\"" % line.text)
+	for i in 2:
+		await press("block", 0.4); await wait(0.3)
+	check(Hints.learned("mirar") and not line.visible, "aimed twice: the line is gone for good")
+	await tap("crossbow"); await wait(1.2)
+	await tap("draw"); await wait(1.0)
+	var e: Enemy = L.enemy
+	e.target = player; e.go(Enemy.State.ATTACK, "Attack"); await wait(0.1)
+	check(line.text == Hints.TEXT.bloquear and line.visible, "a blow coming at the machete: \"%s\"" % line.text)
+	e.go(Enemy.State.IDLE, "Idle")
+	for i in 2:
+		await press("block", 0.3); await wait(0.2)
+	e.go(Enemy.State.ATTACK, "Attack"); await wait(0.1)
+	check(Hints.learned("bloquear") and not line.visible, "blocked twice: no line at the next blow")
+	e.go(Enemy.State.IDLE, "Idle")
+	await tap("draw"); await wait(1.0)
+	Inventory.add("atadura", 2)
+	for i in 2:
+		player.take_damage(1); await wait(0.2)
+		check(i == 1 or line.text == Hints.TEXT.curativo, "hurt, with a bandage: \"%s\"" % line.text)
+		await tap("heal"); await wait(0.6)
+	player.take_damage(1); await wait(0.2)
+	check(Hints.learned("curativo") and not line.visible, "dressed twice: hurt again, no line")
+	player.health = player.max_health
+	Hints.want(player, "lamparina", 4.0); await wait(0.1)
+	check(line.text == Hints.TEXT.lamparina, "the light called something: \"%s\"" % line.text)
+	for i in 3:  # hung, back in hand, hung: twice on the hook
+		await tap("lantern"); await wait(0.9)
+	check(Hints.learned("lamparina") and not player.holds_lantern(), "hung on the hook twice: learned")
+	await tap("lantern"); await wait(0.9)
+	Story.reset()
+
+
 func pause_tests() -> void:
 	var m: GameMenu = L.menu
 	await wait(0.5)
 	await tap("ui_cancel"); await wait(0.2)
 	check(m.paused and get_tree().paused and m.veil.visible and m.buttons.size() == 4 and m.buttons[0].text == "•  Continuar",
 		"Esc pauses: Continuar, Controles, Voltar ao menu, Sair do jogo")
+	check(m.line.visible and m.line.text == "teste: H dano", "the room's test key under Pausa (\"%s\")" % m.line.text)
 	await shot("pausa")
 	await tap("ui_down"); await tap("ui_accept")
 	check(m.controls.visible, "Controles opens over it")
