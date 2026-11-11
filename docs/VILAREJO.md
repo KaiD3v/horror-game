@@ -130,7 +130,12 @@ Gancho da missão (a definir): o filho de Dona Firmina foi levado para a Colôni
     por cima e no pé S o solta. A câmera se afasta enquanto ele escala. Som `escalar`.
   - **Pular** (`Jumpable`): na beira de um vão, sem arma na mão, aparece "Espaço · pular". Ele agacha, salta com os
     joelhos encolhidos e cai do outro lado (`Jump`, som `pouso`). Com arma na mão, Espaço continua sendo a esquiva.
-  - Ainda falta: descer de uma borda ou de um muro pelo alto (hoje ele cai) e dano de queda.
+  - **Descer** (`Climbable`): no alto, perto da borda de um lado subível, aparece "E · descer". Ele dá as costas
+    para o vão, passa pela borda e desce pendurado pelas mãos (`Climb_Ledge` ao contrário), com a câmera vindo para
+    fora. De uma borda ele termina no chão; de um muro, agarrado aos apoios, e aí S continua descendo e W volta a subir.
+  - **Dano de queda** (`Player.fall_damage`): pular ou cair de até 2,2 m não machuca; acima disso, um ferimento a cada
+    1,5 m a mais. O muro de 3,5 m custa 1 ferimento, 5 m custam 2, e de 6,6 m para cima a queda mata. Toda queda de
+    mais de 1 m faz o baque (`pouso`) e sacode a tela; com ferimento aparece "A queda o machucou.".
 - **Ainda não dá para ganhar dinheiro.** Isso fica para depois, por exemplo com saques, missões ou o corpo dos mutantes.
 - **Sons:** moedas no balcão (`compra`) e o pano da atadura (`curativo`), do ElevenLabs.
 

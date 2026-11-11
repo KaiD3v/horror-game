@@ -191,6 +191,7 @@ func run() -> void:
 	await chest_tests()
 	await course_tests()
 	await steps_tests()
+	await descend_tests()
 	player.health = 2
 
 	player.take_damage(2); await wait(1.8); await shot("9_dead")
@@ -607,7 +608,7 @@ func course_tests() -> void:
 	check(over and mid.y > 1.5 and absf(player.global_position.z + 5.4) < 0.05 and player.global_position.y > 1.2 and "pouso" in Audio.heard,
 		"Space: across the gap (%.1f m up mid-air), landing on the far side" % (mid.y - 1.25))
 	await tap("draw"); await wait(1.3); await wait(0.1)
-	check(L.hud.prompt.text == "", "machete out: no jump on offer (Space is the dodge)")
+	check(L.hud.prompt.text != "Espaço · pular", "machete out: no jump on offer (Space is the dodge): \"%s\"" % L.hud.prompt.text)
 	await tap("draw"); await wait(1.3)
 	# the wall
 	put(player, Vector3(7.6, 0, -9.0), PI / 2); await wait(0.3)
@@ -688,3 +689,40 @@ func steps_tests() -> void:
 	check(climbed, "a mutant follows him up the stairs (y %.2f)" % m.global_position.y)
 	m.active = false; m.queue_free()
 	put(player, Vector3(0, 0, 4), 0.0); await wait(0.3)
+
+
+# --- coming down (the course): backwards over an edge, hanging; and what a drop costs -------------------------------
+func descend_tests() -> void:
+	player.velocity = Vector3.ZERO; player.health = 3.0
+	put(player, Vector3(11.1, 1.26, -2), -PI / 2); await wait(0.4)  # on the first ledge, near its east edge
+	check(L.hud.prompt.text == "E · descer", "on top, near the edge: \"%s\"" % L.hud.prompt.text)
+	await tap("interact")
+	await until(func(): return player.action == "Climb_Ledge" and player.action_t > 0.9, 2.0)
+	await shot("56_descer")
+	var down := await until(func(): return not player.busy, 3.0)
+	await wait(0.3)
+	check(down and player.global_position.y < 0.05 and player.global_position.x > 11.6 and player.health == 3.0,
+		"E: down over the edge, backwards, hanging by his hands, to the ground unhurt (x %.2f y %.2f)" % [player.global_position.x, player.global_position.y])
+	put(player, Vector3(6, 3.51, -8.6), PI); await wait(0.4)  # on the wall top, by its face
+	check(L.hud.prompt.text == "E · descer", "on the wall top, by the face with the holds: \"%s\"" % L.hud.prompt.text)
+	await tap("interact")
+	var hanging := await until(func(): return player.mode == Player.Mode.CLIMB and player.action == "", 4.0)
+	await shot("57_descer_muro")
+	check(hanging and player.busy and absf(player.global_position.y - (3.5 - Climbable.LEDGE)) < 0.05,
+		"E: over the top onto the wall's holds (y %.2f)" % player.global_position.y)
+	Input.action_press("back")
+	var foot := await until(func(): return not player.busy, 10.0)
+	Input.action_release("back")
+	check(foot and player.global_position.y < 0.05 and player.mode == Player.Mode.EXPLORE and player.health == 3.0,
+		"S hold by hold down to the foot of it, unhurt")
+	check(Player.fall_damage(2.0) == 0 and Player.fall_damage(3.5) == 1 and Player.fall_damage(5.0) == 2 and Player.fall_damage(6.6) == 3,
+		"a drop: 2 m nothing, 3.5 m one wound, 5 m two, 6.6 m three (dead)")
+	put(player, Vector3(6.5, 3.51, -9.8), -PI / 2); player.pivot.rotation.y = -PI / 2; await wait(0.4)
+	Audio.heard.clear()
+	Input.action_press("forward")
+	await until(func(): return player.global_position.x > 7.4 and player.is_on_floor() and player.global_position.y < 0.1, 4.0)
+	Input.action_release("forward"); await wait(0.3)
+	check(player.health == 2.0 and "pouso" in Audio.heard and L.hud.message.text == "A queda o machucou.",
+		"walking off the 3.5 m top: a hard landing, one wound (hp %.1f)" % player.health)
+	put(player, Vector3(0, 5.0, 6), 0.0); await until(func(): return player.global_position.y < 0.1 and player.is_on_floor(), 3.0); await wait(0.2)
+	check(player.health == 0.0 and player.mode == Player.Mode.DEAD, "5 m more with two wounds left: dead (hp %.1f)" % player.health)

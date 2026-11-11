@@ -44,6 +44,8 @@ const DODGE_DIR := {"Dodge_Back": Vector3.BACK, "Dodge_Left": Vector3.LEFT, "Dod
 const HIT_TIME := {"Attack_Slash": 10.0 / 30.0, "Attack_Overhead": 13.0 / 30.0}
 const HIT_DAMAGE := {"Attack_Slash": 1, "Attack_Overhead": 2}
 const HIT_RANGE := 1.6
+const FALL_SAFE := 2.2        # m he can drop and land unhurt (off a ledge, a 2 m wall)
+const FALL_PER := 1.5         # ...beyond it, a wound for every this much more (a 3.5 m wall: 1, 5 m: 2, 6.5 m: dead)
 const STEP_EASE := 12.0       # 1/s: how fast the body catches up with the root after a step (Steps): quick at first
 const WEAPON_ITEM := {Mode.COMBAT: "facao", Mode.XBOW: "besta"}  # what you need to have (Inventory) to hold it
 const COMBO_FROM := 12.0 / 30.0   # LMB after this point of a slash queues the overhead chop
@@ -71,6 +73,7 @@ var action_len := 0.0
 var hit_done := false
 var swung := false        # the swing's whoosh has played (it leads the blow a little)
 var queued := ""
+var fall_top := NAN        # airborne: the highest he was since he left the floor (NAN = on it)
 var step_lag := 0.0       # the body's lag behind a step the root just took (eases to 0)
 var busy := false         # in a scripted moment (a trunk, a push, a climb, a jump): no control, E / Q / keys do
                           # nothing, no gravity; whoever started it moves him
@@ -413,6 +416,22 @@ func take_damage(n: float, from: Node3D = null) -> void:
 		play("Hit_React")  # exploring: no flinch clip with the lantern pose, the shake sells it
 
 
+## How many wounds a drop of `drop` metres costs: none up to FALL_SAFE, then one more every FALL_PER.
+static func fall_damage(drop: float) -> int:
+	return 0 if drop <= FALL_SAFE else int((drop - FALL_SAFE) / FALL_PER) + 1
+
+
+## Down on his feet after a drop: a thud from a metre up, wounds past FALL_SAFE.
+func _landed(drop: float) -> void:
+	if drop < 1.0 or mode == Mode.DEAD:
+		return
+	sfx("pouso", -2.0); shake = maxf(shake, minf(0.3, 0.05 * drop))
+	var n := fall_damage(drop)
+	if n > 0:
+		take_damage(n)
+		notice.emit("A queda o machucou.")
+
+
 ## One of his own sounds (heard from where he is: 2D), pitch varied a little so a repeat never sounds the same.
 func sfx(n: String, db := 0.0, pitch := 1.0) -> void:
 	Audio.play2d(self, n, db).pitch_scale = pitch * randf_range(0.95, 1.05)
@@ -461,6 +480,10 @@ func _physics_process(delta: float) -> void:
 		var dy := global_position.y - y0
 		if is_on_floor() and absf(dy) > 0.05 and absf(dy) <= Steps.SNAP:  # up or down a step: the body eases after
 			step_lag -= dy
+		if not is_on_floor():
+			fall_top = global_position.y if is_nan(fall_top) else maxf(fall_top, global_position.y)
+		elif not is_nan(fall_top):
+			_landed(fall_top - global_position.y); fall_top = NAN
 	step_lag = lerpf(step_lag, 0.0, minf(1.0, STEP_EASE * delta))
 	if absf(step_lag) < 0.002:
 		step_lag = 0.0
