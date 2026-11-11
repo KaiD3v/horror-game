@@ -20,5 +20,5 @@ func run() -> void:
 	check(not L.controls.visible and get_viewport().gui_get_focus_owner() == L.buttons[first + 1], "Esc closes Controles")
 	await tap("ui_up")
 	await tap("ui_accept")
-	check(SceneRouter.requested == Paths.VILAREJO, "Novo jogo goes to the village")
+	check(SceneRouter.requested == Paths.ABERTURA and Intro.pending, "Novo jogo opens with the opening (then the village)")
 	check(ResourceLoader.exists(SceneRouter.requested), "village scene exists")

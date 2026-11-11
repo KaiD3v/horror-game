@@ -637,8 +637,8 @@ func gate_tests() -> void:
 	again.queue_free()
 
 
-# The opening (Intro, ../docs/INTRODUCAO.md): played through, a capture of each shot, the letters closed with E; then
-# where it leaves him. Again, skipped (E held) halfway: the same end.
+# The arrival (Intro, the opening's last act: ../docs/INTRODUCAO.md): played through, a capture every 1.5 s; then
+# where it leaves him. Again, skipped (E held) halfway: the same end. (The acts before it: test_abertura.gd.)
 func intro_tests() -> void:
 	for skip in [false, true]:
 		Story.marks.erase("intro:vista"); Story.marks.erase("tarefa:colonia"); NotesReader.read.clear()
@@ -656,21 +656,16 @@ func intro_tests() -> void:
 			if not skip and intro.shot != 2 and Time.get_ticks_msec() - last >= 1500:  # a capture every 1.5 s
 				last = Time.get_ticks_msec(); frame += 1
 				await shot("intro_%d_%d" % [intro.shot, frame])
-			if L.notes.showing >= 0:
-				await wait(0.8)
-				if not skip:
-					await shot("intro_2_%s" % NotesReader.read[L.notes.showing])
-				await tap("interact")
-			if skip and intro.shot == 5:
+			if skip and intro.shot == 4:
 				Input.action_press("interact"); await wait(1.3); Input.action_release("interact")
 			await get_tree().process_frame
 		var how := "skipped" if skip else "played"
-		check(ended[0] and seen.size() == (5 if skip else 9), "%s: it ends (%d shots seen)" % [how, seen.size()])
+		check(ended[0] and seen.size() == (4 if skip else 7), "%s: it ends (%d shots seen)" % [how, seen.size()])
 		await wait(0.3)
 		check(not player.busy and player.cam.current and L.hud.visible and player.global_position.distance_to(spawn.origin) < 0.6,
 			"%s: he stands at the road's end, the game's camera and HUD back (%.2f m off)" % [how, player.global_position.distance_to(spawn.origin)])
-		check(Story.has("intro:vista") and Story.task("colonia") == "ativa" and "obito" in NotesReader.read and "carta_mae" in NotesReader.read,
-			"%s: seen, the task \"Subir à Colônia\" on, both letters in the notebook" % how)
+		check(Story.has("intro:vista") and Story.task("colonia") == "ativa" and Intro.NOTES.all(func(n): return n in NotesReader.read),
+			"%s: seen, the task \"Subir à Colônia\" on, the letter, the notice, the photo, the cutting in the notebook" % how)
 		check(player.health == hp, "%s: unhurt (%d of %d)" % [how, player.health, hp])
 		var beam: Node3D = L.marker("ponte_viga_solta")
 		check(beam.global_position.distance_to(Intro.fallen(L).origin) < 0.05 and beam.global_position.y < L.ground(-2.6, 46.75).y - 3.0,

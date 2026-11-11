@@ -85,3 +85,17 @@ func nurse_tests() -> void:
 		player.attack("Attack_Overhead"); await wait(1.05)
 	check(L.nurse.state == Enemy.State.DEAD, "the machete kills her (her hp=%d)" % L.nurse.health)
 	await wait(1.6); await shot("c8_enfermeira_morta")
+
+
+# The parlatório (Parlatorio, by the gatehouse): in through its door from the gatehouse, the wire across stops you;
+# the interned's side opens on the yard. The opening's memory of 1955 (Abertura) is set in it.
+func parlatorio_tests() -> void:
+	put(player, Vector3(-15.5, 0, -1.5), 0.0); await wait(0.4)
+	await walk(4.0)
+	check(player.global_position.z < -3.2 and player.global_position.z > -6.4,
+		"from the gatehouse into the visitors' side; the wire stops you (z=%.2f)" % player.global_position.z)
+	await shot("parlatorio_visitas")
+	put(player, Vector3(-9.0, 0, -8.5), PI / 2); await wait(0.4)
+	await walk(3.0)
+	check(player.global_position.x < -10.3, "from the yard into the interned's side (x=%.2f)" % player.global_position.x)
+	await shot("parlatorio_internos")

@@ -5,21 +5,19 @@
 class_name NotesData
 
 const NOTES := [
-	# the two he brings with him (Intro shows them; scene "": they lie nowhere)
+	# what he brings with him (the opening shows them: Abertura; scene "": they lie nowhere)
 	{"id": "obito", "scene": "", "at": Vector2.ZERO, "yaw": 0.0, "paper": "oficio",
 		"title": "Ofício de óbito (1959)",
-		"text": "COLÔNIA SANTA CLARA
-Serviço de Profilaxia · Of. 48/59
-
-Ao responsável pelo menor nº 112: comunicamos o falecimento da interna nº 0187, sua mãe, em 12/08/1959. Sepultada no cemitério da Colônia. Não há pertences a reclamar.
-
-Dr. Euclides Moura, Diretor Clínico"},
+		"text": "COLÔNIA SANTA CLARA\nServiço de Profilaxia · Of. 48/59\n\nAo responsável pelo menor nº 112: comunicamos o falecimento da interna nº 0187, sua mãe, em 12/08/1959. Sepultada no cemitério da Colônia. Não há pertences a reclamar.\n\nDr. Euclides Moura, Diretor Clínico"},
+	{"id": "foto", "scene": "", "at": Vector2.ZERO, "yaw": 0.0, "paper": "ficha",
+		"title": "Foto da mãe (1955)",
+		"text": "Foto 3x4, amarelada: ela, de cabelo preso, sem sorrir.\n\nNo verso, a lápis, a mesma letra da carta:\n\nPro meu menino.\nTua mãe, 1955."},
+	{"id": "recorte", "scene": "", "at": Vector2.ZERO, "yaw": 0.0, "paper": "oficio",
+		"title": "Recorte de jornal (1962)",
+		"text": "Recorte de jornal · maio de 1962\n\nFIM DO ISOLAMENTO\nDecreto acaba com a internação obrigatória dos doentes de lepra. As colônias devem liberar os internos.\nNa Colônia Santa Clara, o Dr. Euclides Moura diz que os que ficaram \"não têm para onde ir\"."},
 	{"id": "carta_mae", "scene": "", "at": Vector2.ZERO, "yaw": 0.0, "paper": "caderno",
 		"title": "Carta da mãe (1974)",
-		"text": "Meu filho,
-pra você disseram que eu morri, e pra mim que você tinha morrido. Era mentira. Estou viva, aqui em cima. O doutor não deixa ninguém sair e dá injeção toda semana. O Bento da venda põe esta no correio.
-Vem antes do fim de março. Depois não vai ter mais ninguém pra buscar. O portão fica no alto da estrada.
-tua mãe"},
+		"text": "Meu filho,\nlembra do parlatório? Eu disse que ia te buscar. Não consegui. A você disseram que eu morri, a mim, que você tinha morrido. Era mentira.\nEstou viva. O doutor não deixa ninguém sair e dá injeção toda semana. O Bento da venda põe esta no correio.\nAgora é você que tem que vir. Antes do fim de março.\ntua mãe"},
 	{"id": "mala", "scene": "vilarejo", "at": Vector2(2.5, 41.8), "yaw": 30.0, "paper": "caderno",
 		"title": "Bilhete na mala",
 		"text": "Lurdes,\na ponte caiu. Caiu de noite, sem chuva, sem nada. O Juca jura que ouviu serrarem as vigas.\nVou pela trilha do rio. Se eu não voltar até domingo, não vem atrás. Fica na venda com o Bento, de porta trancada.\nDeixei a boneca da menina. Pesa demais para carregar.\n— Tonho"},

@@ -29,8 +29,8 @@ PEAK = {"vento": 0.7, "casa": 0.5, "fogo": 0.6, "velas": 0.35, "relogio": 0.5, "
         "carpideira_queda": 0.8, "bau_abrir": 0.8, "bau_achado": 0.75, "pedra_arrastar": 0.85, "escalar": 0.7, "pouso": 0.8,
         # the progression items at work (2026-11-11): the padlock, the crowbar's planks, the pickaxe, the rubble, the rope
         "cadeado_abrir": 0.7, "tabua_arrancar": 0.85, "tabua_cair": 0.8, "picareta_pedra": 0.85, "entulho_desabar": 0.85,
-        "corda_amarrar": 0.7, "caminhao_partindo": 0.8, "viga_cedendo": 0.85, "papel_desdobrar": 0.5}
-LOOPS = ("vento", "casa", "fogo", "velas", "relogio", "coro", "reza", "musica", "chuva", "coracao",
+        "corda_amarrar": 0.7, "caminhao_partindo": 0.8, "viga_cedendo": 0.85, "papel_desdobrar": 0.5, "apito": 0.75, "onibus": 0.7, "lata_abrir": 0.6}
+LOOPS = ("onibus", "vento", "casa", "fogo", "velas", "relogio", "coro", "reza", "musica", "chuva", "coracao",
          "bruxa_asas", "poceiro_balde", "carpideira_choro")  # generated seamless
 
 

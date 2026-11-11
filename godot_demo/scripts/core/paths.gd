@@ -2,6 +2,7 @@
 class_name Paths
 
 const MENU := "res://scenes/menu.tscn"
+const ABERTURA := "res://scenes/abertura.tscn"      # the opening, before the village (Abertura)
 const VILAREJO := "res://scenes/levels/vilarejo.tscn"
 const COLONIA := "res://scenes/levels/colonia.tscn"
 const TREINO := "res://scenes/levels/treino.tscn"

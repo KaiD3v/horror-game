@@ -119,24 +119,55 @@ Por ordem do que se reaproveita:
 5. **Quem é a mãe.** Fica em aberto até a última ficha. Uma possibilidade, só anotada: a ficha da Celina A. diz "sem
    família".
 
-## Como ficou (implementação)
+## Versão 2: três atos (implementada)
 
-- **Roda** em todo jogo novo: o "Novo jogo" do menu liga `Intro.pending`, e o vilarejo toca a cutscene ao abrir. Ela
-  marca `intro:vista`. Carregar um save não a repete; nesse caso o vilarejo já põe a viga caída no fundo da ravina.
-- **As cartas** são as notas `obito` e `carta_mae` (`NotesData`, sem lugar no mapa), lidas no `NotesReader` de sempre
-  (E fecha) e guardadas no caderno. O texto foi encurtado para caber no papel.
-- **Ele anda pela física normal:** `Player.walk_to` faz ele andar sozinho até um ponto, no passo de caminhada, com
-  pés e animação de sempre. A descida, a subida pela viga e a volta ao alto são `Climb_Ledge` e `Climb_Step` com
-  cortes rápidos para preto entre eles.
-- **Ao amanhecer** (06:30, a hora em que o jogo começa), e não de madrugada.
-- **Pular:** segure E (ou Esc) por 1 s. Um filete âmbar vai enchendo no canto, em vez do terço. O pause fica desligado
-  durante a cutscene.
-- **No cenário:**
-  - os tocos serrados na cabeceira sul, com a face clara de anéis e o marcador `intro_serrado`;
-  - a viga solta `ponte_viga_solta`;
-  - o cartaz na tábua da barricada;
-  - a parede invisível do sul saiu, porque ele anda pela estrada ao sul da ravina, e a cerca da ravina já fecha esse
-    lado.
-- **Sons** (ElevenLabs, 45 créditos): `caminhao_partindo`, `viga_cedendo`, `papel_desdobrar`.
-- **Teste:** `test_vilarejo.gd` `intro_tests`, com a cutscene inteira e depois pulada no plano 5. O teste tira uma
-  captura a cada 1,5 s (`demo_intro_<plano>_<n>`).
+A versão 1 era quase só ele caminhando até a vila, e o porquê ficava em duas cartas soltas. A versão 2 gasta dois terços
+do tempo com ele e com a mãe. São cerca de 2 minutos no total, e dá para pular tudo segurando E (ou Esc) por 1 s.
+
+**Ato 1: o parlatório, 1955** (`Abertura`, em sépia, uns 15 s)
+- Um menino do lado das visitas e a mãe do outro lado da tela de arame, contra a janela.
+- As mãos dos dois na tela, uma de cada lado, e a fala dela em legenda: "Eu vou te buscar."
+- Um apito; o menino é puxado para trás, e a mão dela fica na tela.
+- O parlatório é o mesmo cenário (`Parlatorio`) que agora existe na Colônia, ao lado da portaria. Pela portaria se entra
+  do lado das visitas, pelo pátio do lado dos internos, e a tela não deixa passar.
+
+**Ato 2: São Paulo, março de 1974** (`Abertura`, uns 50 s)
+- Ele volta do turno de vigia noturno com a lamparina. O som é de chuva e de um relógio.
+- Ele acha um envelope por baixo da porta e lê a carta da mãe (`carta_mae`). Ela lembra o parlatório e inverte a
+  promessa: "Agora é você que tem que vir."
+- Na lata sobre o caixote ao lado da cama estão o ofício de óbito de 1959 (`obito`) e a foto dela. Virada, a foto mostra
+  no verso "Pro meu menino. Tua mãe, 1955.", na mesma letra da carta (`foto`).
+- Na parede está o recorte de jornal de 1962 (`recorte`): a lei acabou com o isolamento obrigatório, mas o Dr. Moura
+  diz que os que ficaram "não têm para onde ir".
+- Ele apaga a lamparina da mesa e sai.
+- Por fim, o ônibus da noite: o rosto dele na janela e as luzes da estrada passando.
+
+**Ato 3: a chegada** (`Intro`, no vilarejo, uns 35 s, metade do que era)
+- "28 de março de 1974". O ônibus o deixa na estrada: "Pra Santa Clara não tem mais linha."
+- A ponte caída e o toco serrado.
+- Ele desce e, depois de um corte, já está subindo do outro lado. A viga cede atrás dele.
+- A câmera sobe sobre a vila e entra o título. Lá no alto, a luz da torre da Colônia apaga e acende.
+- A tarefa "Subir à Colônia" entra no caderno.
+
+**Como funciona**
+- O "Novo jogo" abre `scenes/abertura.tscn` (`Abertura`). Os três cenários são montados em código, afastados entre si, e
+  uma câmera corta entre eles.
+- No fim, a `Abertura` vai para o vilarejo, que toca a `Intro`. Pular na `Abertura` pula a `Intro` também
+  (`Intro.skip_next`).
+- A base das duas é `Cutscene` (`scripts/ui/cutscene.gd`). Ela cuida de:
+  - faixas pretas, legenda e título;
+  - pular segurando a tecla;
+  - a câmera própria, com um movimento por vez (`cam_tw`), cancelado a cada corte;
+  - esperas que encurtam quando a cena é pulada.
+- As pessoas da `Abertura` são os próprios modelos do jogo com os clipes que já existem. O menino é o protagonista em
+  0,62 de escala, e a mãe é o modelo da benzedeira com a camisola clara das internas. As mãos são blocos, e o rosto da
+  foto vem de uma câmera pequena apontada para ela no cenário do parlatório.
+- As quatro folhas (carta, ofício, foto, recorte) ficam no caderno, em Notas.
+- Sons do ElevenLabs:
+  - versão 1: `caminhao_partindo`, `viga_cedendo`, `papel_desdobrar` (45 créditos);
+  - versão 2: `apito`, `onibus`, `lata_abrir` (37 créditos).
+- Testes:
+  - `test_abertura.gd`: a abertura inteira, com uma captura a cada 1,5 s (`demo_abertura_<plano>_<n>`), e `--only=skip`;
+  - `test_vilarejo.gd` `intro_tests`: a chegada inteira e pulada;
+  - `test_colonia.gd` `parlatorio_tests`;
+  - `test_menu.gd`.

@@ -5,6 +5,7 @@
 #
 #                     [Igreja]            church: safe room, low side door; main door boarded up
 #                        | low
+# [Parlatório]-low.                       parlatório: a wire screen across it (Parlatorio), visitors | interned
 #  [Portaria]--[    Pátio (yard)    ]--[Refeitório]
 #                        |                  | shortcut (bolted from the infirmary side, E opens it)
 #                  [Pavilhão B]===low===[Enfermaria]
@@ -17,7 +18,7 @@ const T := 0.2                 # wall thickness
 const DOOR := [1.4, 2.4]       # width, height
 const LOW := [1.0, 1.9]        # the player (1.7 m) fits, the mutant does not
 const ROOMS := {  # x0, z0, x1, z1
-	"portaria": [-17, -3, -10, 3], "igreja": [-5, -19, 5, -10], "refeitorio": [10, -10, 20, 2],
+	"portaria": [-17, -3, -10, 3], "parlatorio": [-17, -10, -10, -3], "igreja": [-5, -19, 5, -10], "refeitorio": [10, -10, 20, 2],
 	"pavilhao": [-10, 10, 10, 16], "enfermaria": [10, 2, 20, 16], "usina": [10, 16, 20, 22]}
 const SHORTCUT := Vector3(15, 0, 2)
 
@@ -81,10 +82,12 @@ func _build_rooms() -> void:
 	_wall(-10, 16, 20, 16, [[17.0, DOOR[0], DOOR[1]]])              # ward south | infirmary | boiler room
 	_wall(10, 22, 20, 22)
 	_wall(-5, -19, 5, -19); _wall(-5, -19, -5, -10); _wall(5, -19, 5, -10)  # church
-	_wall(-10, -10, -10, 16, [[0.0, DOOR[0], DOOR[1]]])             # yard west, gatehouse door
+	_wall(-10, -10, -10, 16, [[-8.5, DOOR[0], DOOR[1]], [0.0, DOOR[0], DOOR[1]]])  # yard west: parlatório's inner side, gatehouse
 	_wall(10, -10, 10, 22, [[-4.0, DOOR[0], DOOR[1]], [13.0, LOW[0], LOW[1]]])  # yard east; ward -> infirmary low
 	_wall(20, -10, 20, 22)
-	_wall(-17, -3, -10, -3); _wall(-17, 3, -10, 3); _wall(-17, -3, -17, 3)  # gatehouse
+	_wall(-17, -3, -10, -3, [[-15.5, DOOR[0], DOOR[1]]]); _wall(-17, 3, -10, 3); _wall(-17, -3, -17, 3)  # gatehouse
+	_wall(-17, -10, -10, -10); _wall(-17, -10, -17, -3)                             # parlatório
+	Parlatorio.build(self, Vector3(-13.5, 0, -6.5), 0.0, 6.8)  # visitors from the gatehouse (+z), the interned from the yard
 
 	shortcut = _box(SHORTCUT + Vector3(0, DOOR[1] / 2, 0), Vector3(DOOR[0], DOOR[1], 0.12), C.wood)
 	_props()
