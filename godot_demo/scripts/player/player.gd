@@ -342,7 +342,7 @@ func toggle_lantern() -> void:  # exploring: hang it on the belt hook (hands fre
 	play("Stow_Lantern", not lantern_out)
 	lantern_out = not lantern_out
 	sfx("lamparina", -6.0)
-	for n in ["hands", "crouch_hands"]:
+	for n in ["hands", "crouch_hands", "c_hands"]:
 		tree.set("parameters/%s/blend_amount" % n, 0.0 if lantern_out else 1.0)
 
 
@@ -437,7 +437,7 @@ func _physics_process(delta: float) -> void:
 	rotation.y = lerp_angle(rotation.y, target, TURN_SPEED * delta)
 
 	var moving := Vector2(velocity.x, velocity.z).length()
-	for p in ["l", "f", "c", "x"]:
+	for p in ["l", "f", "c", "cf", "x"]:
 		tree.set("parameters/%s_explore/blend_amount" % p, clamp(moving / WALK_SPEED, 0.0, 1.0))
 		tree.set("parameters/%s_jog_mix/blend_amount" % p, clamp((moving - WALK_SPEED) / (JOG_SPEED - WALK_SPEED), 0.0, 1.0))
 		tree.set("parameters/%s_run_mix/blend_amount" % p, clamp((moving - JOG_SPEED) / (RUN_SPEED - JOG_SPEED), 0.0, 1.0))
@@ -547,7 +547,9 @@ func lantern_hung() -> bool:  # on its belt hook = its rest spot relative to the
 	return skeleton.get_bone_global_pose(l).origin.distance_to(hook.origin) < 0.03
 
 
-func machete_in_hand() -> bool:
+func machete_in_hand() -> bool:  # on the fighting grip (grip.L) or the at-ease carry grip (grip.Lc)
 	var m := skeleton.get_bone_global_pose(skeleton.find_bone("machete")).origin
-	var g := skeleton.get_bone_global_pose(skeleton.find_bone("grip.L")).origin
-	return m.distance_to(g) < 0.03
+	for g in ["grip.L", "grip.Lc"]:
+		if m.distance_to(skeleton.get_bone_global_pose(skeleton.find_bone(g)).origin) < 0.03:
+			return true
+	return false

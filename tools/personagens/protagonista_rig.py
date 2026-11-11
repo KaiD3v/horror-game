@@ -80,6 +80,12 @@ hm = EB["hand.L"].matrix; hx, hy, hz = (Vector(hm.col[i][:3]).normalized() for i
 palm = Vector(hm.translation) + hy * 0.05
 g = EB.new("grip.L"); g.head = palm - hx * 0.06; g.tail = g.head + hx * mb.length
 g.align_roll(hz); g.parent = EB["hand.L"]
+# grip.Lc: the machete carried at ease. The handle lies diagonally across the palm (45 deg from the thumb side
+# towards the fingers), so the blade runs on along the forearm, its flat facing out like the back of the hand
+# and the edge down on the fingers' side
+cb_, ce_ = (hx + hy).normalized(), (hy - hx).normalized()
+g = EB.new("grip.Lc"); g.head = palm - cb_ * 0.06; g.tail = g.head + cb_ * mb.length
+g.align_roll(-ce_); g.parent = EB["hand.L"]
 # grip.bolt: a bolt pinched in the left hand, shaft along hand X like the machete, nock 3 cm behind the palm
 g = EB.new("grip.bolt"); g.head = palm - hx * 0.03; g.tail = g.head + hx * 0.26
 g.align_roll(hz); g.parent = EB["hand.L"]
@@ -103,6 +109,8 @@ light.matrix_world = mw
 P = arm.pose.bones
 grab = P["machete"].constraints.new("COPY_TRANSFORMS")  # 0 = in the sheath, 1 = in the left hand
 grab.name = "grab"; grab.target = arm; grab.subtarget = "grip.L"; grab.influence = 0
+grab_c = P["machete"].constraints.new("COPY_TRANSFORMS")  # 1 = carried at ease (grip.Lc), over grab
+grab_c.name = "grab_carry"; grab_c.target = arm; grab_c.subtarget = "grip.Lc"; grab_c.influence = 0
 grab_x = P["crossbow"].constraints.new("COPY_TRANSFORMS")  # 0 = holstered, 1 = in the right hand
 grab_x.name = "grab_xbow"; grab_x.target = arm; grab_x.subtarget = "grip.R"; grab_x.influence = 0
 grab_b = P["bolt.hand"].constraints.new("COPY_TRANSFORMS")  # 0 = in the quiver, 1 = in the left hand
@@ -217,7 +225,7 @@ def drape():
 
 
 def pose(aims, frame, turns=(), swing=0.0, left=None, armed=0.0, ground="feet", lift=0.0, lantern=None, sway=0.0,
-         right=None, xbow=0.0, cock=0.0, loaded=0.0, nock=0.0):
+         right=None, xbow=0.0, cock=0.0, loaded=0.0, nock=0.0, carry=0.0):
     """Reset, aim bones, IK the left fist (left=(palm, blade, edge[, pole])), hang the lantern from the
     right fist (or place it at the world matrix `lantern`), swap the machete sheath->hand by `armed`,
     put the soles (ground="feet") or the whole body (ground="body") on the floor, raise by `lift`, key.
@@ -235,7 +243,7 @@ def pose(aims, frame, turns=(), swing=0.0, left=None, armed=0.0, ground="feet", 
         hold(*(left() if callable(left) else left))
     if right and ground == "feet":
         hold(*(right() if callable(right) else right))
-    grab.influence = armed; grab_x.influence = xbow; grab_b.influence = nock
+    grab.influence = armed; grab_x.influence = xbow; grab_b.influence = nock; grab_c.influence = carry
     P["xbow.string"].location = (0, -0.17 * cock, 0)            # cocked: string back on the catch
     P["bolt.rail"].location = (0, 0.04 * loaded, 0.026 * loaded)  # loaded: up out of the stock onto the rail
     if lantern == "hung":  # on the belt hook: its rest spot, relative to the hips
@@ -263,6 +271,7 @@ def pose(aims, frame, turns=(), swing=0.0, left=None, armed=0.0, ground="feet", 
     grab.keyframe_insert("influence", frame=frame)
     grab_x.keyframe_insert("influence", frame=frame)
     grab_b.keyframe_insert("influence", frame=frame)
+    grab_c.keyframe_insert("influence", frame=frame)
     return -minz
 
 
@@ -686,11 +695,14 @@ for name, ld in (("Aim_Crossbow_Loop", 1), ("Aim_Crossbow_Empty_Loop", 0)):  # 2
 # --- a drawn weapon carried (not raised: RMB raises it), with its own idle / walk / jog / sprint, the same legs as
 # the lantern sets so the game moves him at the same speeds:
 #   machete: in the left fist, the arm long and down-forward as in a normal walk, the wrist straight (the hand
-#            continues the forearm, no sideways bend), the blade square off the fist, up and forward; the arm
-#            swings with the step; the lantern stays out in the right hand
+#            continues the forearm, only a slight bend down to the little finger, no sideways bend); the machete
+#            on its carry grip (grip.Lc), the blade running on along the forearm and out ahead, its flat to the
+#            side like the hand; the arm swings with the step. Two sets: the lantern out in the right hand
+#            (Machete) or on its hook with the right arm hanging free (Machete_Free)
 #   crossbow: low ready, both hands on it, pointed at the ground ahead; the lantern on the hook. Whether a bolt sits
 #            on the rail is laid over by the game (Carry_Crossbow[_Empty]: only the string and the rail bolt count)
-CARRY_M = ((0.12, -0.3, -1), (0.04, -0.85, -0.75), (0, -0.55, 1))  # upper arm, forearm, blade (before squaring)
+CARRY_M = ((0.12, -0.3, -1), (0.04, -0.85, -0.75), (0, -0.55, 1))  # upper arm, forearm, thumb (before squaring)
+CARRY_BEND = 10  # deg the fist dips towards the little finger
 CARRY_X = xbow_frame((-0.14, -0.26, 1.0), (0.1, -1, -0.62))
 
 
@@ -701,9 +713,15 @@ def machete_carry(a=0.0, breath=0.0):  # a = arm phase (+1: the right arm forwar
         fo = (Vector(CARRY_M[1]) + Vector((0, 0.25 * a, 0))).normalized()
         elbow = s0 + up.normalized() * P["upper_arm.L"].length
         wrist = elbow + fo * (P["forearm.L"].length - 1e-3)
-        b = Vector(CARRY_M[2]); blade = (b - fo * b.dot(fo)).normalized()  # square to the forearm, still up-forward
-        return wrist + fo * 0.05, blade, fo.cross(blade), elbow - (s0 + wrist) / 2  # edge = -(blade x forearm)
-    return {"left": left, "armed": 1}
+        b = Vector(CARRY_M[2]); x0 = (b - fo * b.dot(fo)).normalized()  # thumb side, square to the forearm
+        d = math.radians(CARRY_BEND)
+        hy, hx = fo * math.cos(d) - x0 * math.sin(d), x0 * math.cos(d) + fo * math.sin(d)
+        return wrist + hy * 0.05, hx, hy.cross(hx), elbow - (s0 + wrist) / 2  # hand X, -hand Z, pole
+    return {"left": left, "armed": 1, "carry": 1}
+
+
+def machete_carry_free(a=0.0, breath=0.0):
+    return {**machete_carry(a, breath), "lantern": "hung"}
 
 
 def xbow_carry(a=0.0, breath=0.0):
@@ -715,29 +733,32 @@ def no_arms(up):
     return [(n, d) for n, d in up if not (n.startswith(("upper_arm.", "forearm.", "hand.")))]
 
 
-def carry_set(kind, hands, ups):  # ups = the torso for idle, walk, jog, run
+def carry_set(kind, hands, ups, right=None):  # ups = the torso for idle, walk, jog, run; right(phase, gait) = free arm
+    def up(i, ph, gait):
+        return ups[i] if right is None else no_right(ups[i]) + right(ph, gait)
     act("Idle_%s_Loop" % kind, 61, loop=True)
     for f, b in ((1, 0), (31, 1), (61, 0)):
-        aims = [(n, (d[0], d[1] + 0.08 * b if n in ("chest", "neck") else d[1], d[2])) for n, d in ups[0]]
+        aims = [(n, (d[0], d[1] + 0.08 * b if n in ("chest", "neck") else d[1], d[2])) for n, d in up(0, 0, "idle")]
         pose(aims + IDLE_LEGS, f, turns=[("head", "Z", -8)], **hands(0, b))
     a = new_action("Walk_%s_Loop" % kind)
     for frame, key, front, twist, swing in WALK:
-        pose(ups[1] + legs(key, front), frame, swing=swing, turns=[("chest", "Z", twist), ("head", "Z", -twist - 6)],
-             **hands(WALK_PHASE[frame]))
+        pose(up(1, WALK_PHASE[frame], "walk") + legs(key, front), frame, swing=swing,
+             turns=[("chest", "Z", twist), ("head", "Z", -twist - 6)], **hands(WALK_PHASE[frame]))
     a.use_frame_range = True; a.frame_range = (1, 32)
     a = new_action("Jog_%s_Loop" % kind)
     for frame, key, front, twist, swing, lift, ph in JOG:
-        pose(ups[2] + legs(key, front), frame, swing=swing, lift=lift,
+        pose(up(2, ph, "jog") + legs(key, front), frame, swing=swing, lift=lift,
              turns=[("chest", "Z", twist), ("head", "Z", -twist * 0.7)], **hands(ph))
     a.use_frame_range = True; a.frame_range = (1, 30)
     a = new_action("Run_%s_Loop" % kind)
     for frame, key, front, twist, swing, lift in RUN:
-        pose(ups[3] + legs(key, front), frame, swing=swing, lift=lift,
+        pose(up(3, RUN_PHASE[frame], "run") + legs(key, front), frame, swing=swing, lift=lift,
              turns=[("chest", "Z", twist), ("head", "Z", -twist * 0.6)], **hands(RUN_PHASE[frame]))
     a.use_frame_range = True; a.frame_range = (1, 20)
 
 
 carry_set("Machete", machete_carry, [UPPER, UPPER, JOG_UP, RUN_UP])
+carry_set("Machete_Free", machete_carry_free, [UPPER, UPPER, JOG_UP, RUN_UP], right=free_arm)
 carry_set("Crossbow", xbow_carry, [no_arms(UPPER), no_arms(UPPER), no_arms(JOG_UP), no_arms(RUN_UP)])
 for name, ld in (("Carry_Crossbow_Loop", 1), ("Carry_Crossbow_Empty_Loop", 0)):  # the bolt / string overlay
     act(name, 2)

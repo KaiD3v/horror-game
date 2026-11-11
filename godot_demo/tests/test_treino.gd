@@ -87,6 +87,11 @@ func run() -> void:
 	await player.skeleton.skeleton_updated
 	await shot("2h_free_combat")
 	check(player.mode == Player.Mode.COMBAT and player.machete_in_hand() and hung[0], "machete drawn, the lantern stays on the hook")
+	var sk0: Skeleton3D = player.skeleton
+	var hand_y := sk0.get_bone_global_pose(sk0.find_bone("hand.R")).origin.y
+	var hips0_y := sk0.get_bone_global_pose(sk0.find_bone("hips")).origin.y
+	check(player.tree.get("parameters/c_hands/blend_amount") == 1.0 and hand_y < hips0_y,
+		"...and the empty right hand hangs at rest (%.2f m, hips %.2f m)" % [hand_y, hips0_y])
 	await tap("draw"); await wait(1.2)
 	await tap("lantern"); await wait(0.8)
 	check(player.lantern_out and not player.lantern_hung(), "L again takes it back in hand")
@@ -126,6 +131,7 @@ func run() -> void:
 	await tap("draw"); await wait(0.45); await shot("3_drawing"); await wait(0.7)
 	check(player.mode == Player.Mode.COMBAT, "draw -> combat mode")
 	check(player.machete_in_hand(), "machete in the left hand after drawing")
+	check(player.tree.get("parameters/c_hands/blend_amount") == 0.0, "...carried with the lantern out in the right hand")
 	await carry_tests(func(): return player.machete_in_hand(), "machete")
 
 	await tap("attack"); await wait(0.33); await shot("4_slash"); await wait(0.6)

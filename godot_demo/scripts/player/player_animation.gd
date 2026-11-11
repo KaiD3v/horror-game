@@ -2,7 +2,8 @@
 # sheathe, attacks, dodge, hit) play over the mode:
 #   idle --+                 guard / block (Blend2) --+
 #   walk/jog/sprint (x2: lantern in hand l_, on the hook f_) -- l_/f_explore -- hands (Blend2)       walk legs -----+-- combat (Blend2, legs only)
-#   machete / crossbow carried low (c_/x_explore: their own idle/walk/jog/sprint) <-> raised: combat_ready, xbow_ready
+#   machete / crossbow carried low (c_/cf_/x_explore: their own idle/walk/jog/sprint; c_hands picks the machete set
+#   with the lantern in hand c_ or on the hook cf_) <-> raised: combat_ready, xbow_ready
 #   explore / combat_ready / death / crouch / xbow_ready -- mode (Transition) -- action (OneShot <- shot) -- output
 # Player drives it by the parameters: <l|f>_explore, _jog_mix, _run_mix, _walk_ts... (see player.gd).
 class_name PlayerAnimation
@@ -26,8 +27,10 @@ static func build(model: Node3D, ap: AnimationPlayer) -> AnimationTree:
 	bt.connect_node("hands", 0, "l_explore"); bt.connect_node("hands", 1, "f_explore")
 	bt.connect_node("crouch_hands", 0, "l_crouch"); bt.connect_node("crouch_hands", 1, "f_crouch")
 
-	for c in [["c", "Machete"], ["x", "Crossbow"]]:  # a drawn weapon carried low: its own idle / walk / jog / sprint
+	for c in [["c", "Machete"], ["cf", "Machete_Free"], ["x", "Crossbow"]]:  # a drawn weapon carried low: its own sets
 		_locomotion(bt, anim, c[0], c[1])
+	bt.add_node("c_hands", AnimationNodeBlend2.new())  # the carried machete with the lantern in hand / on the hook
+	bt.connect_node("c_hands", 0, "c_explore"); bt.connect_node("c_hands", 1, "cf_explore")
 	bt.add_node("guard", anim.call("Combat_Idle"))
 	bt.add_node("block_pose", anim.call("Block"))     # RMB held: the machete raised across
 	bt.add_node("block", AnimationNodeBlend2.new())
@@ -47,7 +50,7 @@ static func build(model: Node3D, ap: AnimationPlayer) -> AnimationTree:
 		bolt.set_filter_path(NodePath("%s:%s" % [_skeleton_path(ap), b]), true)
 	bt.add_node("x_low", bolt)
 	bt.connect_node("x_low", 0, "x_explore"); bt.connect_node("x_low", 1, "x_carry")
-	for w in [["c_explore", "combat"], ["x_low", "xbow"]]:
+	for w in [["c_hands", "combat"], ["x_low", "xbow"]]:
 		bt.add_node(w[1] + "_ready", AnimationNodeBlend2.new())  # carried <-> raised
 		bt.connect_node(w[1] + "_ready", 0, w[0]); bt.connect_node(w[1] + "_ready", 1, w[1])
 
