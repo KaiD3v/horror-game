@@ -1,6 +1,6 @@
 # O vilarejo como tutorial (plano)
 
-*Data: 2026-11-11. Plano. Feito: fases 1 a 3 (ver "Fase 1, feita", "Fase 2, feita" e "Fase 3, feita"). Coordenadas em Godot (x, z); no Blender é (x, -z).*
+*Data: 2026-11-11. Plano. Feito: fases 1 a 4 (ver as seções "Fase N, feita" no fim). Coordenadas em Godot (x, z); no Blender é (x, -z).*
 
 ## O problema
 
@@ -307,3 +307,32 @@ principal fica: facão, besta, chave, Colônia. Outra opção: a chave no fundo 
 - Sons novos (ElevenLabs, 32 créditos): `morcegos` (loop), `morcegos_guincho`, `cana_cortar`.
 - Testes: `test_alambique.gd` (o percurso inteiro, mais o de todo interior) e `test_vilarejo.gd` `alambique_tests`
   (tarefa do Bento, porta pregada, porta escorada, a volta com o facão).
+
+## Fase 4, feita: o ossuário de Santa Clara
+
+- **A entrada:** a porta da sacristia, na parede esquerda junto ao altar da capela (`capela.gd`), tem cadeado. A chave
+  da sacristia (da Dona Firmina, pela garrafada) abre, e "E · descer pela sacristia" leva ao ossuário. Subindo de lá, ele
+  aparece ao lado dessa porta (`entrada_sacristia`; `interior.gd` agora aceita `entrada_<de onde>` e `out_to`).
+- **Por dentro** (`ossuario_build.py`, `ossuario.tscn`, `scripts/levels/ossuario.gd`), um caminho só, para o norte:
+  1. **A escada:** patamar com um oratório e a escada de 10 degraus; os 5 virotes do Tenório num degrau (achados uma vez).
+  2. **A galeria das gavetas:** nichos de ossos nas paredes e ossos no chão. Em pé, cada passo estala (`ossos_pisar`) e a
+     respiração do Poceiro, lá no fundo, fica mais alta; de tanto barulho ele rosna, mas não acorda. Agachado, quase nada.
+     Na entrada, "C · agachar".
+  3. **A câmara:** a besta do Tenório ao lado do sangue dele. Atravessa a câmara um corte de 4 m (largo demais para pular),
+     1,5 m de fundo; quem cai sobe de volta pelo lado de cá. Do outro lado, uma tábua em pé presa por uma corda à parede:
+     um virote na corda (um `Target`, agora o virote acerta cordas e garrafas) e a tábua cai por cima do corte, a ponte
+     (Story `ponte:ossuario`).
+  4. **A cisterna:** O Poceiro dorme na água (`Poceiro.asleep`), de dia, a 10 m da tábua, entre a entrada e a corda do
+     poço. Só o barulho o acorda: correr perto, lutar, ou uma garrafa. Duas garrafas penduradas nas paredes: um virote
+     numa delas e ele vai até lá. Agachado, o jogador passa pelo outro lado.
+  5. **A saída:** a corda sobe pelo poço até o largo (`porta_poco`, ao lado do poço). Fica amarrada: daí em diante, "E ·
+     descer pela corda" no largo leva de volta à cisterna (Story `corda:poco_largo`).
+  - No fundo, o túnel para o norte, desmoronado (a picareta, depois), e o escapulário do Joaquim junto dele.
+- **Se ele acordar:** caça pelo som, como à noite. Dá para lutar (10 de vida) ou fugir pela corda. Morto ali, não sobe
+  mais do poço nas noites seguintes (Story `morto:poceiro`, `roster()`). De noite a cisterna está vazia: ele está no vilarejo.
+- **Tarefa do Tenório** (`QuestData` "besta"): sem lâmina, "arruma uma lâmina primeiro"; com o facão, ele conta onde largou
+  a besta e dá a tarefa ("osso no chão é sino"); de volta com ela, "Mostrar a besta" fecha a tarefa.
+- **Dona Firmina:** "Mostrar o escapulário" (item novo) fecha a história do filho dela, por enquanto.
+- Sons novos (ElevenLabs, 15 créditos): `ossos_pisar`, `corda_arrebentar`, `garrafa_quebrar`.
+- Testes: `test_ossuario.gd` (o percurso inteiro), `test_capela.gd` (a porta da sacristia), `test_vilarejo.gd`
+  `ossuario_tests` (Tenório, Firmina, a corda do poço, o Poceiro morto).

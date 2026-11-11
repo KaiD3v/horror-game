@@ -186,6 +186,12 @@ bx(t, (1.3, -5.6, 0.98), (0.06, 0.06, 0.1), "burlap")
 obj(t, "objetos")
 
 # --- markers for capela.gd (interior.gd) ------------------------------------------------------------------------
+sac = B()  # the sacristy's door, in the left wall by the altar (docs/TUTORIAL_VILAREJO.md "Dungeon 2"): down to the ossuary
+R_.quad(sac, "left", 4.85, 5.75, 0.25, 2.3, "door")
+obj(sac, "porta_sacristia_folha")
+for name, loc, yaw in (("porta_sacristia", (-WX, 5.3, 0.25), 90), ("entrada_sacristia", (-2.7, 5.3, 0.25), -90)):
+    e = bpy.data.objects.new(name, None); bpy.context.collection.objects.link(e); e.location = loc
+    e.rotation_euler.z = math.radians(yaw)  # the door's front (Godot +z) into the nave; coming up, facing in
 for name, loc in (("entrada", (0, -5.6, 0)), ("porta", (0, -WY, 0)), ("luz_altar", (0, 5.4, 1.9)),
                   ("luz_vela_a", (0.55, COFFIN_Y - 1.0, 1.5)), ("luz_vela_b", (-0.55, COFFIN_Y + 1.0, 1.5)),
                   ("luz_velario", (-2.6, 3.3, 1.3)), ("luz_janela_a", (-3.0, -3.0, 2.8)), ("luz_janela_b", (3.0, 0.0, 2.8)),

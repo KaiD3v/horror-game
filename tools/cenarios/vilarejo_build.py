@@ -59,7 +59,8 @@ for i, (hx, hy, face, w, d, kind, ex) in enumerate(HOUSES):  # doors you can go 
         x, y, yaw = at_house(i, *DOORS["casa_%02d_lado" % (i + 1)])
         e = bpy.data.objects.new("porta_%s_lado" % door, None); bpy.context.collection.objects.link(e)
         e.location = (x, y, H(x, y)); e.rotation_euler.z = math.radians(yaw - 90)
-for name, (x, y) in {"spawn_jogador": (0.0, -44.5), "spawn_mutante": (4.5, 1.5)}.items():  # read by vilarejo.gd
+for name, (x, y) in {"spawn_jogador": (0.0, -44.5), "spawn_mutante": (4.5, 1.5),  # read by vilarejo.gd; porta_poco:
+                     "porta_poco": (3.0, 1.15)}.items():  # by the well, where the ossuary's rope comes up (facing away)
     e = bpy.data.objects.new(name, None); bpy.context.collection.objects.link(e); e.location = (x, y, H(x, y))
 
 ridge("silhueta_longe", 175, (44, 72), -25, 0.0, 3)

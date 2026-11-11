@@ -1,8 +1,9 @@
 # An interior, its own scene, Zelda style. One script for every room: a room is a .tscn (scenes/interiors/) with
 # this script and its settings below. The room comes from a GLB built by ../tools/cenarios/<name>_build.py with
 # vila_kit.py's Room; its markers place everything:
-#   entrada          where you come in (facing into the room)
-#   porta            E there takes you back out to the village's porta_<door>
+#   entrada          where you come in (facing into the room); entrada_<from>: where you come in by another way
+#                    (SceneRouter.arriving = <from>: the ossuary's stairs into the chapel, entrada_sacristia)
+#   porta            E there takes you back out (to `out_to`, the village by default) at its porta_<door>
 #   npc_<who>        a villager standing there (NpcCatalog)
 #   luz_<kind>[_x]   a light (LIGHT); fogao/velario/vela also sound (LOOP_AT)
 #   som_<name>       a looped sound there (a clock: som_relogio)
@@ -12,6 +13,7 @@ extends Level
 
 @export var model := ""                 # models/levels/<model>.glb
 @export var door := ""                  # the village's porta_<door> you came in by
+@export var out_to := Paths.VILAREJO    # where the door (porta) leads
 @export var cutaway := Vector3(0, 8.5, 6.5)  # camera for the plan capture (ceiling off)
 @export var ambient := 0.28             # ambient light energy (the chapel's whitewash wants less)
 @export var dim := 1.0                  # scales every lamp's energy
@@ -44,11 +46,12 @@ func _build() -> void:
 		if m.name.get_slice("_", 1) == "janela":
 			windows.append(lights[-1])
 	spawn_npcs(room)
-	Door.make(room.get_node("porta"), "E · sair para a rua", Paths.VILAREJO, door, 1.6)
+	Door.make(room.get_node("porta"), "E · sair para a rua" if out_to == Paths.VILAREJO else "E · subir", out_to, door, 1.6)
 
 
 func _player_start() -> Transform3D:
-	var entry: Node3D = room.get_node("entrada")
+	var other := "entrada_" + SceneRouter.arriving
+	var entry: Node3D = room.get_node(other) if SceneRouter.arriving != "" and room.has_node(other) else room.get_node("entrada")
 	return Transform3D(Basis(Vector3.UP, entry.rotation.y), entry.position + Vector3(0, 0.05, 0))  # just inside the door
 
 

@@ -679,6 +679,49 @@ func intro_tests() -> void:
 	await shot("intro_fim")
 
 
+# The ossuary from up here (../docs/TUTORIAL_VILAREJO.md "Dungeon 2"): Tenório's task only with a blade; Dona Firmina
+# and the scapular; up the rope out by the square's well, and the rope a way back down; killed down there, O Poceiro
+# comes up no more.
+func ossuario_tests() -> void:
+	WorldTime.reset(10 * 60); L.day._step(0.0); Story.reset(); Inventory.reset()
+	var ten := Dialog.new("armeiro", player); Story.mark("tenorio_conheceu"); ten.enter("oi")
+	var asks: Array = ten.options().filter(func(o): return o.texto == "Perguntar por uma besta")
+	if asks:
+		ten.pick(asks[0])
+	check(asks.size() == 1 and ten.at == "besta" and Story.task("besta") == "nova", "Tenório, no blade: \"arruma uma lâmina primeiro\"")
+	Inventory.add("facao"); ten.enter("oi")
+	asks = ten.options().filter(func(o): return o.texto == "Perguntar por uma besta")
+	if asks:
+		ten.pick(asks[0])
+	check(ten.at == "besta_conta" and Story.task("besta") == "ativa", "with the machete: where he left it, the task")
+	Inventory.add("besta"); ten.enter("oi")
+	var show: Array = ten.options().filter(func(o): return o.texto == "Mostrar a besta")
+	if show:
+		ten.pick(show[0])
+	check(show.size() == 1 and Story.task("besta") == "feita", "back with it: the task done")
+	var fir := Dialog.new("benzedeira", player); Story.mark("firmina_conheceu"); Inventory.add("escapulario"); fir.enter("oi")
+	var esc: Array = fir.options().filter(func(o): return o.texto == "Mostrar o escapulário")
+	if esc:
+		fir.pick(esc[0])
+	check(esc.size() == 1 and not Inventory.has("escapulario") and Story.has("firmina_escapulario"), "Dona Firmina takes Joaquim's scapular")
+	var well: Node3D = L.marker("porta_poco")
+	SceneRouter.arriving = "poco"
+	var t: Transform3D = L._player_start(); SceneRouter.arriving = ""
+	check(t.origin.distance_to(well.position) < 0.5, "up the ossuary's rope: out beside the square's well")
+	put(player, L.ground(well.position.x, well.position.z), PI); await wait(0.4)
+	check(L.hud.prompt.text != "E · descer pela corda", "no rope tied yet: no way down (\"%s\")" % L.hud.prompt.text)
+	Story.mark("corda:poco_largo")
+	var down: Door = well.get_child(0)
+	down.enabled = true; await wait(0.2)  # (the level reads the mark as it loads: here set by hand)
+	check(L.hud.prompt.text == "E · descer pela corda", "the rope tied below: a way back down (\"%s\")" % L.hud.prompt.text)
+	await tap("interact")
+	check(SceneRouter.requested == Paths.interior("ossuario") and SceneRouter.arriving == "poco", "E: down the rope into the cistern")
+	SceneRouter.requested = ""; SceneRouter.arriving = ""
+	Story.mark("morto:poceiro")
+	check(not L.roster().poceiro, "killed in the ossuary: no Poceiro up the well at night")
+	Story.reset(); Inventory.reset(); Inventory.give_tools()
+
+
 # Juca's still from outside (../docs/TUTORIAL_VILAREJO.md "Dungeon 1"): Seu Bento's task lends the crowbar; the side
 # door nailed (no crowbar: why not), forced, then the way in; the front shored up from inside. And the task told back.
 func alambique_tests() -> void:

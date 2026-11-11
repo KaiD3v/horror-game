@@ -25,6 +25,7 @@ const ITEMS := {
 	"pe_de_cabra": {"nome": "Pé de cabra", "descricao": "Ferro dobrado na ponta. Arranca as tábuas pregadas numa porta.", "tipo": "ferramenta"},
 	"picareta": {"nome": "Picareta", "descricao": "Cabo de pau e ferro de duas pontas. Cava buracos e quebra entulho de pedra.", "tipo": "ferramenta"},
 	"corda": {"nome": "Corda", "descricao": "Sisal trançado, uns vinte metros. Para descer e subir por poços, buracos e barrancos.", "tipo": "ferramenta"},
+	"escapulario": {"nome": "Escapulário", "descricao": "Dois quadradinhos de pano num cordão, Nossa Senhora do Carmo. No verso, a lápis: Joaquim.", "tipo": "ferramenta"},
 	"chave_cadeado": {"nome": "Chave do cadeado", "descricao": "Pequena, de latão. Abre o cadeado da porta da sala de treino.", "tipo": "chave", "modelo": "chave"},
 	"chave_sacristia": {"nome": "Chave da sacristia", "descricao": "Ferro velho, um barbante vermelho na argola. Abre só a porta da sacristia.", "tipo": "chave", "modelo": "chave"},
 	"chave_portao": {"nome": "Chave do portão", "descricao": "Grande, de ferro, com a argola gasta. Abre o cadeado do portão da Colônia.", "tipo": "chave", "modelo": "chave"},

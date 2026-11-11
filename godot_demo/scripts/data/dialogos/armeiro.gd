@@ -12,7 +12,10 @@ const MENU := [
 	{"texto": "Perguntar o que se fala por aí", "vai": "rumores"},
 	{"texto": "Perguntar sobre ele", "vai": "ele"},
 	{"texto": "Perguntar como se mata aquilo", "vai": "matar"},
-	{"texto": "Perguntar por uma besta", "vai": "besta"},
+	{"texto": "Perguntar por uma besta", "vai": "besta", "se": {"nao_tem": "facao", "tarefa": ["besta", "nova"]}},
+	{"texto": "Perguntar por uma besta", "vai": "besta_conta", "se": {"tem": "facao", "nao_tem": "besta", "tarefa": ["besta", "nova"]}},
+	{"texto": "Falar da besta", "vai": "besta_lembrete", "se": {"nao_tem": "besta", "tarefa": ["besta", "ativa"]}},
+	{"texto": "Mostrar a besta", "vai": "besta_achou", "se": {"tem": "besta", "sem_marca": "tenorio_besta"}},
 	{"texto": "Ir embora", "vai": "fim"},
 ]
 
@@ -41,6 +44,17 @@ const NOS := {
 		"Besta? Tinha uma. Boa, de caçar veado. Não vendo mais.",
 		"Ficou lá embaixo, junto com o que eu não quero lembrar.",
 		"Arruma uma lâmina primeiro. Sem lâmina você não volta de onde ela está.",
+	]},
+	"besta_conta": {"faz": [{"tarefa": ["besta", "ativa"]}], "fala": [
+		"Facão na cinta. Hm. Então escuta.",
+		"Fui atrás do rapaz da Firmina. Entrei pela sacristia, desci no ossuário. Lá embaixo tem uma coisa cega que me ouviu antes de eu ver ela.",
+		"Larguei a besta, larguei tudo, e subi pela corda do poço. A besta é tua, se buscar. A chave da sacristia é com a Firmina.",
+		"E não corre lá dentro. Osso no chão é sino.",
+	]},
+	"besta_lembrete": {"fala": ["Sacristia, ossuário, besta. A chave é com a Firmina. E pisa macio, que aquilo ouve."]},
+	"besta_achou": {"faz": [{"marca": "tenorio_besta"}, {"tarefa": ["besta", "feita"]}], "fala": [
+		"Voltou. E com ela. ...Eu não voltei lá, sabe. Nem pra buscar.",
+		"Fica. Virote eu vendo, que eu não sou santo. Mira no peito e não erra a primeira, que a segunda demora.",
 	]},
 	"matar": {"fala": [
 		"Chumbo não adianta. Eu gastei duas caixas num só. Ele levantou.",

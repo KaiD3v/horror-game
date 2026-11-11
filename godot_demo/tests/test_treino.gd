@@ -893,7 +893,8 @@ func hints_tests() -> void:
 	check(Hints.learned("mirar") and not line.visible, "aimed twice: the line is gone for good")
 	await tap("crossbow"); await wait(1.2)
 	await tap("draw"); await wait(1.0)
-	var e: Enemy = L.enemy
+	var e: Enemy = L.add_enemy(Mutante.new(), player.global_position + Vector3(0, 0, -3), 0.0)  # (the room's may be dead by now)
+	e.active = false
 	e.target = player; e.go(Enemy.State.ATTACK, "Attack"); await wait(0.1)
 	check(line.text == Hints.TEXT.bloquear and line.visible, "a blow coming at the machete: \"%s\"" % line.text)
 	e.go(Enemy.State.IDLE, "Idle")
@@ -901,7 +902,7 @@ func hints_tests() -> void:
 		await press("block", 0.3); await wait(0.2)
 	e.go(Enemy.State.ATTACK, "Attack"); await wait(0.1)
 	check(Hints.learned("bloquear") and not line.visible, "blocked twice: no line at the next blow")
-	e.go(Enemy.State.IDLE, "Idle")
+	e.queue_free()
 	await tap("draw"); await wait(1.0)
 	Inventory.add("atadura", 2)
 	for i in 2:

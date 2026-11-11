@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/ossuario.gd" id="1"]
+
+[node name="Ossuario" type="Node3D"]
+script = ExtResource("1")
+title = "Ossuário de Santa Clara"
+floor_kind = "ladrilho"
+model = "ossuario"
+door = "sacristia"
+out_to = "res://scenes/interiors/capela.tscn"
+cutaway = Vector3(0, 30, 17)
+ambient = 0.1
+dim = 0.8

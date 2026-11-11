@@ -133,7 +133,8 @@ Gancho da missão (a definir): o filho de Dona Firmina foi levado para a Colôni
 
 - **O inventário** (`Inventory`) continua entre as cenas e volta ao início num jogo novo. O estoque das lojas também.
   - Um jogo novo começa com a lamparina, Cr$ 40, 6 virotes e 1 atadura. O facão está no baú do Juca, no alambique
-    (a primeira dungeon, ver [TUTORIAL_VILAREJO.md](TUTORIAL_VILAREJO.md)); a besta ainda não está em lugar nenhum.
+    (a primeira dungeon, ver [TUTORIAL_VILAREJO.md](TUTORIAL_VILAREJO.md)); a besta, no ossuário embaixo da capela
+    (a segunda).
   - **Itens que desbloqueiam** (`tipo: "ferramenta"`, ver `docs/ARQUITETURA.md`): sem o facão ou a besta, a placa
     da roda fica escura ("ainda não tem") e as teclas 1 e 2 só dizem "Sem facão." / "Sem besta.".
   - A sala de treino e a Colônia dão todas as ferramentas ao abrir (são cenas de teste, sem entrada pelo vilarejo).

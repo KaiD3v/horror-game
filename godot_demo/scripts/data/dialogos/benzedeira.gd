@@ -17,6 +17,7 @@ const MENU := [
 	{"texto": "Perguntar se precisa de alguma coisa", "vai": "pedido", "se": {"tarefa": ["garrafada", "nova"]}},
 	{"texto": "Falar da garrafada", "vai": "lembrete", "se": {"tarefa": ["garrafada", "ativa"], "nao_tem": "garrafada"}},
 	{"texto": "Entregar a garrafada", "vai": "entrega", "se": {"tarefa": ["garrafada", "ativa"], "tem": "garrafada"}},
+	{"texto": "Mostrar o escapulário", "vai": "escapulario", "se": {"tem": "escapulario"}},
 	{"texto": "Ir embora", "vai": "fim"},
 ]
 
@@ -54,6 +55,11 @@ const NOS := {
 		"Preciso, sim. O padre Anselmo guardava uma garrafada de arnica no baú, do lado do altar da capela.",
 		"Eu não entro mais lá. Desde que acharam o caixão aberto, aquela porta pesa feito chumbo pra mim.",
 		"Me traz a garrafada. Com ela eu fecho o teu corpo antes da noite. Vai precisar.",
+	]},
+	"escapulario": {"faz": [{"toma": "escapulario"}, {"marca": "firmina_escapulario"}], "fala": [
+		"Isso... isso é do meu Joaquim. Fui eu que costurei. Onde... embaixo da igreja?",
+		"Então ele passou por lá. Então ele estava vivo quando passou por lá.",
+		"Deixa comigo. Vou acender mais uma vela. Uma pra ele achar o caminho, e outra pra você.",
 	]},
 	"lembrete": {"fala": ["A garrafada, menino. No baú do lado do altar. A capela é ali, a porta da torre."]},
 	"entrega": {"faz": [{"toma": "garrafada"}, {"cura": true}, {"dinheiro": 20}, {"da": "chave_sacristia"},

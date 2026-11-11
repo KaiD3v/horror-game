@@ -7,6 +7,7 @@ extends Interactable
 # id: one of a kind; scene: the scene file's name; at: x, z (dropped onto what is below); yaw: degrees, 0 = facing +z
 const SPOTS := [
 	{"id": "estrada", "scene": "vilarejo", "at": Vector2(-2.8, 44.0), "yaw": 90.0},  # by the road in, facing it
+	{"id": "ossuario", "scene": "ossuario", "from": 5.5, "at": Vector2(0.75, 3.5), "yaw": -90.0},  # on the landing under the sacristy
 	{"id": "treino", "scene": "treino", "at": Vector2(-3.0, 2.0), "yaw": 90.0},
 ]
 const WOOD := Color(0.3, 0.19, 0.11)

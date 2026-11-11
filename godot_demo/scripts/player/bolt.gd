@@ -1,5 +1,5 @@
 # A crossbow bolt in flight: a little drop, it sticks in what it hits (point buried) and rides along with it; an
-# enemy takes DAMAGE.
+# enemy takes DAMAGE; a Target (a rope, a bottle) is struck.
 class_name Bolt
 extends Node3D
 
@@ -37,6 +37,9 @@ func _physics_process(delta: float) -> void:
 		if hit.collider.is_in_group("enemy") and hit.collider.has_method("take_hit"):
 			hit.collider.take_hit(DAMAGE, Player.WEAPON_ITEM[Player.Mode.XBOW])
 			reparent(hit.collider)  # rides along with what it hit
+		elif hit.collider is Target:  # a rope, a bottle
+			hit.collider.struck(self)
+			reparent(hit.collider)
 	else:
 		look_at(to); global_position = to
 		if global_position.length() > 200.0:

@@ -5,6 +5,7 @@
 # keep still and quiet and he stops there, listens, and wanders back. Within arm's reach he feels you anyway, and
 # his two-fisted blow takes 2. A hit tells him where you are. The chapel bell draws him to the church (hear()).
 # Slow, huge, hard to kill (10): better to slip past than to fight. The bucket at his hip clanks as he walks.
+# By day he sleeps in the cistern under the well (`asleep`, the ossuary): a noise wakes him.
 class_name Poceiro
 extends Enemy
 
@@ -26,6 +27,7 @@ var roam_to := Vector3.INF
 var pause := 2.0
 var going_home := false
 var bucket: AudioStreamPlayer3D
+var asleep := false          # by day, down in the cistern (ossuario.gd): still, until a noise reaches him
 
 
 func _init() -> void:
@@ -103,6 +105,12 @@ func noise() -> float:
 
 func _decide(to: Vector3, dist: float, delta: float) -> void:
 	heard_t += delta
+	if asleep:  # nothing moves him but a sound: the player's near enough, or one he is sent (a bottle smashing)
+		if dist < noise():
+			hear(target.global_position)
+		if not fresh:
+			return
+		asleep = false
 	if dist < noise():
 		hear(target.global_position); heard_t = 0.0
 	if going_home:

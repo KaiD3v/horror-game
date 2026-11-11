@@ -3,7 +3,8 @@
 São três mutantes que só saem à noite no vilarejo, das 18:00 às 05:59 (Noite e Madrugada). De dia o vilarejo continua como está, só com o Interno no largo.
 
 Quem sai depende do que o jogador já tem (`vilarejo.gd` `roster()`, ver [TUTORIAL_VILAREJO.md](TUTORIAL_VILAREJO.md)):
-sem o facão, uma Bruxa; com o facão, as duas Bruxas e o Poceiro; com a besta, também a Carpideira.
+sem o facão, uma Bruxa; com o facão, as duas Bruxas e o Poceiro; com a besta, também a Carpideira. De dia o Poceiro dorme na
+cisterna embaixo do poço (o ossuário); morto lá, não sobe mais.
 
 ## Análise
 

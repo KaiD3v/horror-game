@@ -73,6 +73,9 @@ func _build() -> void:
 	for d in DOORS:
 		Door.make(marker("porta_" + d), DOORS[d], Paths.interior(d), d)
 	_alambique()
+	var well := marker("porta_poco")  # the ossuary's rope up the well (../docs/TUTORIAL_VILAREJO.md "Dungeon 2"): once
+	var down := Door.make(well, "E · descer pela corda", Paths.interior("ossuario"), "poco", 1.4)  # tied, a way back down
+	down.enabled = Story.has("corda:poco_largo")
 
 
 func _player_start() -> Transform3D:
@@ -119,7 +122,8 @@ func _process(_delta: float) -> void:
 ## A Carpideira too (killed from afar, in silence).
 static func roster() -> Dictionary:
 	var blade := Inventory.has("facao")
-	return {"bruxas": BRUXAS if blade else 1, "poceiro": blade, "carpideira": Inventory.has("besta")}
+	return {"bruxas": BRUXAS if blade else 1, "poceiro": blade and not Story.has("morto:poceiro"),  # (killed in the ossuary)
+		"carpideira": Inventory.has("besta")}
 
 
 ## The bruxas settle on roofs away from the player, O Poceiro climbs out of the well, A Carpideira starts down an
