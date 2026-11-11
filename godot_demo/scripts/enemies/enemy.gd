@@ -2,6 +2,7 @@
 # health and states, the blow it strikes and the stagger it takes. A creature sets its stats in _init() and decides
 # what to do each frame in _decide(); the attack and the stagger play out here (_attack, _stagger). Its sounds are
 # data too (`voice`): what it plays on each state, now and then while it roams, and at each step.
+# A scripted move that ignores gravity and walls (a glide off a roof, a climb out of a well) is travel().
 # Takes hits from player.gd (group "enemy", take_hit).
 class_name Enemy
 extends CharacterBody3D
@@ -23,6 +24,7 @@ var attack_reach := 1.9         # the blow connects up to here, if the player is
 var attack_hit := 18.0 / 30.0   # when in the Attack clip it connects
 var attack_cooldown := 0.6
 var attack_track := 0.5         # how much it can still turn to follow you during the wind-up
+var attack_damage := 1
 # event -> sound name (res://sounds, takes picked at random): idle (now and then), alert, attack, hurt, death, step.
 # Leave one out and it is silent there (A Enfermeira has none: no voice, no footsteps).
 var voice := {}
@@ -39,6 +41,7 @@ var agent: NavigationAgent3D    # follows the level navmesh; with none (training
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _grunt_in := randf_range(3.0, 8.0)
 var _stride := 0.0
+var flight := {}                # a travel() under way: from, ctrl, to, dur, k, then
 const SAY := {  # event -> volume dB, unit size, max distance: the scream carries, the steps stay close
 	"idle": [-3.0, 4.0, 30.0], "alert": [4.0, 8.0, 60.0], "attack": [0.0, 5.0, 35.0], "hurt": [0.0, 5.0, 35.0],
 	"death": [2.0, 6.0, 45.0], "step": [-7.0, 3.0, 25.0]}
@@ -91,6 +94,9 @@ func take_hit(n: int) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if not flight.is_empty():
+		_travel_step(delta)
+		return
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 	velocity.x = 0; velocity.z = 0
@@ -141,7 +147,7 @@ func _attack(to: Vector3, delta: float) -> void:
 	elif not hit_done:
 		hit_done = true
 		if to.length() < attack_reach and (-global_basis.z).dot(to.normalized()) > 0.5:
-			target.take_damage(1, self)
+			target.take_damage(attack_damage, self)
 	if t >= ap.get_animation("Attack").length:
 		cooldown = attack_cooldown
 		go(State.CHASE, "Walk", 0.25)
@@ -150,6 +156,29 @@ func _attack(to: Vector3, delta: float) -> void:
 func _stagger() -> void:
 	if t >= ap.get_animation("Hit").length:
 		go(State.CHASE, "Walk", 0.2)
+
+
+## Along an arc to `to` (`arc` metres over the higher end) at `v` m/s, playing `anim` (state ALERT), through
+## anything in the way and with no gravity; then `then`.
+func travel(to: Vector3, then: Callable, anim: String, arc: float, v: float) -> void:
+	var from := global_position
+	var flat := to - from; flat.y = 0
+	if flat.length() > 0.1:
+		rotation.y = atan2(-flat.x, -flat.z)
+	flight = {"from": from, "to": to, "ctrl": Vector3((from.x + to.x) / 2, maxf(from.y, to.y) + arc, (from.z + to.z) / 2),
+		"dur": clampf(from.distance_to(to) / v, 0.5, 6.0), "k": 0.0, "then": then}
+	go(State.ALERT, anim, 0.2)
+
+
+func _travel_step(delta: float) -> void:
+	flight.k = minf(1.0, flight.k + delta / flight.dur)
+	var k: float = flight.k
+	global_position = (flight.from as Vector3).lerp(flight.ctrl, k).lerp((flight.ctrl as Vector3).lerp(flight.to, k), k)
+	velocity = Vector3.ZERO
+	if k >= 1.0:
+		var then: Callable = flight.then
+		flight = {}
+		then.call()
 
 
 func walk_forward() -> void:

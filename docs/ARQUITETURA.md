@@ -13,7 +13,7 @@ protagonista-terror/
       core/                   base de tudo: Level, Paths, Audio, Looks, Nodes, GameInput, SceneRouter,
                               Interactable, Interactor
       player/                 Player e as partes dele: animação, casaco, lamparina, virote, condição (sangue, fôlego)
-      enemies/                Enemy (base), Mutante, Enfermeira, Bruxa, Dummy
+      enemies/                Enemy (base), Mutante, Enfermeira, Bruxa, Poceiro, Dummy
       npcs/                   Npc
       shop/                   Shop (regras de compra), ShopMenu (a tela), ShopCounter (o "E · comprar" de um vendedor)
       world/                  Door, Footsteps, RandomEvents, Clima, Corvo
@@ -21,22 +21,22 @@ protagonista-terror/
       data/                   dados sem lógica: NpcCatalog, NotesData, Atmospheres, DayData, ItemCatalog, ShopCatalog
       levels/                 o script de cada fase: vilarejo, colonia, treino, interior (único para todos os interiores)
     shaders/                  sangue, visao, silhueta, neblina_bancos, poca, menu_neblina
-    models/characters/        protagonista, monster, enfermeira, bruxa, npc_<quem> (.glb gerados)
+    models/characters/        protagonista, monster, enfermeira, bruxa, poceiro, npc_<quem> (.glb gerados)
     models/levels/            vilarejo, armaria, venda, capela (.glb gerados)
     textures/ sounds/ ui/     texturas, sons e interface (fonte, tema, arte do menu)
     tests/                    AutoTest (base) e um test_<cena>.gd por cena; check_scripts.gd
     captures/                 saída dos testes (capturas de tela)
   tools/                      o pipeline: tudo o que gera os arquivos do jogo
     comum/                    paths.py, audio.py, lowpoly.py (personagens), npc_kit.py, vila_kit.py (cenários)
-    personagens/              protagonista_build + protagonista_rig, monster_build, enfermeira_build, bruxa_build,
+    personagens/              protagonista_build + protagonista_rig, monster_build, enfermeira_build, bruxa_build, poceiro_build,
                               npcs_build (roda npcs/<quem>.py)
     cenarios/                 vilarejo_build (+ pacote vilarejo/), armaria_build, venda_build, capela_build
     texturas/                 scenery_textures, notas_papeis, fonte, roda_armas (o terço e as plaquinhas da roda)
-    sons/                     sounds_import (ElevenLabs), clima_sons, enfermeira_sons, bruxa_sons, ferido_sons, sounds_build
+    sons/                     sounds_import (ElevenLabs), clima_sons, enfermeira_sons, bruxa_sons, poceiro_sons, ferido_sons, sounds_build
     renders/                  renders de conferência (protagonista, mutante, vilarejo, NPCs lado a lado)
   blender/                    .blend salvos pelos builds: personagens/, npcs/, cenarios/
   audio_fontes/               MP3 do ElevenLabs (elevenlabs/, elevenlabs_extra/) e o conjunto sintetizado antigo
-  renders/                    imagens de conferência: protagonista/, mutante/, enfermeira/, bruxa/, npcs/, cenarios/,
+  renders/                    imagens de conferência: protagonista/, mutante/, enfermeira/, bruxa/, poceiro/, npcs/, cenarios/,
                               texturas/, interface/, sons/, godot/
   docs/                       documentação (esta, VILAREJO, ENFERMEIRA, MUTANTES_NOITE, CENARIOS, TODO_ARTE)
 ```

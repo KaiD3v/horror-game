@@ -25,7 +25,7 @@ Os quatro itens estão feitos e falta o teste do autor no jogo. A descrição es
 - [ ] **Mutante atual:** uma animação de corrida e outra de busca, farejando.
   - [~] Os sons estão feitos: grunhidos, grito ao ver o jogador, golpe, dor, morte e passos pesados (ver VILAREJO.md, "Sons"). Falta o teste do autor no jogo.
 - [~] **A Enfermeira:** modelo, animações, comportamento e sons feitos (ver [ENFERMEIRA.md](ENFERMEIRA.md)). Falta o teste do autor no jogo.
-- [~] **Os mutantes da noite** (ver [MUTANTES_NOITE.md](MUTANTES_NOITE.md)): A Bruxa feita (modelo, animações, comportamento, sons), falta o teste do autor no jogo. O Poceiro e A Carpideira planejados.
+- [~] **Os mutantes da noite** (ver [MUTANTES_NOITE.md](MUTANTES_NOITE.md)): A Bruxa e O Poceiro feitos (modelo, animações, comportamento, sons), falta o teste do autor no jogo. A Carpideira planejada.
 - [~] **Jogador ferido:** feito, falta o teste do autor no jogo.
   - O sangue sai de `godot_demo/shaders/sangue.gdshader`, uma passada extra sobre a roupa e a pele. O `scripts/player/player.gd` guarda a posição de repouso de cada vértice em CUSTOM0, e por isso as manchas acompanham as animações.
   - A atadura já começa manchada e encharca aos poucos, até cobrir o antebraço.

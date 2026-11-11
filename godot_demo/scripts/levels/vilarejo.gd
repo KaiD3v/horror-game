@@ -2,7 +2,8 @@
 # Colliders come from the GLB's name suffixes (-col, -colonly); the navmesh is baked at load over the playable
 # area. Fog does the rest: about 25 m of sight, thicker down in the valley. The GLB's markers place everything:
 # spawn_jogador, spawn_mutante, npc_<who>, porta_<interior>, corvo_NN, varal_*, marca_carcaca.
-# At night (noite, madrugada) the night mutants come (../docs/MUTANTES_NOITE.md): A Bruxa on the roof ridges.
+# At night (noite, madrugada) the night mutants come (../docs/MUTANTES_NOITE.md): A Bruxa on the roof ridges, O Poceiro
+# up out of the well.
 extends Level
 
 # the road through the village (Godot x, z), south to north: puddles gather on it (Clima)
@@ -30,6 +31,9 @@ var creakers: Array[Vector3] = []
 const BRUXAS := 2             # perched on the roofs each night
 var bruxas: Array[Bruxa] = []
 var perches: Array[Vector3] = []  # the roof ridges (found at the first nightfall, once the colliders are in)
+var poceiro: Poceiro
+var well_out := Vector3.INF
+const WELL := Vector2(3.0, -3.0)  # the well's centre (x, z); he climbs out beside the crank's crossbar, towards the square
 var night := false
 var night_watch := true       # the autotest holds the night back until it tests it
 
@@ -75,6 +79,8 @@ func _process(_delta: float) -> void:
 			for b in bruxas:
 				if is_instance_valid(b):
 					b.leave()
+			if is_instance_valid(poceiro):
+				poceiro.go_home()
 
 
 ## The bruxas settle on roofs away from the player (last night's dead are cleared away).
@@ -88,6 +94,15 @@ func _nightfall() -> void:
 		if is_instance_valid(b):
 			b.queue_free()
 	bruxas.clear()
+	if is_instance_valid(poceiro):
+		poceiro.queue_free()
+	if well_out == Vector3.INF:  # beside the well (its little roof covers the centre); found once, before anyone stands there
+		var g: Vector3 = ground(WELL.x, WELL.y + 1.8)
+		well_out = NavigationServer3D.map_get_closest_point(get_world_3d().navigation_map, g)
+	var mouth := Vector3(WELL.x, well_out.y + 0.85, WELL.y + 0.35)  # on the rim
+	poceiro = Poceiro.new()
+	add_enemy(poceiro, mouth - Vector3(0, 2.4, 0), 0.0)
+	poceiro.emerge(mouth, well_out)
 	var far := perches.filter(func(p): return p.distance_to(player.global_position) > 12.0)
 	far.shuffle()
 	for p in far.slice(0, BRUXAS):
@@ -173,7 +188,9 @@ func _creak() -> AudioStreamPlayer3D:
 	return null if near.is_empty() else Audio.play3d(self, "rangido_%d" % randi_range(1, 2), near.pick_random(), 0.0, false, 3.0, 25.0)
 
 
-func _bell() -> AudioStreamPlayer3D:  # three tolls, four seconds apart
+func _bell() -> AudioStreamPlayer3D:  # three tolls, four seconds apart; O Poceiro goes to it
+	if is_instance_valid(poceiro) and poceiro.state != Enemy.State.DEAD:
+		poceiro.hear(marker("porta_capela").position)
 	for i in [1, 2]:
 		get_tree().create_timer(4.0 * i).timeout.connect(func(): Audio.play3d(self, "sino", bell_at, 8.0, false, 25.0, 220.0))
 	return Audio.play3d(self, "sino", bell_at, 8.0, false, 25.0, 220.0)

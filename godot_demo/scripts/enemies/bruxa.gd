@@ -18,7 +18,6 @@ const WATCH := 1.5         # seconds she stares at the light, eyes shining, befo
 
 var roosts: Array[Vector3] = []   # the roof ridges she can perch on (vilarejo.gd)
 var roost = null                  # the one she is on (Vector3), null once she leaves it
-var flight := {}                  # a glide under way: from, ctrl, to, dur, k, then (Callable)
 var darting := false
 var dart_in := 3.0
 var orbit_a := 0.0
@@ -61,29 +60,13 @@ func _physics_process(delta: float) -> void:
 	if target and shine:
 		var lit: bool = target.lantern_out and global_position.distance_to(target.global_position) < LURE
 		shine.emission_energy_multiplier = move_toward(shine.emission_energy_multiplier, 4.0 if lit else 0.6, 6.0 * delta)
-	if flight.is_empty():
-		super(delta)
-		return
-	flight.k = minf(1.0, flight.k + delta / flight.dur)  # along the glide: no gravity, no collisions
-	var k: float = flight.k
-	global_position = (flight.from as Vector3).lerp(flight.ctrl, k).lerp((flight.ctrl as Vector3).lerp(flight.to, k), k)
-	velocity = Vector3.ZERO
-	if k >= 1.0:
-		var then: Callable = flight.then
-		flight = {}
-		then.call()
+	super(delta)
 
 
 ## A glide from where she is to `to`, arcing over; `then` when she gets there.
 func fly_to(to: Vector3, then: Callable) -> void:
-	var from := global_position
-	var flat := to - from; flat.y = 0
-	if flat.length() > 0.1:
-		rotation.y = atan2(-flat.x, -flat.z)
-	flight = {"from": from, "to": to, "ctrl": Vector3((from.x + to.x) / 2, maxf(from.y, to.y) + 2.5, (from.z + to.z) / 2),
-		"dur": clampf(from.distance_to(to) / FLY, 0.8, 5.0), "k": 0.0, "then": then}
 	roost = null
-	go(State.ALERT, "Fly", 0.2)
+	travel(to, then, "Fly", 2.5, FLY)
 
 
 ## Dawn: up and away north, over the Colônia, and gone.

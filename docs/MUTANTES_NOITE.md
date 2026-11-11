@@ -17,7 +17,7 @@ Outra regra: nenhum deles anda como gente. O Interno e a Enfermeira caminham em 
 | | Sentido | Onde fica | O que o jogador faz | O que custa |
 |---|---|---|---|---|
 | **A Bruxa** (feita) | luz | nas cumeeiras dos telhados | pendura a lamparina no cinto | passa a enxergar pouco |
-| **O Poceiro** (planejado) | som | sai do poço do largo | anda agachado, não corre, evita lutar | fica lento perto dele |
+| **O Poceiro** (feito) | som | sai do poço do largo | anda agachado, não corre, evita lutar | fica lento perto dele |
 | **A Carpideira** (planejada) | vista | anda pelas vielas com uma vela | mata em silêncio (besta) ou se esconde | se ela grita, chama os outros dois |
 
 Os três se cruzam. Com a lamparina guardada, a Bruxa não acha o jogador, mas ele também não vê a Carpideira chegando. Correr da Bruxa acorda o Poceiro. A vela da Carpideira é a única outra luz no vilarejo à noite, e a Bruxa também vai atrás dela.
@@ -101,17 +101,81 @@ Capturas: `captures/demo_v30_bruxa_telhado.png`, `demo_v31_bruxa_voo.png` e `dem
 - Se os sons sintetizados servem. Dá para trocar por efeitos do ElevenLabs depois.
 - Se duas Bruxas por noite é o número certo (`BRUXAS` em `vilarejo.gd`).
 
-## O Poceiro (planejado)
+## O Poceiro (feito)
 
-Um homem enorme e cego que dorme no fundo do poço do largo. É ele que puxa os baldes de volta à noite.
+O homem que cavou o poço do largo, desceu e ficou lá embaixo. É ele quem puxa os baldes de volta à noite.
 
-- **Sai do poço quando escurece** e caça pelo **som**, não pela luz:
-  - os passos de quem corre e de quem trota;
-  - os golpes e o virote;
-  - o sino da capela.
-- Agachado e andando, o jogador passa por ele. A lamparina não importa.
-- É lento e forte: é melhor desviar dele do que lutar.
-- Uma nota do vilarejo ("os baldes voltam cheios de manhã") pode falar dele antes de o jogador vê-lo.
+### Visual (`tools/personagens/poceiro_build.py`)
+
+- Mede 2,16 m e é corcunda, com ombros enormes, braços longos e mãos do tamanho de pás.
+- **É cego.** A pele cresceu por cima dos olhos e só restaram duas covas com uma cicatriz. Tem orelhas grandes e rasgadas, e a cabeça está sempre inclinada, escutando.
+- A pele é pálida e encharcada, com limo verde. A boca fica frouxa, com poucos dentes.
+- Veste um macacão de trabalho podre e botas de borracha até o joelho.
+- Leva uma corda na cintura com um **balde de lata** no quadril direito. É o aviso dele: o balde bate e a água chacoalha a cada passo, como as chaves da Enfermeira.
+- O modelo tem 1364 triângulos e 16 ossos, no mesmo kit dos outros.
+- Animações:
+  - `Idle`: parado, escutando; a cabeça pende para um lado e depois para o outro, e a respiração é pesada.
+  - `Listen`: congela com um som, vira a cabeça para ele e ergue a mão perto da orelha.
+  - `Walk`: passada pesada e cambaleante; faz 1,68 m/s em 1x.
+  - `Attack`: junta os punhos no alto e desce como uma marreta no quadro 20.
+  - `Hit`: é jogado para trás.
+  - `Death`: os joelhos cedem e ele cai de cara.
+  - `Climb`: sobe (ou desce) a parede do poço, uma mão por cima da outra.
+- Renders: `renders/poceiro/` e a folha `renders/poceiro/poceiro_folha.png`.
+
+### Comportamento (`godot_demo/scripts/enemies/poceiro.gd`, estende `Enemy`)
+
+- **Chegada:** ao anoitecer, ele sobe pelo poço do largo com a água escorrendo, sai pela borda e fica de pé ao lado.
+- **No amanhecer**, volta ao poço e desce. Se morrer, o corpo some na noite seguinte.
+- **Caça só pelo som.** Luz e vista não contam. A cada quadro ele ouve o jogador até uma distância que depende do que o jogador faz:
+
+  | O que o jogador faz | Ouvido até |
+  |---|---|
+  | correndo | 16 m |
+  | trotando (o passo normal) | 9 m |
+  | andando (Ctrl) | 4 m |
+  | agachado andando | 1,5 m |
+  | parado | 1,2 m (é a distância em que ele sente o jogador) |
+  | golpe, virote, bloqueio, esquiva ou dano | 14 m |
+
+- **Vai até o som, não até o jogador.** Ao ouvir algo, ele urra, vira a cabeça e anda até o lugar do barulho a 1,9 m/s, mais rápido que o trote e mais lento que a corrida.
+  - Se o jogador se cala e se afasta, ele chega ao lugar, escuta por 3 s e volta a vagar em volta do poço.
+- **De perto, ele sente o jogador mesmo parado.** O golpe de dois punhos tira **2** de vida.
+- **Vida:** 10. Ser atingido conta a ele onde o jogador está. É melhor passar por ele do que lutar.
+- **O sino da capela**, que ninguém toca, faz ele ir até a porta da igreja.
+- A luta contra a Bruxa faz barulho: golpes e dano chamam o Poceiro.
+
+### Sons (`tools/sons/poceiro_sons.py`)
+
+Todos foram sintetizados localmente.
+
+- `poceiro_balde` (loop): o balde de lata batendo e a água, a cada passo.
+- `poceiro_respira_1..2`: respiração molhada, com bolhas.
+- `poceiro_rugido_1..2`: um urro grave e encharcado, quando ele ouve, golpeia ou é ferido.
+- `poceiro_queda`: a queda na morte.
+- `poceiro_agua`: a água escorrendo quando ele sai do poço ou desce de volta.
+- Os passos usam o `mutante_passo` do Interno.
+
+### Testes (`vilarejo.tscn -- --autotest`, `poceiro_tests`)
+
+Os testes conferem que:
+- ao anoitecer, ele sobe pelo poço e fica ao lado;
+- agachado e parado a 5 m, o jogador não é ouvido;
+- uma corrida a 14 m é ouvida e ele urra;
+- ele vai até o lugar do som (e não até o jogador) e escuta;
+- de perto, o golpe tira 2;
+- ser atingido conta onde o jogador está;
+- o sino o leva até a igreja;
+- no amanhecer, ele desce o poço.
+
+Capturas: `captures/demo_v33_poceiro_poco.png` e `demo_v34_poceiro_golpe.png`.
+
+### Para o autor testar no jogo
+
+- As distâncias de audição e se o trote (9 m) deixa explorar com ele por perto.
+- Se 2 de dano por golpe é pesado demais (`attack_damage`).
+- Se os sons sintetizados servem.
+- A ideia da nota que fala dele ("os baldes voltam cheios de manhã") continua em aberto.
 
 ## A Carpideira (planejada)
 

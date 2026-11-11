@@ -107,6 +107,7 @@ func run() -> void:
 	await notes_suite()
 	await day_tests()
 	await bruxa_tests()
+	await poceiro_tests()
 
 
 
@@ -234,6 +235,7 @@ func bruxa_tests() -> void:
 		"at nightfall %d bruxas perch on roof ridges (%d ridges, %d up there)" % [L.bruxas.size(), L.perches.size(), up.size()])
 	for b in L.bruxas:
 		b.active = false
+	L.poceiro.active = false  # (poceiro_tests)
 	var b: Bruxa = null; var spot := Vector3.INF
 	for c in L.bruxas:
 		spot = _below(c.roost)
@@ -276,6 +278,69 @@ func bruxa_tests() -> void:
 	WorldTime.reset(6 * 60 + 1); L.day._step(0.0)
 	var gone := await until(func(): return not is_instance_valid(b), 8.0)
 	check(gone, "at dawn the living fly off over the Colônia and are gone")
+	L.night_watch = false
+
+
+# --- O Poceiro (../docs/MUTANTES_NOITE.md): up out of the well at night, hunts by ear, back down at dawn ----------
+func poceiro_tests() -> void:
+	var map: RID = L.get_world_3d().navigation_map
+	WorldTime.reset(10 * 60); L.day._step(0.0)
+	L.night_watch = true; await wait(0.3)
+	await _lantern(false)
+	put(player, L.ground(-1.0, 24.0), PI)
+	Audio.heard.clear(); player.health = 99
+	WorldTime.reset(21 * 60); L.day._step(0.0); await wait(0.3)
+	for b in L.bruxas:
+		b.active = false
+	var p: Poceiro = L.poceiro
+	check(p != null and not p.flight.is_empty() and p.global_position.y < p.mouth.y, "at nightfall something climbs up the well")
+	var out := await until(func(): return p.flight.is_empty() and p.state == Enemy.State.IDLE, 8.0)
+	await wait(0.5)
+	check(out and p.is_on_floor() and p.global_position.distance_to(p.beside) < 0.8 and "poceiro_agua" in Audio.heard,
+		"O Poceiro hauls himself out, water pouring off him, and stands by the well (%.2f m off)" % p.global_position.distance_to(p.beside))
+	p.pause = 999.0  # he stays put between the hearing checks
+	var near: Vector3 = NavigationServer3D.map_get_closest_point(map, p.global_position + Vector3(0, 0, 5.0))
+	var d := p.global_position - near
+	put(player, near, atan2(-d.x, -d.z)); await wait(0.6); await shot("v33_poceiro_poco")
+	player.crouch(); await wait(2.5)
+	check(player.mode == Player.Mode.CROUCH and p.state == Enemy.State.IDLE and p.heard_at == Vector3.INF,
+		"crouched and still %.1f m from him: he does not hear you" % player.global_position.distance_to(p.global_position))
+	player.crouch(); await until(func(): return player.action == "", 2.0)
+	put(player, NavigationServer3D.map_get_closest_point(map, p.global_position + Vector3(0, 0, 12.0)), PI)
+	Audio.heard.clear()
+	Input.action_press("sprint"); await walk(1.0); Input.action_release("sprint")
+	var heard := await until(func(): return p.state in [Enemy.State.ALERT, Enemy.State.CHASE], 2.0)
+	check(heard and "poceiro_rugido" in Audio.heard, "a sprint %.0f m off: he hears it and roars" % player.global_position.distance_to(p.global_position))
+	var spot: Vector3 = p.heard_at
+	put(player, NavigationServer3D.map_get_closest_point(map, spot + Vector3(5.0, 0, 0)), PI); player.crouch()
+	var h0 := player.health
+	var there := await until(func(): return p.listening > 0.0, 15.0)
+	check(there and p.global_position.distance_to(spot) < 1.6 and player.health == h0,
+		"he goes to where the sound was, not to you, and stands listening (%.1f m from it)" % p.global_position.distance_to(spot))
+	player.crouch(); await until(func(): return player.action == "", 2.0)
+	await until(func(): return p.listening <= 0.0, Poceiro.LISTEN + 1.0)
+	var front: Vector3 = p.global_position - p.global_basis.z * 1.1
+	d = p.global_position - front
+	put(player, NavigationServer3D.map_get_closest_point(map, front), atan2(-d.x, -d.z))
+	h0 = player.health
+	var hit := await until(func(): return player.health <= h0 - 2.0, 6.0)
+	await shot("v34_poceiro_golpe")
+	check(hit, "at arm's length the blind man feels you: the two-fisted blow takes 2 (%.0f -> %.0f)" % [h0, player.health])
+	await until(func(): return p.state == Enemy.State.CHASE and player.action == "", 4.0)
+	put(player, NavigationServer3D.map_get_closest_point(map, p.global_position + Vector3(-7.0, 0, 6.0)), 0.0); player.crouch()
+	await wait(0.3)
+	p.take_hit(1)
+	check(p.heard_at.distance_to(player.global_position) < 0.5, "a hit tells him where you are")
+	await until(func(): return p.state != Enemy.State.HIT, 2.0)
+	L._bell()
+	var door: Vector3 = L.marker("porta_capela").position
+	var d0 := p.global_position.distance_to(door)
+	await wait(4.0)
+	check(p.heard_at.distance_to(door) < 0.5 and p.global_position.distance_to(door) < d0 - 3.0,
+		"the chapel bell draws him to the church (%.1f -> %.1f m)" % [d0, p.global_position.distance_to(door)])
+	WorldTime.reset(6 * 60 + 1); L.day._step(0.0)
+	var gone := await until(func(): return not is_instance_valid(p), 30.0)
+	check(gone, "at dawn he goes back to the well and down it")
 	L.night_watch = false
 
 
