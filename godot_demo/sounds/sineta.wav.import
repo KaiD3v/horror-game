@@ -2,13 +2,13 @@
 
 importer="wav"
 type="AudioStreamWAV"
-uid="uid://yq4sy8j7fdey"
-path="res://.godot/imported/apito.wav-72ad89951c3d8e69cd06517b197ff711.sample"
+uid="uid://chp8l0fj1vjau"
+path="res://.godot/imported/sineta.wav-521f1d63a6e5a4510f1e137b584ac2f2.sample"
 
 [deps]
 
-source_file="res://sounds/apito.wav"
-dest_files=["res://.godot/imported/apito.wav-72ad89951c3d8e69cd06517b197ff711.sample"]
+source_file="res://sounds/sineta.wav"
+dest_files=["res://.godot/imported/sineta.wav-521f1d63a6e5a4510f1e137b584ac2f2.sample"]
 
 [params]
 

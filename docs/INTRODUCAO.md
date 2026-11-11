@@ -127,7 +127,8 @@ do tempo com ele e com a mãe. São cerca de 2 minutos no total, e dá para pula
 **Ato 1: o parlatório, 1955** (`Abertura`, em sépia, uns 15 s)
 - Um menino do lado das visitas e a mãe do outro lado da tela de arame, contra a janela.
 - As mãos dos dois na tela, uma de cada lado, e a fala dela em legenda: "Eu vou te buscar."
-- Um apito; o menino é puxado para trás, e a mão dela fica na tela.
+- A sineta da enfermeira (o fim da visita); o menino é puxado para trás. As mãos são só do close; no plano aberto elas
+  não aparecem.
 - O parlatório é o mesmo cenário (`Parlatorio`) que agora existe na Colônia, ao lado da portaria. Pela portaria se entra
   do lado das visitas, pelo pátio do lado dos internos, e a tela não deixa passar.
 
@@ -160,12 +161,13 @@ do tempo com ele e com a mãe. São cerca de 2 minutos no total, e dá para pula
   - a câmera própria, com um movimento por vez (`cam_tw`), cancelado a cada corte;
   - esperas que encurtam quando a cena é pulada.
 - As pessoas da `Abertura` são os próprios modelos do jogo com os clipes que já existem. O menino é o protagonista em
-  0,62 de escala, e a mãe é o modelo da benzedeira com a camisola clara das internas. As mãos são blocos, e o rosto da
-  foto vem de uma câmera pequena apontada para ela no cenário do parlatório.
+  0,62 de escala. A mãe tem modelo próprio (`npc_mae`, `tools/personagens/npcs/mae.py`): interna de uns 30 anos, com a
+  camisola clara, o cabelo preso, a pulseira de paciente e chinelos de pano. As mãos do close são blocos com a pele de
+  cada um (o material do próprio modelo), e o rosto da foto vem de uma câmera pequena apontada para ela no parlatório.
 - As quatro folhas (carta, ofício, foto, recorte) ficam no caderno, em Notas.
 - Sons do ElevenLabs:
   - versão 1: `caminhao_partindo`, `viga_cedendo`, `papel_desdobrar` (45 créditos);
-  - versão 2: `apito`, `onibus`, `lata_abrir` (37 créditos).
+  - versão 2: `onibus`, `lata_abrir` e `sineta` (45 créditos no total). A `sineta` substituiu um apito que soou mal.
 - Testes:
   - `test_abertura.gd`: a abertura inteira, com uma captura a cada 1,5 s (`demo_abertura_<plano>_<n>`), e `--only=skip`;
   - `test_vilarejo.gd` `intro_tests`: a chegada inteira e pulada;

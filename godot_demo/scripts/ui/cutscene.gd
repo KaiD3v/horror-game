@@ -87,12 +87,13 @@ func cam_tw() -> Tween:
 	return moving
 
 
-## Wait s seconds, or less if skipped.
+## Wait s seconds, or less if skipped. (A frame counts 0.1 s at most: a hitch, a shader compiling on a cut, would
+## otherwise eat a whole shot.)
 func wait(s: float) -> void:
 	var t := 0.0
 	while t < s and not skipped:
 		await get_tree().process_frame
-		t += get_process_delta_time()
+		t += minf(get_process_delta_time(), 0.1)
 
 
 func cut() -> void:  # a short dip to black between two shots
