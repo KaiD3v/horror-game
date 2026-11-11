@@ -44,7 +44,7 @@ const DODGE_DIR := {"Dodge_Back": Vector3.BACK, "Dodge_Left": Vector3.LEFT, "Dod
 const HIT_TIME := {"Attack_Slash": 10.0 / 30.0, "Attack_Overhead": 13.0 / 30.0}
 const HIT_DAMAGE := {"Attack_Slash": 1, "Attack_Overhead": 2}
 const HIT_RANGE := 1.6
-const STEP_EASE := 1.8        # m/s: how fast the body catches up with the root after a step (Steps)
+const STEP_EASE := 12.0       # 1/s: how fast the body catches up with the root after a step (Steps): quick at first
 const WEAPON_ITEM := {Mode.COMBAT: "facao", Mode.XBOW: "besta"}  # what you need to have (Inventory) to hold it
 const COMBO_FROM := 12.0 / 30.0   # LMB after this point of a slash queues the overhead chop
 # Over-the-shoulder camera (right shoulder). Combat pulls in closer and further aside, so the target stays clear.
@@ -461,7 +461,9 @@ func _physics_process(delta: float) -> void:
 		var dy := global_position.y - y0
 		if is_on_floor() and absf(dy) > 0.05 and absf(dy) <= Steps.SNAP:  # up or down a step: the body eases after
 			step_lag -= dy
-	step_lag = move_toward(step_lag, 0.0, STEP_EASE * delta)
+	step_lag = lerpf(step_lag, 0.0, minf(1.0, STEP_EASE * delta))
+	if absf(step_lag) < 0.002:
+		step_lag = 0.0
 	model.position.y = step_lag
 
 	# facing: exploring turns towards the movement, combat faces where the camera looks (strafe)

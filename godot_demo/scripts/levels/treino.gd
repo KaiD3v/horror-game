@@ -43,9 +43,11 @@ func _course() -> void:
 	Climbable.make(self, Vector3(6, 0, -9.225), 0.0, 3.5, Vector2(2.0, 2.35), [Vector3.BACK])  # its holds: the face only
 
 
-## Off to the west: a flight of five 20 cm stairs up to a landing 1 m high, and a 60 cm block too high to step onto.
+## Off to the west: a flight of five 20 cm stairs up to a landing 1 m high, a 45 cm step (a porch's), and a 60 cm block
+## too high to step onto.
 func _stairs() -> void:
 	var rock := Looks.triplanar("stone", 1.0, Color(0.7, 0.68, 0.64))
 	Steps.flight(self, Vector3(-9, 0, 3.5), 0.0, 5, 0.2, 0.35, 2.0, rock)
 	Looks.box(self, Vector3(-9, 0.5, 1.25), Vector3(2, 1, 1), rock)
 	Looks.box(self, Vector3(-12.5, 0.3, 2.5), Vector3(1.5, 0.6, 1), rock)
+	Looks.box(self, Vector3(-6, 0.225, 2.5), Vector3(1.5, 0.45, 1), rock)   # a porch's stone step: 45 cm

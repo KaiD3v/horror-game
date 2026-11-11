@@ -5,8 +5,9 @@
 # stairs (and future staircases are just that).
 class_name Steps
 
-const MAX := 0.4      # the highest step taken in stride (= the village navmesh's agent climb)
-const SNAP := 0.45    # how far down a body keeps to the floor when it walks off an edge
+const MAX := 0.55     # the highest step taken in stride: a porch's stone step (45 cm) on uneven ground. The enemies'
+                      # navmesh keeps them to its own agent climb (0.4 in the village); this is what their legs can do
+const SNAP := 0.6     # how far down a body keeps to the floor when it walks off an edge (a step down, MAX and a margin)
 const AHEAD := 0.12   # how far past the edge it looks for the step's top
 
 

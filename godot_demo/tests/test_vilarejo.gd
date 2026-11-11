@@ -493,3 +493,15 @@ func _below(p: Vector3) -> Vector3:
 		if NavigationServer3D.map_get_closest_point(w.navigation_map, q).distance_to(q) < 0.3 				and w.direct_space_state.intersect_ray(rq).is_empty():
 			return q
 	return Vector3.INF
+
+
+# --- the armaria's porch (Steps): from the foot of its stone step he walks up onto the deck --------------------------
+func porch_tests() -> void:
+	var door: Node3D = L.marker("porta_armaria")
+	put(player, door.position, door.rotation.y); player.pivot.rotation.y = door.rotation.y
+	await wait(0.4)
+	var y0 := player.global_position.y
+	Input.action_press("forward"); await wait(1.6); Input.action_release("forward")
+	await wait(0.3); await shot("v40_alpendre")
+	check(player.global_position.y - y0 > 0.4 and player.is_on_floor(),
+		"from the foot of the armaria's step, W: up onto the porch (%.2f m up)" % (player.global_position.y - y0))

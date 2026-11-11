@@ -671,6 +671,13 @@ func steps_tests() -> void:
 	Input.action_release("forward")
 	check(player.global_position.y < 0.05 and player.global_position.z >= 4.3 and airborne <= 2,
 		"...and down them on his feet, not hopping off each step (%d frames in the air)" % airborne)
+	put(player, Vector3(-6, 0, 3.6), 0.0); player.pivot.rotation.y = 0.0; await wait(0.3)
+	Input.action_press("forward")
+	var high := await until(func(): return player.global_position.y > 0.4 and player.global_position.z < 2.6, 2.0)
+	await shot("61_degrau_alto")
+	Input.action_release("forward"); await wait(0.4)
+	check(high and absf(player.global_position.y - 0.45) < 0.03 and absf(player.model.position.y) < 0.02,
+		"a 45 cm step (a porch's): up it in stride (y %.2f)" % player.global_position.y)
 	put(player, Vector3(-12.5, 0, 3.6), 0.0); player.pivot.rotation.y = 0.0; await wait(0.3)
 	Input.action_press("forward"); await wait(1.2); Input.action_release("forward")
 	check(player.global_position.y < 0.05 and player.global_position.z > 3.0, "a 60 cm block is no step: it stops him (y %.2f)" % player.global_position.y)
