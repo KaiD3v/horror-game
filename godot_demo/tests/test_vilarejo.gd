@@ -4,6 +4,7 @@ extends AutoTest
 
 
 func run() -> void:
+	L.night_watch = false  # no bruxas while the rest is tested (bruxa_tests lets the night in)
 	await wait(1.5); await shot("v1_chegada")
 	var bodies = L.village.find_children("*", "StaticBody3D", true, false).size()
 	check(bodies >= 20, "village colliders imported from the GLB suffixes (%d bodies)" % bodies)
@@ -105,6 +106,7 @@ func run() -> void:
 	L.enemy.active = false; put(L.enemy, L.ground(-30.0, 40.0), 0.0)
 	await notes_suite()
 	await day_tests()
+	await bruxa_tests()
 
 
 
@@ -216,3 +218,81 @@ func day_tests() -> void:
 	WorldTime.reset(11 * 60 + 59); L.day._step(0.0); L.day._step(2.0); await wait(0.1)
 	check(L.hud.message.visible and L.hud.message.text.begins_with("Tarde"), "the period is told as it begins: \"%s\"" % L.hud.message.text)
 	Weather.force(1.0, 1.0)
+
+
+# --- A Bruxa (../docs/MUTANTES_NOITE.md): on the roofs at night, down to the lantern, gone at dawn ---------------
+func bruxa_tests() -> void:
+	WorldTime.reset(10 * 60); Weather.force(0.0, 0.3); L.day._step(0.0)
+	player.health = 99; player.pitch.rotation.x = 0.2
+	put(player, L.ground(0.0, 40.0), PI)
+	L.night_watch = true; await wait(0.3)
+	check(L.bruxas.is_empty(), "by day there is no bruxa in the village")
+	await _lantern(false)  # on the belt while they settle: nothing calls them yet
+	WorldTime.reset(21 * 60); L.day._step(0.0); await wait(0.5)
+	var up: Array = L.bruxas.filter(func(b): return b.roost != null and b.global_position.distance_to(b.roost) < 0.4)
+	check(L.bruxas.size() == L.BRUXAS and up.size() == L.BRUXAS and L.perches.size() >= 8,
+		"at nightfall %d bruxas perch on roof ridges (%d ridges, %d up there)" % [L.bruxas.size(), L.perches.size(), up.size()])
+	for b in L.bruxas:
+		b.active = false
+	var b: Bruxa = null; var spot := Vector3.INF
+	for c in L.bruxas:
+		spot = _below(c.roost)
+		if spot != Vector3.INF:
+			b = c; break
+	check(b != null, "open ground in plain view of a roof (%s)" % spot)
+	if b == null:
+		return
+	var d := b.global_position - spot
+	put(player, spot, atan2(-d.x, -d.z))
+	await _lantern(true); await wait(1.2)
+	check(player.lantern_out and b.shine.emission_energy_multiplier > 2.0,
+		"her eyes throw the lantern back from the roof (%.1f)" % b.shine.emission_energy_multiplier)
+	Audio.heard.clear(); b.active = true
+	var stare := await until(func(): return b.watching > 1.1, 3.0)
+	var facing := (-b.global_basis.z).dot((player.global_position - b.global_position) * Vector3(1, 0, 1)) / (player.global_position - b.global_position).length()
+	await shot("v30_bruxa_telhado")
+	check(stare and facing > 0.8 and b.state == Enemy.State.IDLE, "the lantern catches her eye: she turns on the roof and stares at it (%.2f)" % facing)
+	var flew := await until(func(): return not b.flight.is_empty(), 4.0)
+	check(flew and "bruxa_estalo" in Audio.heard, "then she clicks, opens her wings, leaves the roof")
+	await wait(0.5); await shot("v31_bruxa_voo")
+	var down := await until(func(): return b.state == Enemy.State.CHASE, 6.0)
+	var dist := b.global_position.distance_to(player.global_position)
+	check(down and b.is_on_floor() and dist < Bruxa.ORBIT + 1.5, "she glides down to the light (%.1f m off)" % dist)
+	var h0 := player.health
+	var hit := await until(func(): return player.health < h0, 12.0)
+	await shot("v32_bruxa_ataque")
+	check(hit, "she circles the light and darts in to rake at it (health %.1f -> %.1f)" % [h0, player.health])
+	await until(func(): return b.state == Enemy.State.CHASE and not b.darting, 3.0)
+	await _lantern(false)
+	var lost := await until(func(): return b.searching > 0.0, 4.0)
+	check(lost and not player.lantern_out, "the lantern hung on the belt: she loses you, hunts round where it went out")
+	var away := player.global_position - b.global_position; away.y = 0
+	put(player, NavigationServer3D.map_get_closest_point(L.get_world_3d().navigation_map, player.global_position + away.normalized() * 9.0), 0.0)
+	var home := await until(func(): return b.roost != null and b.flight.is_empty() and b.state == Enemy.State.IDLE, Bruxa.SEARCH_TIME + 8.0)
+	check(home, "then flies back up to a roof (%s)" % b.roost)
+	var other: Bruxa = L.bruxas[1] if L.bruxas[0] == b else L.bruxas[0]
+	other.take_hit(3)
+	check(other.state == Enemy.State.DEAD and not other.is_in_group("enemy"), "a bolt (3) kills one")
+	WorldTime.reset(6 * 60 + 1); L.day._step(0.0)
+	var gone := await until(func(): return not is_instance_valid(b), 8.0)
+	check(gone, "at dawn the living fly off over the Colônia and are gone")
+	L.night_watch = false
+
+
+## The lantern in hand (true) or on the belt, once he is free to move it.
+func _lantern(on: bool) -> void:
+	await until(func(): return player.action == "" and player.mode == Player.Mode.EXPLORE, 3.0)
+	if player.lantern_out != on:
+		player.toggle_lantern()
+
+
+## Open ground (on the navmesh) about 11 m from the roof ridge p, in plain view of it.
+func _below(p: Vector3) -> Vector3:
+	var w: World3D = L.get_world_3d()
+	for i in 24:
+		var a := TAU * i / 24.0
+		var q: Vector3 = L.ground(p.x + cos(a) * 11.0, p.z + sin(a) * 11.0)
+		var rq := PhysicsRayQueryParameters3D.create(p + Vector3(0, 1.2, 0), q + Vector3(0, 1.3, 0), 1)
+		if NavigationServer3D.map_get_closest_point(w.navigation_map, q).distance_to(q) < 0.3 				and w.direct_space_state.intersect_ray(rq).is_empty():
+			return q
+	return Vector3.INF

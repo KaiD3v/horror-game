@@ -29,6 +29,11 @@ static func period() -> Dictionary:
 	return DayData.PERIODS[int(minute_of_day() / 360.0)]
 
 
+## Noite and madrugada (18:00-05:59): when the night mutants are out (vilarejo.gd).
+static func is_night() -> bool:
+	return period().id in ["noite", "madrugada"]
+
+
 ## The game minute the current period began at (on the absolute clock).
 static func period_start() -> float:
 	return floorf(minutes / 360.0) * 360.0

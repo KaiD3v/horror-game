@@ -2,6 +2,7 @@
 # Colliders come from the GLB's name suffixes (-col, -colonly); the navmesh is baked at load over the playable
 # area. Fog does the rest: about 25 m of sight, thicker down in the valley. The GLB's markers place everything:
 # spawn_jogador, spawn_mutante, npc_<who>, porta_<interior>, corvo_NN, varal_*, marca_carcaca.
+# At night (noite, madrugada) the night mutants come (../docs/MUTANTES_NOITE.md): A Bruxa on the roof ridges.
 extends Level
 
 # the road through the village (Godot x, z), south to north: puddles gather on it (Clima)
@@ -26,6 +27,11 @@ var haze: Array[ShaderMaterial] = []  # the far shapes' materials (DayCycle move
 var wind: AudioStreamPlayer
 var bell_at: Vector3          # up in the chapel tower
 var creakers: Array[Vector3] = []
+const BRUXAS := 2             # perched on the roofs each night
+var bruxas: Array[Bruxa] = []
+var perches: Array[Vector3] = []  # the roof ridges (found at the first nightfall, once the colliders are in)
+var night := false
+var night_watch := true       # the autotest holds the night back until it tests it
 
 
 func _init() -> void:
@@ -58,6 +64,36 @@ func _started() -> void:
 	_ambience()
 	_life()
 	day = DayCycle.outdoors(self, env, sun, haze, clima)  # the hour and the weather light it from here on
+
+
+func _process(_delta: float) -> void:
+	if night_watch and WorldTime.is_night() != night:
+		night = not night
+		if night:
+			_nightfall()
+		else:
+			for b in bruxas:
+				if is_instance_valid(b):
+					b.leave()
+
+
+## The bruxas settle on roofs away from the player (last night's dead are cleared away).
+func _nightfall() -> void:
+	if perches.is_empty():
+		for c in Nodes.children_named(village, "casa_"):
+			var hit := ray(c.position.x, c.position.z)
+			if hit and hit.position.y - c.position.y > 3.5:  # a roof over it (the ruins have none)
+				perches.append(hit.position)
+	for b in bruxas:
+		if is_instance_valid(b):
+			b.queue_free()
+	bruxas.clear()
+	var far := perches.filter(func(p): return p.distance_to(player.global_position) > 12.0)
+	far.shuffle()
+	for p in far.slice(0, BRUXAS):
+		var b := Bruxa.new(); b.roosts = perches
+		add_enemy(b, p, randf() * TAU); b.perch_on(p)
+		bruxas.append(b)
 
 
 func marker(n: String) -> Node3D:  # the village GLB sits at the origin: its markers' positions are world positions
