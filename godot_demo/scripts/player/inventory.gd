@@ -3,7 +3,7 @@
 class_name Inventory
 
 const START_MONEY := 40
-const START_ITEMS := {"virote": 6, "atadura": 1}
+const START_ITEMS := {"lamparina": 1, "virote": 6, "atadura": 1}  # of the tools, only the lantern
 
 static var money := START_MONEY
 static var items := START_ITEMS.duplicate()
@@ -15,6 +15,18 @@ static func reset() -> void:
 
 static func count(id: String) -> int:
 	return items.get(id, 0)
+
+
+## Whether you have it (what unlocks a weapon, a door, an offer); "" = nothing asked, always true.
+static func has(id: String) -> bool:
+	return id == "" or count(id) > 0
+
+
+## Every tool at once: the training room, the Colônia (no way in from the village yet) and the tests.
+static func give_tools() -> void:
+	for id in ItemCatalog.ITEMS:
+		if ItemCatalog.tool(id) and not has(id):
+			add(id)
 
 
 static func add(id: String, n := 1) -> void:

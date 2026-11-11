@@ -1,6 +1,7 @@
 # Something the player uses with E: a door, a paper to read, a bolt. Stand within `radius` (flat) and `height`
 # (up/down) of it and the HUD shows its prompt; E calls use(). The level's Interactor picks the nearest one.
-# Subclass and override _use(), or connect to `used`.
+# Subclass and override _use(), or connect to `used`. `requires` (an ItemCatalog id) locks it: without that item E
+# only says `refusal` (a door that needs a key, a well that needs a rope).
 class_name Interactable
 extends Node3D
 
@@ -9,6 +10,8 @@ signal used(by: Node3D)
 @export var prompt := "E · usar"
 @export var radius := 1.5
 @export var height := 1.6
+@export var requires := ""
+@export var refusal := ""   # "" = "Precisa de: <item>."
 var enabled := true
 
 
@@ -24,6 +27,10 @@ func reach(p: Vector3) -> float:
 
 
 func use(by: Node3D) -> void:
+	if not Inventory.has(requires):
+		if by is Player:
+			by.notice.emit(refusal if refusal != "" else "Precisa de: %s." % ItemCatalog.item(requires).nome)
+		return
 	_use(by)
 	used.emit(by)
 

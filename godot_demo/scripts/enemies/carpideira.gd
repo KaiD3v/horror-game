@@ -89,7 +89,7 @@ func sees(to: Vector3, dist: float) -> bool:
 	return _clear_line(global_position + Vector3(0, 1.6, 0))
 
 
-func take_hit(n: int) -> void:
+func take_hit(n: int, by := "") -> void:
 	if state == State.DEAD:
 		return
 	if target == null:
@@ -97,7 +97,7 @@ func take_hit(n: int) -> void:
 	var from := target.global_position - global_position; from.y = 0
 	if (-global_basis.z).dot(from.normalized()) < 0.0:
 		n = max_health  # from behind: she never saw it coming
-	super(n)
+	super(n, by)
 	if state == State.DEAD:  # the candle goes out
 		weeping.stop(); candle.remove_from_group("vela")
 		create_tween().tween_property(candle, "light_energy", 0.0, 0.8)

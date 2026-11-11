@@ -2,7 +2,8 @@
 # per weapon on it (WHEEL), its picture burnt in like an ex-voto (art: ../tools/texturas/roda_armas.py, at 2x).
 # The mouse (or WASD) points at one, and candlelight comes up behind it; letting go of Q puts it in his hands
 # (Player.equip: whatever he holds goes away first). A red ribbon is tied on the one he holds now.
-# A quick tap of Q, pointing at nothing, puts away the weapon in hand.
+# A quick tap of Q, pointing at nothing, puts away the weapon in hand. A weapon he does not have yet (Player.owns,
+# ItemCatalog "ferramenta") is a dark tablet: pointed at, it says so; let go on it, nothing comes out.
 class_name WeaponWheel
 extends CanvasLayer
 
@@ -91,7 +92,8 @@ func _process(_delta: float) -> void:
 			aim = keys * REACH
 		picked = slice_at(aim)
 		centre.text = WHEEL[picked].nome if picked >= 0 else ""
-		note.text = (WHEEL[picked].nota % Inventory.count("virote") if "%d" in WHEEL[picked].nota
+		note.text = ("ainda não tem" if not player.owns(WHEEL[picked].mode)
+			else WHEEL[picked].nota % Inventory.count("virote") if "%d" in WHEEL[picked].nota
 			else WHEEL[picked].nota) if picked >= 0 else "aponte com o mouse"
 		ring.queue_redraw()  # the candle flickers
 
@@ -140,14 +142,16 @@ func _draw_ring() -> void:
 	var flicker := 0.85 + 0.1 * sin(Time.get_ticks_msec() * 0.013) + 0.05 * sin(Time.get_ticks_msec() * 0.031)
 	for i in WHEEL.size():
 		var at := c + slice_dir(i) * RADIUS * PX
-		var lit := i == picked
+		var locked := not player.owns(WHEEL[i].mode)  # not found / bought yet: a dark, empty tablet
+		var lit := i == picked and not locked
 		if lit:
 			var g: Texture2D = art.brilho
 			ring.draw_texture_rect(g, Rect2(at - g.get_size() * PX / 2, g.get_size() * PX), false, Color(1, 1, 1, flicker))
 		var p: Texture2D = art["placa_" + WHEEL[i].arte]
 		var top := (at - p.get_size() * PX / 2 + Vector2(0, -2.0 * PX if lit else 0.0)).round()  # pointed: lifted 2 texels
 		ring.draw_texture_rect(p, Rect2(top, p.get_size() * PX), false,
-			Color(1.25 * flicker + 0.1, 1.1 * flicker + 0.05, 0.9) if lit else Color(0.72, 0.68, 0.64))
+			Color(1.25 * flicker + 0.1, 1.1 * flicker + 0.05, 0.9) if lit else Color(0.3, 0.28, 0.27, 0.6) if locked
+			else Color(0.72, 0.68, 0.64))
 		if WHEEL[i].mode == _holding():
 			var f: Texture2D = art.fita
 			ring.draw_texture_rect(f, Rect2(top + Vector2(p.get_width() - 7, -3) * PX, f.get_size() * PX), false)

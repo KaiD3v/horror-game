@@ -91,9 +91,17 @@ Gancho da missão (a definir): o filho de Dona Firmina foi levado para a Colôni
   | Seu Bento | garrafada de arnica (fecha 2) | Cr$ 18 | 2 |
   | Tenório (Armas e Munição) | 3 virotes | Cr$ 9 | sem limite |
   | Tenório | 8 virotes | Cr$ 20 | 3 |
+  | Tenório | facão | Cr$ 10 | 1 |
+  | Tenório | besta | Cr$ 20 | 1 |
+
+  Os virotes só se compram depois da besta (`requires` na oferta). Sem ela, o Tenório pergunta com que você vai
+  atirar. Uma ferramenta que você já tem aparece como "já tem".
 
 - **O inventário** (`Inventory`) continua entre as cenas e volta ao início num jogo novo. O estoque das lojas também.
-  - Um jogo novo começa com Cr$ 40, 6 virotes e 1 atadura.
+  - Um jogo novo começa com a lamparina, Cr$ 40, 6 virotes e 1 atadura. Facão e besta se compram na armaria.
+  - **Itens que desbloqueiam** (`tipo: "ferramenta"`, ver `docs/ARQUITETURA.md`): sem o facão ou a besta, a placa
+    da roda fica escura ("ainda não tem") e as teclas 1 e 2 só dizem "Sem facão." / "Sem besta.".
+  - A sala de treino e a Colônia dão todas as ferramentas ao abrir (são cenas de teste, sem entrada pelo vilarejo).
   - Cada recarga da besta tira um virote da aljava. Sem virotes não há recarga, e a mira mostra quantos restam.
   - F usa o primeiro curativo que tiver.
 - **Ainda não dá para ganhar dinheiro.** Isso fica para depois, por exemplo com saques, missões ou o corpo dos mutantes.

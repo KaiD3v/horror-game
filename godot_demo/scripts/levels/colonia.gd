@@ -35,6 +35,7 @@ func _init() -> void:
 
 
 func _build() -> void:
+	Inventory.give_tools()  # no way in from the village yet: armed as for a test
 	env = Looks.environment(self, Atmospheres.COLONIA)
 	var moon: Array = Atmospheres.MOON; Looks.sky_light(self, moon[0], moon[1], moon[2])
 	Looks.omni(self, Vector3(0, 1.4, -17.3), Color(1.0, 0.7, 0.4), 1.4, 8.0)  # the church reads as safe from across the yard

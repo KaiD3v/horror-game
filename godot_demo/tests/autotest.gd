@@ -23,7 +23,7 @@ func _ready() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(Paths.CAPTURES))
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if L is Level:
-		Inventory.reset(); Shop.reset()
+		Inventory.reset(); Inventory.give_tools(); Shop.reset()  # the tests hold every weapon (their own test takes them away)
 		WorldTime.reset(16 * 60 + 30); Weather.force(1.0, 1.0)  # the same light every run: late afternoon, fog, drizzle
 		if L.day:
 			L.day._step(0.0)
@@ -216,4 +216,4 @@ func shop_suite() -> void:
 		check(menu.focused() == 1 % menu.rows.size(), "S moves down the list")
 		await tap("ui_cancel"); await wait(0.2)
 		check(not menu.visible and not get_tree().paused, "Esc leaves the shop")
-		Inventory.reset(); Shop.reset()
+		Inventory.reset(); Inventory.give_tools(); Shop.reset()

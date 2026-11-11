@@ -88,6 +88,8 @@ func buy(i: int) -> void:
 			line.text = "\"Isso é %s. Volta quando tiver.\"" % ItemCatalog.price(o.preco)
 		Shop.Result.SOLD_OUT:
 			line.text = "\"Acabou. Não vem mais nada lá de baixo.\""
+		Shop.Result.LOCKED:
+			line.text = "\"E vai atirar isso com quê? Arruma uma %s primeiro.\"" % ItemCatalog.item(o.requires).nome.to_lower()
 	_refresh()
 	_show(i)
 
@@ -97,9 +99,10 @@ func _refresh() -> void:
 		var o: Dictionary = Shop.offers(shop_id)[i]
 		var it := ItemCatalog.item(o.item)
 		var left := Shop.left(shop_id, i)
-		rows[i].text = it.nome + (" (%d)" % o.qtd if o.qtd > 1 else "") + ("  · esgotado" if left == 0 else "")
+		var owned := ItemCatalog.tool(o.item) and Inventory.has(o.item)
+		rows[i].text = it.nome + (" (%d)" % o.qtd if o.qtd > 1 else "") + ("  · já tem" if owned else "  · esgotado" if left == 0 else "")
 		prices[i].text = ItemCatalog.price(o.preco)
-		var col := GONE if left == 0 or Inventory.money < o.preco else INK
+		var col := GONE if left == 0 or Inventory.money < o.preco or not Inventory.has(o.get("requires", "")) else INK
 		for s in ["font_color", "font_pressed_color", "font_hover_pressed_color"]:
 			rows[i].add_theme_color_override(s, col)
 		for s in ["font_hover_color", "font_focus_color"]:
@@ -112,7 +115,9 @@ func _show(i: int) -> void:  # the chosen item: what it is, how many you have
 	var o: Dictionary = Shop.offers(shop_id)[i]
 	var it := ItemCatalog.item(o.item)
 	var left := Shop.left(shop_id, i)
-	desc.text = "%s\nVocê tem: %d%s" % [it.descricao, Inventory.count(o.item), "" if left < 0 else "   ·   restam %d" % left]
+	var need: String = o.get("requires", "")
+	desc.text = "%s\nVocê tem: %d%s%s" % [it.descricao, Inventory.count(o.item), "" if left < 0 else "   ·   restam %d" % left,
+		"" if Inventory.has(need) else "\nPrecisa de: %s" % ItemCatalog.item(need).nome]
 
 
 func focused() -> int:

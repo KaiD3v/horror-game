@@ -11,6 +11,7 @@ func _init() -> void:
 
 
 func _build() -> void:
+	Inventory.give_tools()  # the training room: every weapon to try
 	env = Looks.environment(self, Atmospheres.NIGHT)
 	var moon: Array = Atmospheres.MOON; Looks.sky_light(self, moon[0], moon[1], moon[2])
 	Looks.box(self, Vector3(0, -0.5, 0), Vector3(30, 1, 30), Looks.triplanar("stone", 0.6, Color(0.55, 0.53, 0.5)))

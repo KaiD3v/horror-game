@@ -25,6 +25,7 @@ var attack_hit := 18.0 / 30.0   # when in the Attack clip it connects
 var attack_cooldown := 0.6
 var attack_track := 0.5         # how much it can still turn to follow you during the wind-up
 var attack_damage := 1
+var weak_to: Array[String] = []  # ItemCatalog ids: only these hurt it ([] = anything does); the rest only SHRUG
 # event -> sound name (res://sounds, takes picked at random): idle (now and then), alert, attack, hurt, death, step.
 # Leave one out and it is silent there (A Enfermeira has none: no voice, no footsteps).
 var voice := {}
@@ -42,6 +43,7 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _grunt_in := randf_range(3.0, 8.0)
 var _stride := 0.0
 var flight := {}                # a travel() under way: from, ctrl, to, dur, k, then
+const SHRUG := "O golpe não lhe faz nada."
 const SAY := {  # event -> volume dB, unit size, max distance: the scream carries, the steps stay close
 	"idle": [-3.0, 4.0, 30.0], "alert": [4.0, 8.0, 60.0], "attack": [0.0, 5.0, 35.0], "hurt": [0.0, 5.0, 35.0],
 	"death": [2.0, 6.0, 45.0], "step": [-7.0, 3.0, 25.0]}
@@ -79,12 +81,17 @@ func say(event: String) -> void:
 		p.pitch_scale = randf_range(0.92, 1.06)
 
 
-func take_hit(n: int) -> void:
+## A blow of n from `by` (the ItemCatalog id that struck: "facao", "besta"). With weak_to set, only those hurt it.
+func take_hit(n: int, by := "") -> void:
 	if state == State.DEAD:
 		return
-	health -= n
 	if target == null:
 		target = get_tree().get_first_node_in_group("player")
+	if not weak_to.is_empty() and by not in weak_to:
+		if target is Player:
+			target.notice.emit(SHRUG)
+		return
+	health -= n
 	if health <= 0:
 		go(State.DEAD, "Death", 0.1)
 		remove_from_group("enemy")  # the corpse keeps its collision (it would fall through the floor) but takes no hits

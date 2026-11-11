@@ -187,6 +187,7 @@ func run() -> void:
 	sounds_heard()
 	await wound_tests()
 	await inventory_tests()
+	await unlock_tests()
 	player.health = 2
 
 	player.take_damage(2); await wait(1.8); await shot("9_dead")
@@ -429,4 +430,55 @@ func inventory_tests() -> void:
 	await tap("reload"); await wait(0.3)
 	check(not player.loaded and player.action == "" and L.hud.message.text == "Sem virotes.", "no bolts, no reload: \"%s\"" % L.hud.message.text)
 	await tap("crossbow"); await wait(1.4)
+	Inventory.reset(); Inventory.give_tools()
+
+
+# --- items that unlock things (ItemCatalog "ferramenta"): a new game has only the lantern -----------------------------
+func unlock_tests() -> void:
 	Inventory.reset()
+	check(Inventory.has("lamparina") and not Inventory.has("facao") and not Inventory.has("besta"), "a new game: the lantern, no machete, no crossbow")
+	await tap("draw"); await wait(1.2)
+	check(player.mode == Player.Mode.EXPLORE and not player.machete_in_hand() and L.hud.message.text == "Sem facão.",
+		"1 with no machete: nothing comes out (\"%s\")" % L.hud.message.text)
+	await tap("attack"); await wait(1.2)
+	check(player.mode == Player.Mode.EXPLORE and not player.machete_in_hand(), "...nor with a click")
+	var W: WeaponWheel = L.wheel
+	Input.action_press("weapons"); await wait(0.1); await _swipe(1)
+	check(W.note.text == "ainda não tem", "the wheel: the crossbow's tablet is dark (%s)" % W.note.text)
+	await shot("2w_wheel_locked")
+	Input.action_release("weapons"); await wait(1.4)
+	check(player.mode == Player.Mode.EXPLORE and not player.crossbow_in_hand(), "...let go on it, nothing comes out")
+	# a door that needs a key
+	var door := Interactable.new(); door.requires = "facao"; door.refusal = "O mato fechou a trilha."; L.add_child(door)
+	var opened := [0]; door.used.connect(func(_b): opened[0] += 1)
+	door.use(player)
+	check(opened[0] == 0 and L.hud.message.text == "O mato fechou a trilha.", "a locked way says why: \"%s\"" % L.hud.message.text)
+	# the shop: the bolts wait for the crossbow, a tool sells once
+	Inventory.money = 100
+	check(Shop.buy("armaria", 0) == Shop.Result.LOCKED and Inventory.count("virote") == 6, "no bolts for sale without the crossbow")
+	check(Shop.buy("armaria", 3) == Shop.Result.OK and Inventory.has("besta") and Shop.buy("armaria", 0) == Shop.Result.OK,
+		"the crossbow bought, then the bolts")
+	check(Shop.left("armaria", 3) == 0 and Shop.buy("armaria", 3) == Shop.Result.SOLD_OUT, "a crossbow is bought once")
+	Shop.reset()
+	# found lying about
+	var knife := Pickup.make(L, player.global_position, "facao")
+	await wait(0.2)
+	check(L.interactor.current == knife and L.hud.prompt.text == "E · pegar facão", "a machete on the floor: \"%s\"" % L.hud.prompt.text)
+	await tap("interact"); await wait(0.2)
+	check(Inventory.has("facao") and not is_instance_valid(knife), "E takes it")
+	check(Pickup.make(L, player.global_position, "facao").is_queued_for_deletion(), "a tool you already have is not lying there again")
+	door.use(player)
+	check(opened[0] == 1, "...and the way it locked opens")
+	door.queue_free()
+	await tap("draw"); await wait(1.3)
+	check(player.mode == Player.Mode.COMBAT and player.machete_in_hand(), "the machete found: 1 draws it")
+	await tap("draw"); await wait(1.3)
+	# a creature only some things hurt
+	var m: Mutante = L.add_enemy(Mutante.new(), Vector3(8, 0, 8), 0.0); m.active = false
+	m.weak_to = ["besta"]
+	m.take_hit(2, "facao")
+	check(m.health == m.max_health and L.hud.message.text == Enemy.SHRUG, "weak only to bolts: the machete does nothing (\"%s\")" % L.hud.message.text)
+	m.take_hit(2, "besta")
+	check(m.health == m.max_health - 2, "...a bolt does")
+	m.queue_free()
+	Inventory.reset(); Inventory.give_tools()

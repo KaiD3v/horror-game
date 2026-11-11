@@ -44,6 +44,7 @@ const DODGE_DIR := {"Dodge_Back": Vector3.BACK, "Dodge_Left": Vector3.LEFT, "Dod
 const HIT_TIME := {"Attack_Slash": 10.0 / 30.0, "Attack_Overhead": 13.0 / 30.0}
 const HIT_DAMAGE := {"Attack_Slash": 1, "Attack_Overhead": 2}
 const HIT_RANGE := 1.6
+const WEAPON_ITEM := {Mode.COMBAT: "facao", Mode.XBOW: "besta"}  # what you need to have (Inventory) to hold it
 const COMBO_FROM := 12.0 / 30.0   # LMB after this point of a slash queues the overhead chop
 # Over-the-shoulder camera (right shoulder). Combat pulls in closer and further aside, so the target stays clear.
 const CAM_EXPLORE := {"height": 1.55, "side": 0.45, "length": 1.7, "fov": 62.0}
@@ -185,6 +186,9 @@ func set_mode(m: Mode) -> void:
 ## What to hold (the weapon wheel, Q): whatever is in his hands goes away first (sheathe / holster / stand up),
 ## then the chosen one comes out, one clip after the other. EXPLORE = the lantern, no weapon.
 func equip(m: Mode) -> void:
+	if not owns(m):
+		notice.emit("Sem %s." % ItemCatalog.item(WEAPON_ITEM[m]).nome.to_lower())
+		return
 	wanted = m
 	_equip_next()
 
@@ -202,8 +206,13 @@ func _equip_next() -> void:
 		crouch()
 
 
+## Whether he has what that mode holds (WEAPON_ITEM; the lantern / crouching: always).
+func owns(m: Mode) -> bool:
+	return Inventory.has(WEAPON_ITEM.get(m, ""))
+
+
 func toggle_weapon() -> void:
-	if action != "" or mode == Mode.CROUCH or mode == Mode.XBOW:
+	if action != "" or mode == Mode.CROUCH or mode == Mode.XBOW or (mode == Mode.EXPLORE and not owns(Mode.COMBAT)):
 		return
 	if mode == Mode.EXPLORE:
 		play("Draw_Machete"); set_mode(Mode.COMBAT)   # the one-shot hides the switch underneath
@@ -298,7 +307,7 @@ func _track_lock(delta: float) -> void:
 
 
 func toggle_crossbow() -> void:  # exploring only; holstering = the draw backwards (the lantern back in hand)
-	if action != "":
+	if action != "" or (mode == Mode.EXPLORE and not owns(Mode.XBOW)):
 		return
 	if loaded:  # it travels uncocked in the holster; a loaded bolt goes back in the quiver
 		Inventory.add("virote")
@@ -486,7 +495,7 @@ func _tick_action(delta: float) -> void:
 			var to: Vector3 = e.global_position - global_position
 			to.y = 0
 			if to.length() < HIT_RANGE and (-global_basis.z).dot(to.normalized()) > 0.4:
-				e.take_hit(HIT_DAMAGE[action]); struck = true
+				e.take_hit(HIT_DAMAGE[action], WEAPON_ITEM[Mode.COMBAT]); struck = true
 		if struck:
 			sfx("facao_acerto", -2.0)
 	if action_t >= action_len:

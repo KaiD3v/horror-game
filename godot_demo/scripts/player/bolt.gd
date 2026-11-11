@@ -35,7 +35,7 @@ func _physics_process(delta: float) -> void:
 		flying = false
 		global_position = hit.position - vel.normalized() * 0.08  # stuck, the point buried
 		if hit.collider.is_in_group("enemy") and hit.collider.has_method("take_hit"):
-			hit.collider.take_hit(DAMAGE)
+			hit.collider.take_hit(DAMAGE, Player.WEAPON_ITEM[Player.Mode.XBOW])
 			reparent(hit.collider)  # rides along with what it hit
 	else:
 		look_at(to); global_position = to

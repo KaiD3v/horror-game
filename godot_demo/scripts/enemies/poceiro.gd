@@ -72,10 +72,10 @@ func hear(at: Vector3) -> void:
 	heard_at = at; fresh = true
 
 
-func take_hit(n: int) -> void:
+func take_hit(n: int, by := "") -> void:
 	if target:
 		hear(target.global_position); heard_t = 0.0
-	super(n)
+	super(n, by)
 
 
 func _physics_process(delta: float) -> void:

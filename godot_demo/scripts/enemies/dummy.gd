@@ -18,7 +18,7 @@ func _ready() -> void:
 	var am := BoxMesh.new(); am.size = Vector3(1.0, 0.12, 0.12); am.material = mat; arms.mesh = am; arms.position.y = 0.45
 
 
-func take_hit(n: int) -> void:
+func take_hit(n: int, _by := "") -> void:
 	hits += 1; damage += n
 	var tw := create_tween()
 	tw.tween_property(mesh, "rotation:x", -0.35 * n, 0.08)

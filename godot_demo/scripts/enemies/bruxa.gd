@@ -79,9 +79,9 @@ func leave() -> void:
 	fly_to(global_position + Vector3(randf_range(-15, 15), 30, -60), queue_free)
 
 
-func take_hit(n: int) -> void:
+func take_hit(n: int, by := "") -> void:
 	flight = {}  # hit on the wing: she drops
-	super(n)
+	super(n, by)
 
 
 func _decide(to: Vector3, dist: float, delta: float) -> void:
