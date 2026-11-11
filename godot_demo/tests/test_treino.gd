@@ -198,6 +198,7 @@ func run() -> void:
 	await pause_tests()
 	await save_tests()
 	await keys_tests()
+	await caderno_tests()
 	player.health = 2
 
 	player.take_damage(2); await wait(1.8); await shot("9_dead")
@@ -971,3 +972,42 @@ func keys_tests() -> void:
 	Inventory.add("pe_de_cabra"); tool.use(player)
 	check(Inventory.has("pe_de_cabra"), "a tool is not spent")
 	door.queue_free(); tool.queue_free()
+
+
+## Tab: the notebook pauses the game on Tarefas / Bolso / Notas; the tasks as they stand, the day, hour, money and all
+## he carries (tools, keys, the rest), the notes to reread (and back to the notebook after); Tab closes.
+func caderno_tests() -> void:
+	var c: Caderno = L.caderno
+	Caderno.section = 0; Story.reset()
+	await tap("notes"); await wait(0.2)
+	check(c.visible and get_tree().paused and c.empty.visible and c.empty.text == "Nada anotado ainda.", "Tab: the notebook, no tasks yet")
+	await tap("notes"); await wait(0.1)
+	check(not c.visible and not get_tree().paused, "Tab again closes it")
+	Story.set_task("garrafada", "ativa")
+	await tap("notes"); await wait(0.2)
+	check(c.rows.size() == 1 and c.rows[0].text == "· A garrafada do altar" and c.detail.text.begins_with("Dona Firmina"),
+		"a task going on, its description on the right page")
+	await shot("caderno_tarefas")
+	Story.set_task("garrafada", "feita"); c.show_section(0)
+	check(c.rows[0].text.begins_with("+ ") and c.detail.text.ends_with("Cumprida."), "...done: marked off")
+	Inventory.items["chave_sacristia"] = 1; Inventory.items["virote"] = 3
+	await tap("right"); await wait(0.1)
+	var names := c.rows.map(func(r): return r.text)
+	check(Caderno.section == 1 and c.head.text.begins_with("Dia ") and ("Dinheiro: Cr$ %d" % Inventory.money) in c.head.text
+		and WorldTime.clock() in c.head.text, "D: Bolso, the day, the hour and the money (%s)" % c.head.text.replace("
+", " / "))
+	check(names.find("Lamparina") < names.find("Chave da sacristia (1)") and names.find("Chave da sacristia (1)") < names.find("Virote (3)"),
+		"...tools, then keys, then the rest: %s" % ", ".join(names))
+	await tap("back"); await wait(0.1)
+	check(c.title.text == ItemCatalog.item("facao").nome or c.title.text != "", "W/S: the right page tells about it (%s)" % c.title.text)
+	await shot("caderno_bolso")
+	NotesReader.read.append(NotesData.NOTES[0].id)
+	await tap("right"); await wait(0.1)
+	check(Caderno.section == 2 and c.rows.size() == 1 and c.rows[0].text == NotesData.NOTES[0].title, "D: Notas, the papers found")
+	await tap("interact"); await wait(0.2)
+	check(not c.visible and L.notes.page.visible and get_tree().paused, "E reads it")
+	await tap("ui_cancel"); await wait(0.2)
+	check(c.visible and get_tree().paused and not L.notes.page.visible, "...closing it, back to the notebook")
+	await tap("ui_cancel"); await wait(0.1)
+	check(not c.visible and not get_tree().paused, "Esc closes the notebook")
+	NotesReader.read.pop_back(); Story.reset(); Inventory.items.erase("chave_sacristia")

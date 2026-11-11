@@ -152,7 +152,7 @@ static func controls_panel(parent: Node) -> Control:
 	var rows := [["WASD", "trotar"], ["Ctrl / Shift", "andar / correr"], ["Mouse", "olhar"], ["E", "interagir · armado: travar mira"],
 		["1", "facão"], ["2", "besta"], ["3", "lamparina (no gancho / na mão)"], ["Q", "roda de armas (segurar) / guardar (toque)"],
 		["Mouse esq.", "golpe (de novo: de cima)"], ["Mouse dir.", "erguer: bloquear / mirar (segurar)"], ["Espaço", "esquiva"], ["C", "agachar"],
-		["R", "recarregar"], ["F", "curativo"], ["Tab", "notas"], ["Esc", "pausa"]]
+		["R", "recarregar"], ["F", "curativo"], ["Tab", "caderno: tarefas, bolso, notas"], ["Esc", "pausa"]]
 	var grid := GridContainer.new(); p.add_child(grid); grid.columns = 2
 	grid.add_theme_constant_override("h_separation", 28); grid.add_theme_constant_override("v_separation", 0)
 	var head := Label.new(); p.add_child(head); head.text = "Controles"; head.position = Vector2(338, 40)

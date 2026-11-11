@@ -15,6 +15,7 @@ var hud: Hud
 var interactor: Interactor
 var footsteps: Footsteps
 var notes: NotesReader
+var caderno: Caderno               # Tab: tasks, pockets, notes
 var shop: ShopMenu                 # the shop screen, for whichever seller you talk to
 var dialog: DialogBox              # talking to a villager
 var wheel: WeaponWheel             # Q: what he holds
@@ -37,11 +38,12 @@ func _ready() -> void:
 	interactor = Interactor.new(player, hud); add_child(interactor)
 	footsteps = Footsteps.new(player, floor_kind); add_child(footsteps)
 	notes = NotesReader.new(); add_child(notes)
+	caderno = Caderno.new(); add_child(caderno)
 	shop = ShopMenu.new(); add_child(shop)
 	dialog = DialogBox.new(); add_child(dialog)
 	wheel = WeaponWheel.new(player); add_child(wheel)
 	menu = GameMenu.new(player); add_child(menu)
-	notes.closed.connect(func(): hud.say("%d de %d notas · Tab relê" % [NotesReader.read.size(), NotesData.NOTES.size()], 2.5))
+	notes.closed.connect(func(): hud.say("%d de %d notas · no caderno (Tab)" % [NotesReader.read.size(), NotesData.NOTES.size()], 2.5))
 	_place_notes.call_deferred()  # once the level's colliders are in the physics world
 	_started()
 	if SceneRouter.testing():

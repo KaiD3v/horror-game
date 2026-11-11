@@ -1,6 +1,6 @@
 # Reading the notes (NotesData): the game pauses on the page, held up close (aged paper at 2x from
-# ../tools/texturas/notas_papeis.py, the text in the game font). Once read a note is yours: Tab rereads them all,
-# A/D leafs through, E / Tab / Esc closes. Kept across scenes (a static list).
+# ../tools/texturas/notas_papeis.py, the text in the game font). Once read a note is yours: the notebook (Caderno,
+# Tab) lists them to reread; A/D leafs through, E / Tab / Esc closes. Kept across scenes (a static list).
 class_name NotesReader
 extends CanvasLayer
 
@@ -67,7 +67,4 @@ func _unhandled_input(e: InputEvent) -> void:
 			close()
 		elif e.is_action_pressed("left") or e.is_action_pressed("right"):
 			open(wrapi(showing + (1 if e.is_action_pressed("right") else -1), 0, read.size()))
-		get_viewport().set_input_as_handled()
-	elif e.is_action_pressed("notes") and not read.is_empty() and not get_tree().paused:
-		open(read.size() - 1)
 		get_viewport().set_input_as_handled()
