@@ -176,7 +176,8 @@ do tempo com ele e com a mãe. São cerca de 2 minutos no total, e dá para pula
 
 ## Música e ambiente
 
-- **A música** (ElevenLabs Music, gerada pelo autor) é uma faixa só, de 1:55, com seções que acompanham os atos:
+- **A música** (ElevenLabs Music, gerada pelo autor: "Sepia Threshold") é uma faixa só, de 2:00, a -10 dB, com seções
+  que acompanham os atos (forte de 0:15 a 1:05, na pensão; baixa daí em diante):
   - caixinha de música e piano na lembrança;
   - violão sobre violoncelos na pensão;
   - um pulso grave no ônibus;
@@ -184,6 +185,7 @@ do tempo com ele e com a mãe. São cerca de 2 minutos no total, e dá para pula
 - **Onde fica:** `godot_demo/music/abertura.mp3`. `Audio.music_play` toca a faixa na raiz da árvore, então ela segue da
   `Abertura` para o vilarejo. A `Intro` a apaga aos poucos quando a luz da Colônia pisca. Sem o arquivo, a cena roda em
   silêncio de música.
+- **Para trocar a música:** basta substituir o arquivo.
 - **Sons de ambiente e de pontuação** (ElevenLabs, 65 créditos):
   - `ambiente_hospital`: o eco do salão, no parlatório;
   - `tela_arame`: a tela cedendo sob as mãos;

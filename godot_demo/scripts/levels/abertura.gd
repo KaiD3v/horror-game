@@ -52,7 +52,7 @@ func _ready() -> void:
 # --- act 1: the parlatório, 1955 ----------------------------------------------------------------------------------
 func _year() -> void:  # 1
 	cs.cam.environment = sepia
-	Audio.music_play(self, "abertura")  # (../docs/INTRODUCAO.md "Música"; on to the village, faded out by Intro)
+	Audio.music_play(self, "abertura", -10.0)  # (../docs/INTRODUCAO.md "Música"; on to the village, faded out by Intro)
 	hall = Audio.play2d(self, "ambiente_hospital", -14.0, true)
 	cs.say("Colônia Santa Clara, 1955")
 	await cs.wait(3.0)

@@ -5,6 +5,8 @@ extends AutoTest
 
 func run() -> void:
 	var cs: Cutscene = L.cs
+	await wait(0.5)
+	check(Audio.music != null and Audio.music.playing, "the opening's music plays (music/abertura.mp3)")
 	var shots := {}; var last := 0; var frame := 0
 	var t0 := Time.get_ticks_msec()
 	while SceneRouter.requested != Paths.VILAREJO and Time.get_ticks_msec() - t0 < 180000:
@@ -19,6 +21,8 @@ func run() -> void:
 	check(Intro.NOTES.all(func(n): return n in NotesReader.read), "the letter, the notice, the photo, the cutting: in the notebook")
 	check(Intro.pending and not Intro.skip_next, "the arrival waits in the village")
 	check(not get_tree().paused, "nothing left paused")
+	check(Audio.music != null and Audio.music.playing and Audio.music.get_parent() == get_tree().root,
+		"the music plays on, on the root: it carries into the village")
 	var want := ["ambiente_hospital", "tela_arame", "sineta", "chuva", "cidade_madrugada", "chave_fechadura", "porta",
 		"passo_madeira", "papel_desdobrar", "lata_abrir", "coracao", "impacto_grave", "sopro", "onibus"]
 	var missing := want.filter(func(n): return n not in Audio.heard)

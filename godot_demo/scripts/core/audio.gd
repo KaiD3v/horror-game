@@ -73,8 +73,10 @@ static func music_play(from: Node, n: String, db := -8.0, fade_in := 2.0) -> voi
 		return
 	music_stop(0.0)
 	music = AudioStreamPlayer.new(); music.stream = load(Paths.MUSIC % n); music.process_mode = Node.PROCESS_MODE_ALWAYS
-	from.get_tree().root.add_child(music); music.volume_db = -60.0; music.play()
-	music.create_tween().tween_property(music, "volume_db", db, fade_in)
+	music.volume_db = -60.0; music.autoplay = true
+	var m := music  # (deferred: a scene starting it from its _ready finds the root still busy)
+	m.tree_entered.connect(func(): m.create_tween().tween_property(m, "volume_db", db, fade_in), CONNECT_ONE_SHOT)
+	from.get_tree().root.add_child.call_deferred(m)
 	music.finished.connect(music_stop.bind(0.0))
 
 
