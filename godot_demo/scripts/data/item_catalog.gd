@@ -27,6 +27,7 @@ const ITEMS := {
 	"corda": {"nome": "Corda", "descricao": "Sisal trançado, uns vinte metros. Para descer e subir por poços, buracos e barrancos.", "tipo": "ferramenta"},
 	"chave_cadeado": {"nome": "Chave do cadeado", "descricao": "Pequena, de latão. Abre o cadeado da porta da sala de treino.", "tipo": "chave", "modelo": "chave"},
 	"chave_sacristia": {"nome": "Chave da sacristia", "descricao": "Ferro velho, um barbante vermelho na argola. Abre só a porta da sacristia.", "tipo": "chave", "modelo": "chave"},
+	"chave_portao": {"nome": "Chave do portão", "descricao": "Grande, de ferro, com a argola gasta. Abre o cadeado do portão da Colônia.", "tipo": "chave", "modelo": "chave"},
 }
 
 

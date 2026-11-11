@@ -9,7 +9,12 @@ extends Level
 # the road through the village (Godot x, z), south to north: puddles gather on it (Clima)
 const ROAD := [Vector2(0.5, 44), Vector2(-0.5, 36), Vector2(1.0, 25), Vector2(0.5, 12), Vector2(0.7, 0), Vector2(1.4, -8),
 	Vector2(1.8, -20), Vector2(-1.0, -32), Vector2(-1.3, -40), Vector2(0.3, -50)]
-const PLAY := AABB(Vector3(-50, -10, -61), Vector3(100, 40, 115))  # invisible walls on the open sides
+const PLAY := AABB(Vector3(-50, -10, -61), Vector3(100, 40, 115))  # the navmesh and the weather cover this
+# What closes the map (../docs/VILAREJO.md "Bordas"): east and west a steep rocky bank, too steep to climb; north the
+# Colônia's wall; south the ravine, fenced along its brink. These invisible walls only back them up, out of sight.
+const WALLS := [[Vector3(-54, 0, 0), Vector3(1, 80, 200)], [Vector3(54, 0, 0), Vector3(1, 80, 200)],
+	[Vector3(0, 0, -63), Vector3(200, 80, 1)], [Vector3(0, 0, 54), Vector3(200, 80, 1)]]
+const GATE := "portao_colonia"  # the Colônia's gate: locked (chave_portao); open, E takes you up to the Colônia
 # Doors into interiors (porta_<name> markers at the foot of the steps): E takes you in; coming out puts you back here.
 const DOORS := {"armaria": "E · entrar na Armaria do Tenório", "venda": "E · entrar na Venda do Seu Bento",
 	"capela": "E · entrar na capela"}
@@ -52,6 +57,8 @@ func _build() -> void:
 	_finish(village)
 	_bounds()
 	spawn_npcs(village)
+	var g := marker(GATE)
+	Gate.make(self, g.position, g.rotation.y, GATE, "chave_portao", Paths.COLONIA, "E · entrar na Colônia")  # before the navmesh: its leaves cut it
 	bake_navmesh({"cell": 0.25, "cell_h": 0.1, "climb": 0.4, "slope": 40.0, "aabb": PLAY})  # after the NPCs: they stand in it
 	enemy = Mutante.new(); add_enemy(enemy, marker("spawn_mutante").position + Vector3(0, 0.3, 0), PI)  # by the well, facing the road
 	for d in DOORS:
@@ -156,10 +163,8 @@ func _finish(root: Node) -> void:
 			m.vertex_color_use_as_albedo = true)  # the baked AO (meshes without colours read white)
 
 
-func _bounds() -> void:  # the Colônia's wall closes the north; the hills, trees and these close the rest
-	var e := PLAY.end
-	for b in [[Vector3(PLAY.position.x, 0, 0), Vector3(1, 60, 200)], [Vector3(e.x, 0, 0), Vector3(1, 60, 200)],
-			[Vector3(0, 0, e.z), Vector3(200, 60, 1)]]:
+func _bounds() -> void:
+	for b in WALLS:
 		var body := StaticBody3D.new(); body.position = b[0]; add_child(body)
 		var cs := CollisionShape3D.new(); var bs := BoxShape3D.new(); bs.size = b[1]; cs.shape = bs; body.add_child(cs)
 

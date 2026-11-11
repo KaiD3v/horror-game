@@ -6,6 +6,7 @@ from vila_kit import *  # materials, mesh builder, prop pieces
 from .layout import *
 from .paredes import *
 from .objetos import at_house
+from .construcoes import fence_line
 
 TERR = None  # the terrain object: the build sets it after terrain()
 
@@ -147,9 +148,9 @@ def narrative():
         c = p.lerp(q, rng.random()) + Vector((rng.uniform(-0.6, 0.6), rng.uniform(-0.6, 0.6)))
         flat(deco, c, rng.uniform(0.3, 0.6), rng.uniform(0, 360), "sangue_mancha")
     flat(deco, (0.4, WALL_Y - 1.2), 1.8, 30, "sangue_poca")  # where it stopped, at the gate
-    gate = (Vector((0, WALL_Y - 0.14, 0)), X, -Y)
+    gate = (Vector((0, WALL_Y - 0.47, 0)), X, -Y)  # the pillars' faces (the leaves are the game's: they open)
     g = H(0, WALL_Y)
-    for u, z, r in ((-0.6, 1.0, 0.2), (0.3, 1.25, -0.3), (0.9, 0.85, 0.1), (-1.3, 1.5, 0.5)):  # hands on the boards
+    for u, z, r in ((-2.75, 1.0, 0.2), (-2.45, 1.45, -0.3), (2.5, 0.85, 0.1), (2.8, 1.5, 0.5)):  # hands on the pillars
         wall_decal(deco, gate, u, g + z, 0.26, 0.26, "sangue_mao", rot=r)
     # 3. graffiti: on the Colônia's wall, beside its gate
     wf = (Vector((0, WALL_Y - 0.27, 0)), X, -Y)
@@ -163,6 +164,21 @@ def narrative():
         wall_decal(deco, fr, 0, H(px, py) + z, 0.26, 0.33, "cartaz", rot=rng.uniform(-0.1, 0.1))
     # 5. the way out: the ravine's fallen bridge; on the road a dropped suitcase, a doll
     br = B(); bridge(br, rng); obj(br, "ponte_caida-col")
+    guard = B(); grng = random.Random("ravina/cerca"); yg = GULLY_Y + 5.0  # on the brink, before the bank drops
+    fence_line(guard, (-56, yg), (-2.2, yg), grng, gone=0.35)
+    fence_line(guard, (2.2, yg), (56, yg), grng, gone=0.35)
+    for sx in (-1, 1):  # across the road: two sawhorses and a plank between them
+        x = sx * 1.3; g_ = H(x, yg)
+        for s in (-1, 1):
+            bx(guard, (x, yg + s * 0.25, g_ + 0.45), (0.08, 0.08, 1.0), "fence", rot=(s * 0.45, 0, 0))
+        bx(guard, (x, yg, g_ + 0.85), (0.9, 0.1, 0.1), "planks")
+    bx(guard, (0, yg - 0.1, H(0, yg) + 0.95), (3.6, 0.05, 0.25), "planks", rot=(0, 0.06, 0))
+    obj(guard, "ravina_cerca-col")
+    wall = B()  # the fence's reach, no gaps, 3 m over the ground: he never falls in
+    for x in range(-56, 56, 4):
+        h0 = min(H(x, yg), H(x + 4, yg)); h1 = max(H(x, yg), H(x + 4, yg))
+        bx(wall, (x + 2, yg, (h0 - 1 + h1 + 3) / 2), (4.02, 0.3, h1 + 3 - h0 + 1), "fence")
+    obj(wall, "ravina_guarda-colonly")
     water = B()  # standing water along the bottom of the ravine
     strip(water, [(-74, GULLY_Y), (74, GULLY_Y)], "pit", random.Random(1), step=2.0, width=(2.2, 2.2), gaps=0)
     obj(water, "ravina_agua")

@@ -24,6 +24,8 @@ var env: Environment
 var nav: NavigationRegion3D
 var npcs := {}                     # who -> Npc
 var day: DayCycle                  # the hour and the weather (levels that have them: vilarejo, interiors)
+const FALL_Y := -60.0              # below every level's floor: whoever gets here fell out of the world
+var last_floor := Vector3.ZERO     # where he last stood on something (put back there if he falls out)
 
 
 func _ready() -> void:
@@ -62,6 +64,16 @@ func _player_start() -> Transform3D:
 
 func _started() -> void:
 	pass
+
+
+func _physics_process(_delta: float) -> void:
+	if player == null:
+		return
+	if player.global_position.y > FALL_Y:
+		if player.is_on_floor():  # (this frame's floor is last frame's: a teleport down there is not ground)
+			last_floor = player.global_position
+	else:  # through a gap nobody saw: back on his feet where he was, no harm
+		player.global_position = last_floor + Vector3(0, 0.3, 0); player.velocity = Vector3.ZERO
 
 
 func _unhandled_input(e: InputEvent) -> void:

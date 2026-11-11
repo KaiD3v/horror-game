@@ -84,6 +84,7 @@ Uma fase sobrescreve três métodos:
 | **uma porta com cadeado** | `BlockedDoor.make(fase, pé, giro, "cadeado", id, "chave_<x>")` no `_build()`: E com a chave e o cadeado some, a chave é gasta e a porta abre. |
 | **uma porta pregada** | `BlockedDoor.make(fase, pé, giro, "tabuas", id)`: E com o pé de cabra, ele arranca as tábuas, "Porta aberta" e a porta abre. |
 | **um entulho de pedra** | `Breakable.make(fase, pé da frente, giro, id)`: E põe a picareta na mão (ou a tecla 4); cada golpe dela derruba pedras até abrir. Outro golpe só tine. |
+| **um portão para outra cena** | `Gate.make(fase, pé, giro, id, "chave_<x>", cena, "E · entrar em ...")`: trancado com corrente e cadeado; E com a chave abre uma fresta (estreita demais para passar); E de novo troca de cena. |
 | **um poço para descer** | `Well.make(fase, centro, giro, id, cena do fundo)`: E com a corda amarra na trave; E de novo desce. A cena do fundo (como `poco.gd`) volta com `SceneRouter.go_to(..., Story "poco:volta")`, e a fase põe o jogador ao lado do poço (`Well.arrival`). |
 | **uma ferramenta segurada na mão** (como a picareta) | `player.equip(Mode.COMBAT, "<id>")`: o facão some do osso e a forma do item (itens.glb) fica no lugar dele (`ToolInHand`); os golpes chegam a `take_hit(n, "<id>")`. |
 | **um obstáculo de ferramenta** (outro) | O `Interactable` do obstáculo com `requires = "pe_de_cabra"`, `"picareta"` ou `"corda"` e um `refusal` que diga o que se vê. A ferramenta não se gasta; os quatro acima são os modelos. |

@@ -94,7 +94,7 @@ func run() -> void:
 	put(player, L.ground(3.5, 15.5), -PI / 2); await wait(0.6); await shot("v15_casa04")       # where it started
 	put(player, L.ground(-26.0, 1.0), PI); await wait(0.6); await shot("v17_queimada")         # the burnt house
 	put(player, L.ground(4.6, 30.6), -PI / 2); await wait(0.6); await shot("v18_acorrentada")  # chained from outside
-	put(player, L.ground(1.0, 46.5), PI); await wait(0.6); await shot("v19_ponte")             # the way out, fallen
+	put(player, L.ground(1.0, 45.3), PI); await wait(0.6); await shot("v19_ponte")             # the way out, fallen, fenced off
 
 	# it gives chase across the square and up the road, over the slope
 	player.health = 99
@@ -583,3 +583,60 @@ func oratorio_tests() -> void:
 	check(absf(o.global_position.y - L.ground(front.x, front.z).y) < 0.3, "on the ground")
 	put(player, o.global_position + o.global_basis.z * 1.0, o.rotation.y); await wait(0.4)
 	check(L.hud.prompt.text == "E · rezar no oratório", "its prompt: \"%s\"" % L.hud.prompt.text)
+
+
+# What closes the map (../docs/VILAREJO.md "Bordas"): he walks into each edge and something he can see stops him,
+# never the invisible walls behind (x = +-54); nowhere does he fall.
+func edges_tests() -> void:
+	var hp := player.health
+	for side in [1.0, -1.0]:  # the rocky banks east and west, too steep to climb
+		for z in [-30.0, 0.0, 30.0]:
+			put(player, L.ground(side * 44.0, z), -side * PI / 2); await wait(0.3)
+			await walk(5.0); await wait(0.3)
+			var x := player.global_position.x
+			check(absf(x) < 52.5, "the %s bank (or a tree on it) stops him at x=%.1f (z=%d), before the walls" % ["east" if side > 0 else "west", x, z])
+	put(player, L.ground(44.0, 10.0), -PI / 2); player.pivot.rotation.y = -PI / 2; await wait(0.6); await shot("borda_leste")
+	for x in [-30.0, 0.0, 8.0, 30.0]:  # the ravine: the fence along its brink (the road's barricade at x=0)
+		put(player, L.ground(x, 42.0), PI); await wait(0.3)
+		await walk(4.0); await wait(0.3)
+		var p := player.global_position
+		check(p.z < 46.4 and player.is_on_floor(), "the ravine's fence stops him at z=%.1f (x=%d), on his feet" % [p.z, x])
+	put(player, L.ground(2.0, 43.5), PI); player.pivot.rotation.y = PI; await wait(0.6); await shot("borda_ravina")
+	for x in [-3.5, 0.0, 3.5]:  # the Colônia's wall: the gate shut, no gap beside its pillars
+		put(player, L.ground(x, -56.0), 0.0); await wait(0.3)
+		await walk(3.0); await wait(0.3)
+		check(player.global_position.z > -59.8, "the Colônia's wall stops him at z=%.2f (x=%.1f)" % [player.global_position.z, x])
+	check(player.health == hp, "no fall hurt him (%d of %d)" % [player.health, hp])
+	var stood: Vector3 = L.ground(5.0, 20.0)  # the safety net: out of the world, back where he stood
+	put(player, stood, 0.0); await wait(0.5)
+	player.global_position = Vector3(5.0, -80.0, 20.0); await wait(0.3)
+	check(absf(player.global_position.y - stood.y) < 1.0, "fallen out of the world, he is put back (y=%.1f)" % player.global_position.y)
+
+
+# The Colônia's gate (Gate): locked at first; its key opens it a crack, too narrow to pass; then E goes up.
+func gate_tests() -> void:
+	var gate: Gate = L.find_children("*", "Gate", true, false)[0]
+	Story.marks.erase("aberta:" + gate.id); Story.marks.erase("destrancado:chave_portao"); Inventory.take("chave_portao", 99)
+	var said := []; player.notice.connect(func(t): said.append(t))
+	var front := gate.global_position + gate.global_basis.z * 1.3
+	put(player, L.ground(front.x, front.z), gate.rotation.y); await wait(0.6); await shot("portao_trancado")
+	check(L.hud.prompt.text == "E · abrir o portão", "at the gate: \"%s\"" % L.hud.prompt.text)
+	SceneRouter.requested = ""; await tap("interact")
+	check(not gate.opened() and SceneRouter.requested == "" and said.size() > 0 and said[-1] == gate.refusal,
+		"without the key it stays shut: \"%s\"" % (said[-1] if said else ""))
+	Inventory.add("chave_portao"); await tap("interact"); await wait(3.2)
+	check(gate.opened() and not Inventory.has("chave_portao") and gate.chain == null, "the key spent, the chain gone")
+	check(absf(rad_to_deg(gate.leaves[0].rotation.y) - Gate.AJAR) < 1.0 and absf(rad_to_deg(gate.leaves[1].rotation.y) + Gate.AJAR) < 1.0,
+		"both leaves swung in, ajar (%.0f, %.0f deg)" % [rad_to_deg(gate.leaves[0].rotation.y), rad_to_deg(gate.leaves[1].rotation.y)])
+	await shot("portao_fresta")
+	put(player, L.ground(gate.global_position.x, gate.global_position.z + 1.0), gate.rotation.y); await wait(0.3)
+	await walk(3.0); await wait(0.3)
+	var tips := gate.global_position.z - (Gate.WIDTH / 2) * sin(deg_to_rad(Gate.AJAR))  # how far in the leaves' edges swung
+	check(player.global_position.z > tips, "the gap is too narrow to go through: he stops between the leaves (z=%.2f, edges at %.2f)" % [player.global_position.z, tips])
+	put(player, L.ground(front.x, front.z), gate.rotation.y); await wait(0.4)
+	check(L.hud.prompt.text == "E · entrar na Colônia", "open: \"%s\"" % L.hud.prompt.text)
+	await tap("interact")
+	check(SceneRouter.requested == Paths.COLONIA, "E goes up to the Colônia (%s)" % SceneRouter.requested)
+	var again := Gate.make(L, gate.position + Vector3(0, 0, 30), gate.rotation.y, gate.id, "chave_portao", Paths.COLONIA, "")
+	check(again.chain == null and absf(rad_to_deg(again.leaves[0].rotation.y) - Gate.AJAR) < 1.0, "back in the village it is still open")
+	again.queue_free()

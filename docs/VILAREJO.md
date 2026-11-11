@@ -12,7 +12,7 @@ o largo com o poço, árvores mortas e neblina que deixa ver uns 25 m.
 ## Layout (cerca de 100 x 100 m jogáveis, terreno de 150 x 150 m)
 
 ```
-                 N   portão da Colônia (muro, portão tábuado: marco visual, fechado)
+                 N   portão da Colônia (muro; portão com corrente e cadeado: leva à Colônia)
                  |
           [casas]|[casas]         subida
                  |
@@ -28,6 +28,28 @@ o largo com o poço, árvores mortas e neblina que deixa ver uns 25 m.
   árvores mortas e rocha no alto). Platôs aplanados sob cada casa.
 - **Largo**: poço de pedra, capela com torre do sino (marco visível na neblina), venda de dois andares.
 - **Cemitério** atrás da capela: cruzes de madeira e muro baixo.
+
+## Bordas e o portão
+
+Nada de parede invisível em campo aberto, e nenhum lugar onde ele caia:
+
+- **Leste e oeste:** a borda do vale sobe num barranco de pedra de 8 m (`layout.RIM`), íngreme demais para subir, com as
+  árvores mortas mais densas por cima. Ele para no pé do barranco, por volta de x = ±49.
+- **Norte:** o muro da Colônia, agora sem vão ao lado dos pilares do portão (antes sobrava quase 1 m entre o pilar e o muro,
+  e por ali se chegava ao fim do terreno).
+- **Sul:** a ravina, mais funda (7 m, `GULLY_DEEP`), com uma cerca quebrada pela beira e dois cavaletes com uma tábua
+  atravessados na cabeceira da ponte caída. Atrás da cerca, um muro invisível contínuo de 3 m (`ravina_guarda-colonly`)
+  cobre os vãos da cerca. O começo do jogo recuou para y = -44,5.
+- As paredes invisíveis (`vilarejo.gd` `WALLS`) ficaram atrás disso tudo, onde ele nunca chega: x = ±54, e atrás do muro.
+- **Rede de segurança** (`Level`, todas as fases): se ainda assim ele cair para fora do mundo (abaixo de y = -60), volta
+  em pé ao último chão onde esteve.
+
+**O portão da Colônia** (`Gate`, no marcador `portao_colonia`): duas folhas de tábua com ferragens, uma corrente e um
+cadeado. No começo do jogo está trancado ("Corrente e cadeado. O portão está trancado."). Com a `chave_portao`, a chave é
+gasta, a corrente cai e as folhas rangem até uma fresta de uns 20 cm, escura e estreita demais para passar
+(Story `aberta:portao_colonia`, fica aberto). E de novo: "E · entrar na Colônia" leva a `colonia.tscn`. As marcas de
+mão em sangue passaram das tábuas para os pilares. Onde ele encontra a chave ainda não está decidido: ela existe no
+catálogo, mas não está em lugar nenhum do jogo.
 
 ## Casas (gerador paramétrico, cada uma diferente)
 
@@ -209,7 +231,7 @@ Gancho da missão (a definir): o filho de Dona Firmina foi levado para a Colôni
 Alguém foi arrastado para a Colônia, e o vilarejo tentou se trancar.
 
 1. **O arrastão:** uma poça de sangue na porta da `casa_04`; marcas de arrasto pelo quintal até a estrada; o rastro
-   subindo a estrada, com falhas, pelo largo, até o portão da Colônia, onde ficam marcas de mãos nas tábuas.
+   subindo a estrada, com falhas, pelo largo, até o portão da Colônia, onde ficam marcas de mãos nos pilares.
 2. **O vilarejo trancado:** três casas com a porta pregada em X e acorrentada **por fora**, cadeado; um X vermelho
    pintado ao lado ("aqui tem gente") e arranhões na madeira.
 3. **Pichações:** "NÃO SUBAM" no muro da Colônia, "ELES VOLTAM À NOITE" e "DEUS NOS PERDOE" nas paredes caiadas.

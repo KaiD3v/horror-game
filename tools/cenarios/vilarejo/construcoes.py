@@ -235,9 +235,13 @@ def colony_wall(b):
     for sx in (-1, 1):
         bx(b, (sx * 2.6, WALL_Y, g + 1.8), (0.9, 0.9, 5.2), "whitewash")
         bx(b, (sx * 2.6, WALL_Y, g + 4.5), (1.1, 1.1, 0.25), "stone")
-    bx(b, (0, WALL_Y, g + 1.6), (4.4, 0.12, 3.2), "door")  # closed gate
-    for z in (0.7, 1.7, 2.6):
-        bx(b, (0, WALL_Y - 0.1, g + z), (4.6, 0.06, 0.2), "planks", rot=(0, R.uniform(-0.08, 0.08), 0))  # boarded up
+    for sx in (-1, 1):  # wall from each pillar to the first whole piece (x = 3 to 4)
+        h0 = min(H(sx * 3.0, WALL_Y), H(sx * 4.0, WALL_Y)); h1 = max(H(sx * 3.0, WALL_Y), H(sx * 4.0, WALL_Y))
+        bx(b, (sx * 3.5, WALL_Y, (h0 - 0.8 + h1 + 3.4) / 2), (1.04, 0.5, h1 + 3.4 - h0 + 0.8), "whitewash")
+        bx(b, (sx * 3.5, WALL_Y, h0 + 0.3), (1.06, 0.56, 1.0), "stone")
+        bx(b, (sx * 3.5, WALL_Y, h1 + 3.45), (1.06, 0.62, 0.12), "roof")
+    # the gate itself (its two leaves, chain and padlock) is built by the game: vilarejo.gd, Gate, on this marker
+    e = bpy.data.objects.new("portao_colonia", None); bpy.context.collection.objects.link(e); e.location = (0, WALL_Y, g)
     bx(b, (0, WALL_Y, g + 5.5), (5.6, 0.12, 0.12), "iron")  # iron arch
     for sx in (-1, 1):
         bx(b, (sx * 2.6, WALL_Y, g + 5.0), (0.1, 0.1, 1.0), "iron")
@@ -271,23 +275,28 @@ def cemetery(b, cem_cross):
             cem_cross.box(M @ Matrix.LocRotScale(Vector((0, 0, 0.85)), None, Vector((0.6, 0.08, 0.1))), "planks")
 
 
+def fence_line(b, a, c, rng, gone=0.25):
+    """Posts every ~2.2 m from a to c (x, y), two rails between them; `gone` of the spans have lost theirs."""
+    a, c = Vector(a), Vector(c); k = max(1, int((c - a).length / 2.2))
+    posts = []
+    for i in range(k + 1):
+        p = a + (c - a) * i / k; g = H(p.x, p.y)
+        lean = (rng.uniform(-0.12, 0.12), rng.uniform(-0.12, 0.12), 0)
+        bx(b, (p.x, p.y, g + 0.35), (0.12, 0.12, 1.4), "fence", rot=lean)
+        posts.append(Vector((p.x, p.y, g)))
+    for p, q in zip(posts, posts[1:]):
+        if rng.random() < gone:
+            continue  # rails gone
+        yaw = math.atan2(q.y - p.y, q.x - p.x); L = (q - p).xy.length; tilt = math.atan2(q.z - p.z, L)
+        for z in (0.45, 0.85):
+            if z > 0.6 and rng.random() < 0.3:
+                continue
+            m = (p + q) / 2
+            bx(b, (m.x, m.y, m.z + z), (L + 0.1, 0.05, 0.12), "fence", rot=(0, -tilt, yaw))
+
+
 def fences(b):
     rng = random.Random("cercas")
     for field in FIELDS:
         for a, c in zip(field, field[1:] + field[:1]):
-            a, c = Vector(a), Vector(c); k = int((c - a).length / 2.2)
-            posts = []
-            for i in range(k + 1):
-                p = a + (c - a) * i / k; g = H(p.x, p.y)
-                lean = (rng.uniform(-0.12, 0.12), rng.uniform(-0.12, 0.12), 0)
-                bx(b, (p.x, p.y, g + 0.35), (0.12, 0.12, 1.4), "fence", rot=lean)
-                posts.append(Vector((p.x, p.y, g)))
-            for p, q in zip(posts, posts[1:]):
-                if rng.random() < 0.25:
-                    continue  # rails gone
-                yaw = math.atan2(q.y - p.y, q.x - p.x); L = (q - p).xy.length; tilt = math.atan2(q.z - p.z, L)
-                for z in (0.45, 0.85):
-                    if z > 0.6 and rng.random() < 0.3:
-                        continue
-                    m = (p + q) / 2
-                    bx(b, (m.x, m.y, m.z + z), (L + 0.1, 0.05, 0.12), "fence", rot=(0, -tilt, yaw))
+            fence_line(b, a, c, rng)

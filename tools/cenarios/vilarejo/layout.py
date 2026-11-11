@@ -14,6 +14,8 @@ ROADS = [[(0, -90), (0, -50), (-2, -32), (2, -14), (0, 0), (1, 20), (-2, 40), (0
 SQUARE = (0.0, 6.0, 8.5)  # largo: centre, radius
 WALL_Y = 60.0             # the Colônia's wall, north edge of the map
 GULLY_Y = -51.5           # the ravine across the south, behind the way in: its bridge has fallen (narrative())
+GULLY_DEEP = 7.0          # deep enough that the fall would kill: a fence along its north bank keeps him out (narrative())
+RIM = (49.0, 55.0, 8.0)   # the bowl's rim east and west: a steep rocky bank (too steep to walk) from r0 to r1, h high
 # houses: x, y, facing (0 = south, 90 = east, -90 = west, 180 = north; = the object's yaw, front is local -Y), width, depth, kind, extras
 HOUSES = [
     (-10, -36, 90, 6.0, 5.0, "ruin", {}),
@@ -59,7 +61,9 @@ def smooth(e0, e1, x):
 
 def valley(x, y):  # the bowl and the climb to the Colônia, no bumps; the ravine across the south
     r = (x ** 4 + (y * 0.78 if y > 0 else y) ** 4) ** 0.25  # stretched north: the hill starts past the wall
-    return smooth(46, 78, r) * 18 + 0.04 * y - 2.8 * smooth(4.6, 1.2, abs(y - GULLY_Y))
+    rim = (x ** 4 + (y * 0.78 if y > 0 else y * 0.6) ** 4) ** 0.25  # the bank: none south (the ravine closes it), behind the wall north
+    return (smooth(46, 78, r) * 18 + RIM[2] * smooth(RIM[0], RIM[1], rim) + 0.04 * y
+            - GULLY_DEEP * smooth(4.6, 1.8, abs(y - GULLY_Y)))
 
 
 def bumps(x, y):
