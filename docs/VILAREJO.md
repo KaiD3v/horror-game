@@ -113,6 +113,11 @@ Gancho da missão (a definir): o filho de Dona Firmina foi levado para a Colôni
     o nome e a descrição, com o acorde de viola (`bau_achado`). O item entra no inventário nessa hora.
   - Com E de novo, ele guarda o item no casaco e se levanta (`Stow_Item`). O baú fica aberto e vazio até um jogo novo.
   - Hoje há dois: o facão (junto à casa em ruínas da entrada da vila) e uma garrafada (ao lado do altar da capela).
+- **Degraus e escadas** (`Steps`): o personagem e os inimigos sobem andando qualquer borda de até 40 cm (soleiras,
+  degraus das casas, escadas), sem animação própria: as pernas seguem no passo e o corpo acompanha suave a subida de cada
+  degrau. Ao descer, ele fica no chão de degrau em degrau, sem pular. O corpo do personagem passou a ser um cilindro
+  (base reta), para apoiar na quina do degrau em vez de rolar por ela. Mais alto que 40 cm, é preciso escalar. Há um
+  lance de teste a oeste da sala de treino.
 - **Movimentos de enigma** (para as masmorras; experimente no percurso a leste da sala de treino):
   - **Empurrar** (`Pushable`, a pedra lavrada de `puzzle_build.py`): ande contra um lado do bloco por um instante e ele
     encosta o ombro (`Push`). O bloco vai deslizando de 1 em 1 m, arrastando (`pedra_arrastar`), e ele vai junto, sem

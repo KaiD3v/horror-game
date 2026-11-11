@@ -190,6 +190,7 @@ func run() -> void:
 	await unlock_tests()
 	await chest_tests()
 	await course_tests()
+	await steps_tests()
 	player.health = 2
 
 	player.take_damage(2); await wait(1.8); await shot("9_dead")
@@ -646,3 +647,37 @@ func course_tests() -> void:
 		% [Vector2(m.global_position.x - 6, m.global_position.z + 8.6).length(), hp, player.health])
 	m.active = false; m.queue_free()
 	put(player, Vector3(0, 0, 4), 0.0); await wait(0.5)
+
+
+# --- stairs (west of the room): he walks up and down them; an edge too high stops him; a mutant follows him up ------
+func steps_tests() -> void:
+	player.velocity = Vector3.ZERO; player.health = 99
+	put(player, Vector3(-9, 0, 4.6), 0.0); player.pivot.rotation.y = 0.0; await wait(0.4)
+	Input.action_press("forward")
+	var up := await until(func(): return player.global_position.y > 0.95 and player.global_position.z < 1.6, 4.0)
+	Input.action_release("forward")
+	await shot("60_escada")
+	check(up, "W into the stairs: up them, onto the 1 m landing (y %.2f z %.2f)" % [player.global_position.y, player.global_position.z])
+	await wait(0.3)
+	check(absf(player.model.position.y) < 0.02, "...the body caught up with each step (lag %.3f)" % player.model.position.y)
+	put(player, Vector3(-9, 1.0, 1.5), PI); player.pivot.rotation.y = PI; await wait(0.3)
+	Input.action_press("forward")
+	var airborne := 0
+	var t0 := Time.get_ticks_msec()
+	while player.global_position.z < 4.3 and Time.get_ticks_msec() - t0 < 4000:
+		await get_tree().physics_frame
+		if not player.is_on_floor():
+			airborne += 1
+	Input.action_release("forward")
+	check(player.global_position.y < 0.05 and player.global_position.z >= 4.3 and airborne <= 2,
+		"...and down them on his feet, not hopping off each step (%d frames in the air)" % airborne)
+	put(player, Vector3(-12.5, 0, 3.6), 0.0); player.pivot.rotation.y = 0.0; await wait(0.3)
+	Input.action_press("forward"); await wait(1.2); Input.action_release("forward")
+	check(player.global_position.y < 0.05 and player.global_position.z > 3.0, "a 60 cm block is no step: it stops him (y %.2f)" % player.global_position.y)
+	put(player, Vector3(-9, 1.0, 1.2), PI); await wait(0.2)
+	var m: Mutante = L.add_enemy(Mutante.new(), Vector3(-9, 0, 6.5), PI)
+	m.target = player; m.active = true; m.go(Enemy.State.CHASE, "Walk")
+	var climbed := await until(func(): return m.global_position.y > 0.7, 10.0)
+	check(climbed, "a mutant follows him up the stairs (y %.2f)" % m.global_position.y)
+	m.active = false; m.queue_free()
+	put(player, Vector3(0, 0, 4), 0.0); await wait(0.3)

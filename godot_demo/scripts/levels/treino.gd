@@ -1,5 +1,5 @@
 # The training room: a stone floor, five pillars, a dummy to hit and the mutant past the far pillar; to the east a
-# course of the puzzle moves (push, ledge, gap, wall). For trying the
+# course of the puzzle moves (push, ledge, gap, wall), to the west a flight of stairs. For trying the
 # protagonist's controls and fights (tests/test_treino.gd plays it all through).
 extends Level
 
@@ -23,6 +23,7 @@ func _build() -> void:
 	dummy = Dummy.new(); dummy.position = Vector3(0, 0, -2.6); add_child(dummy)
 	enemy = Mutante.new(); add_enemy(enemy, Vector3(2.5, 0, -10), PI * 0.8)  # past the far pillar
 	_course()
+	_stairs()
 
 
 ## Off to the east, the moves for puzzles: a block to push, a ledge to haul up onto, a gap to jump to a second one, and
@@ -40,3 +41,11 @@ func _course() -> void:
 	add_child(wall); wall.position = Vector3(6, 0, -8)
 	Looks.box(self, Vector3(6, 1.75, -9.225), Vector3(2.0, 3.5, 2.35), rock)  # its body (just behind the stones) and the top
 	Climbable.make(self, Vector3(6, 0, -9.225), 0.0, 3.5, Vector2(2.0, 2.35), [Vector3.BACK])  # its holds: the face only
+
+
+## Off to the west: a flight of five 20 cm stairs up to a landing 1 m high, and a 60 cm block too high to step onto.
+func _stairs() -> void:
+	var rock := Looks.triplanar("stone", 1.0, Color(0.7, 0.68, 0.64))
+	Steps.flight(self, Vector3(-9, 0, 3.5), 0.0, 5, 0.2, 0.35, 2.0, rock)
+	Looks.box(self, Vector3(-9, 0.5, 1.25), Vector3(2, 1, 1), rock)
+	Looks.box(self, Vector3(-12.5, 0.3, 2.5), Vector3(1.5, 0.6, 1), rock)

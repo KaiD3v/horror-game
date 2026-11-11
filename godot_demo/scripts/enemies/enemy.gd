@@ -53,6 +53,7 @@ const SAY := {  # event -> volume dB, unit size, max distance: the scream carrie
 func _ready() -> void:
 	health = max_health
 	add_to_group("enemy")
+	Steps.keep_down(self)
 	var col := CollisionShape3D.new(); add_child(col)
 	var cap := CapsuleShape3D.new(); cap.radius = body_radius; cap.height = 2.1
 	col.shape = cap; col.position.y = 1.05
@@ -113,6 +114,7 @@ func _physics_process(delta: float) -> void:
 	if active and state != State.DEAD:
 		_think(delta)
 		_sounds(delta)
+	Steps.up(self, delta)  # the navmesh takes them over steps (agent climb): so do their legs
 	move_and_slide()
 
 

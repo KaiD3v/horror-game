@@ -44,6 +44,7 @@ const DODGE_DIR := {"Dodge_Back": Vector3.BACK, "Dodge_Left": Vector3.LEFT, "Dod
 const HIT_TIME := {"Attack_Slash": 10.0 / 30.0, "Attack_Overhead": 13.0 / 30.0}
 const HIT_DAMAGE := {"Attack_Slash": 1, "Attack_Overhead": 2}
 const HIT_RANGE := 1.6
+const STEP_EASE := 1.8        # m/s: how fast the body catches up with the root after a step (Steps)
 const WEAPON_ITEM := {Mode.COMBAT: "facao", Mode.XBOW: "besta"}  # what you need to have (Inventory) to hold it
 const COMBO_FROM := 12.0 / 30.0   # LMB after this point of a slash queues the overhead chop
 # Over-the-shoulder camera (right shoulder). Combat pulls in closer and further aside, so the target stays clear.
@@ -70,6 +71,7 @@ var action_len := 0.0
 var hit_done := false
 var swung := false        # the swing's whoosh has played (it leads the blow a little)
 var queued := ""
+var step_lag := 0.0       # the body's lag behind a step the root just took (eases to 0)
 var busy := false         # in a scripted moment (a trunk, a push, a climb, a jump): no control, E / Q / keys do
                           # nothing, no gravity; whoever started it moves him
 var cam_override := {}    # a scripted moment's camera (CAM_KNEEL...), {} = the usual
@@ -106,9 +108,10 @@ var condition: PlayerCondition  # blood, breathing, panting
 func _ready() -> void:
 	health = max_health
 	add_to_group("player")
+	Steps.keep_down(self)
 	GameInput.setup()
 	var col := CollisionShape3D.new(); add_child(col)
-	var cap := CapsuleShape3D.new(); cap.radius = 0.25; cap.height = 1.7
+	var cap := CylinderShape3D.new(); cap.radius = 0.25; cap.height = 1.7  # flat-bottomed: it stands on a stair's edge instead of rolling off it (Steps)
 	col.shape = cap; col.position.y = 0.85
 
 	model = load(Paths.character("protagonista")).instantiate()
@@ -452,7 +455,14 @@ func _physics_process(delta: float) -> void:
 	if busy:
 		velocity = Vector3.ZERO  # moved by whoever made him busy
 	else:
+		var y0 := global_position.y
+		Steps.up(self, delta)  # a step or a stair ahead: up onto it
 		move_and_slide()
+		var dy := global_position.y - y0
+		if is_on_floor() and absf(dy) > 0.05 and absf(dy) <= Steps.SNAP:  # up or down a step: the body eases after
+			step_lag -= dy
+	step_lag = move_toward(step_lag, 0.0, STEP_EASE * delta)
+	model.position.y = step_lag
 
 	# facing: exploring turns towards the movement, combat faces where the camera looks (strafe)
 	var target := rotation.y
