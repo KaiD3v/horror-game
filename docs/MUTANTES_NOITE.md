@@ -72,13 +72,13 @@ Os três se cruzam. Com a lamparina guardada, a Bruxa não acha o jogador, mas e
   - o farfalhar das asas enquanto voa e corre;
   - estalos secos ao ver a luz, de vez em quando no telhado e antes de cada mergulho.
 
-### Sons (`tools/sons/bruxa_sons.py`)
+### Sons
 
-Todos foram sintetizados localmente, sem gastar créditos do ElevenLabs. Ela não fala.
+Todos vêm do ElevenLabs (flow "Vila de Santa Clara — sons", modelo de efeitos sonoros), convertidos por `tools/sons/sounds_import.py`; os MP3 ficam em `audio_fontes/elevenlabs/`. Ela não fala.
 
-- `bruxa_asas` (loop): batidas de asa empoeirada, com estalido de papel.
-- `bruxa_estalo_1..3`: rajadas de cliques secos.
-- `bruxa_guincho_1..2`: um guincho fino e rascante que desce, quando ela é ferida ou morre.
+- `bruxa_asas` (loop): asas de mariposa grandes e empoeiradas batendo devagar.
+- `bruxa_estalo_1..2`: rajadas de cliques secos, de inseto, na garganta.
+- `bruxa_guincho`: um guincho fino e rascante que desce, quando ela é ferida ou morre.
 
 ### Testes (`vilarejo.tscn -- --autotest`, `bruxa_tests`)
 
@@ -99,7 +99,7 @@ Capturas: `captures/demo_v30_bruxa_telhado.png`, `demo_v31_bruxa_voo.png` e `dem
 - O alcance de 22 m e o raio de 4 m: se ela vem cedo ou tarde demais.
 - O ritmo dos mergulhos (2 a 4 s) e a janela de 0,8 s para contra-atacar.
 - Se apagar a luz salva fácil demais, ou se os 6 s de ronda bastam.
-- Se os sons sintetizados servem. Dá para trocar por efeitos do ElevenLabs depois.
+- Se os sons do ElevenLabs servem.
 - Se duas Bruxas por noite é o número certo (`BRUXAS` em `vilarejo.gd`).
 
 ## O Poceiro (feito)
@@ -147,12 +147,12 @@ O homem que cavou o poço do largo, desceu e ficou lá embaixo. É ele quem puxa
 - A luta contra a Bruxa faz barulho: golpes e dano chamam o Poceiro.
 - O grito da Carpideira faz ele ir até onde está o jogador.
 
-### Sons (`tools/sons/poceiro_sons.py`)
+### Sons
 
-Todos foram sintetizados localmente.
+Todos vêm do ElevenLabs (flow "Vila de Santa Clara — sons", modelo de efeitos sonoros), convertidos por `tools/sons/sounds_import.py`; os MP3 ficam em `audio_fontes/elevenlabs/`.
 
 - `poceiro_balde` (loop): o balde de lata batendo e a água, a cada passo.
-- `poceiro_respira_1..2`: respiração molhada, com bolhas.
+- `poceiro_respira`: respiração molhada, com bolhas.
 - `poceiro_rugido_1..2`: um urro grave e encharcado, quando ele ouve, golpeia ou é ferido.
 - `poceiro_queda`: a queda na morte.
 - `poceiro_agua`: a água escorrendo quando ele sai do poço ou desce de volta.
@@ -176,7 +176,7 @@ Capturas: `captures/demo_v33_poceiro_poco.png` e `demo_v34_poceiro_golpe.png`.
 
 - As distâncias de audição e se o trote (9 m) deixa explorar com ele por perto.
 - Se 2 de dano por golpe é pesado demais (`attack_damage`).
-- Se os sons sintetizados servem.
+- Se os sons do ElevenLabs servem, e se o balde soa no ritmo dos passos.
 - A ideia da nota que fala dele ("os baldes voltam cheios de manhã") continua em aberto.
 
 ## A Carpideira (feita)
@@ -243,12 +243,12 @@ Capturas: `captures/demo_v33_poceiro_poco.png` e `demo_v34_poceiro_golpe.png`.
   - morta, a vela apaga.
 - **Amanhecer:** ela anda até a porta da capela e entra. O corpo de quem morreu some na noite seguinte.
 
-### Sons (`tools/sons/carpideira_sons.py`)
+### Sons
 
-Todos foram sintetizados localmente: uma voz feita de pulso glótico passando por formantes de vogal.
+Todos vêm do ElevenLabs (flow "Vila de Santa Clara — sons", modelo de efeitos sonoros), convertidos por `tools/sons/sounds_import.py`; os MP3 ficam em `audio_fontes/elevenlabs/`. São choro e grito sem palavras: o jogo continua sem dublagem.
 
-- `carpideira_choro` (loop, 9,6 s): lamentos que descem, soluços e respiração entrecortada.
-- `carpideira_crianca_1..2`: o choro de criança ("uaa").
+- `carpideira_choro` (loop, 10 s): uma mulher chorando o morto, em soluços e lamentos.
+- `carpideira_crianca`: o choro baixo de uma criança no escuro.
 - `carpideira_suspiro`: a respiração puxada quando ela vê o jogador, ou quando é atingida.
 - `carpideira_grito_1..2`: um grito agudo, que sobe, áspero, a voz quebrando.
 - `carpideira_queda`: a queda na morte e a vela rolando.
@@ -276,5 +276,5 @@ Capturas: `captures/demo_v35_carpideira_vela.png` e `demo_v36_carpideira_grito.p
 - As distâncias de visão (20, 8 e 4 m) e o 1,2 s antes do grito: se dá tempo de se esconder ou atirar.
 - Se ela seguindo e gritando a cada 6 s pesa demais com os outros dois chegando.
 - Se dá para chegar por trás dela para matar, e se isso é fácil demais.
-- Se o choro de criança engana e se os sons sintetizados servem.
+- Se o choro de criança engana e se os sons do ElevenLabs servem.
 - Se uma Carpideira por noite basta.

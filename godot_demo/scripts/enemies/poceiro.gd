@@ -80,7 +80,7 @@ func take_hit(n: int) -> void:
 
 func _physics_process(delta: float) -> void:
 	var moving := not flight.is_empty() or Vector2(velocity.x, velocity.z).length() > 0.3
-	bucket.volume_db = move_toward(bucket.volume_db, -4.0 if moving and state != State.DEAD else -80.0, 120.0 * delta)
+	bucket.volume_db = move_toward(bucket.volume_db, 0.0 if moving and state != State.DEAD else -80.0, 120.0 * delta)
 	super(delta)
 
 

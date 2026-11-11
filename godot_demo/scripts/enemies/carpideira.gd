@@ -68,7 +68,7 @@ func _physics_process(delta: float) -> void:
 				cry_in = randf_range(18.0, 35.0); hush = 4.0
 				Audio.play3d(self, "carpideira_crianca", Vector3(0, 1.5, 0), 0.0, false, 5.0, 40.0)
 	var weep := state == State.IDLE and hush == 0.0
-	weeping.volume_db = move_toward(weeping.volume_db, -2.0 if weep else -80.0, (60.0 if weep else 240.0) * delta)
+	weeping.volume_db = move_toward(weeping.volume_db, 2.0 if weep else -80.0, (60.0 if weep else 240.0) * delta)
 	super(delta)
 
 

@@ -21,8 +21,14 @@ PEAK = {"vento": 0.7, "casa": 0.5, "fogo": 0.6, "velas": 0.35, "relogio": 0.5, "
         "musica": 0.4,  # musica_venda: the shop radio (sound-effects model: this connector has no music model)
         # the protagonist's actions and body, the mutant, the rain (2026-11-10)
         "facao": 0.75, "besta": 0.75, "lamparina": 0.6, "dano": 0.8, "coracao": 0.7, "mutante": 0.85, "chuva": 0.6, "compra": 0.6, "curativo": 0.6,
-        "bloqueio": 0.8}  # the machete blocking a blow (2026-11-10)
-LOOPS = ("vento", "casa", "fogo", "velas", "relogio", "coro", "reza", "musica", "chuva", "coracao")  # generated seamless
+        "bloqueio": 0.8,  # the machete blocking a blow (2026-11-10)
+        # the night mutants (docs/MUTANTES_NOITE.md, 2026-11-11): per sound, by its name without the take number
+        "bruxa_asas": 0.6, "bruxa_estalo": 0.7, "bruxa_guincho": 0.8,
+        "poceiro_balde": 0.9, "poceiro_respira": 0.6, "poceiro_rugido": 0.85, "poceiro_queda": 0.85, "poceiro_agua": 0.7,
+        "carpideira_choro": 0.9, "carpideira_crianca": 0.6, "carpideira_suspiro": 0.7, "carpideira_grito": 0.9,
+        "carpideira_queda": 0.8}
+LOOPS = ("vento", "casa", "fogo", "velas", "relogio", "coro", "reza", "musica", "chuva", "coracao",
+         "bruxa_asas", "poceiro_balde", "carpideira_choro")  # generated seamless
 
 
 def load(path):
@@ -80,6 +86,9 @@ for path in sorted(glob.glob(os.path.join(SRC, "*.mp3"))):
     name = os.path.splitext(os.path.basename(path))[0]
     x = load(path)
     kind = name.split("_")[0]
+    base = name.rstrip("0123456789").rstrip("_")  # bruxa_estalo_2 -> bruxa_estalo
+    if base in PEAK:
+        kind = base
     if kind == "passo" or name.startswith("mutante_passo"):  # start on the impact, end clean
         start = max(0, int(np.argmax(np.abs(x) > 0.08 * np.max(np.abs(x)))) - int(0.005 * SR))
         x = fade(x[start:], 0.0, 0.05)

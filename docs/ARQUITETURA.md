@@ -33,7 +33,7 @@ protagonista-terror/
                               npcs_build (roda npcs/<quem>.py)
     cenarios/                 vilarejo_build (+ pacote vilarejo/), armaria_build, venda_build, capela_build
     texturas/                 scenery_textures, notas_papeis, fonte, roda_armas (o terço e as plaquinhas da roda)
-    sons/                     sounds_import (ElevenLabs), clima_sons, enfermeira_sons, bruxa_sons, poceiro_sons, carpideira_sons, ferido_sons, sounds_build
+    sons/                     sounds_import (ElevenLabs), clima_sons, enfermeira_sons, ferido_sons, sounds_build
     renders/                  renders de conferência (protagonista, mutante, vilarejo, NPCs lado a lado)
   blender/                    .blend salvos pelos builds: personagens/, npcs/, cenarios/
   audio_fontes/               MP3 do ElevenLabs (elevenlabs/, elevenlabs_extra/) e o conjunto sintetizado antigo
