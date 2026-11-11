@@ -113,6 +113,19 @@ Gancho da missão (a definir): o filho de Dona Firmina foi levado para a Colôni
     o nome e a descrição, com o acorde de viola (`bau_achado`). O item entra no inventário nessa hora.
   - Com E de novo, ele guarda o item no casaco e se levanta (`Stow_Item`). O baú fica aberto e vazio até um jogo novo.
   - Hoje há dois: o facão (junto à casa em ruínas da entrada da vila) e uma garrafada (ao lado do altar da capela).
+- **Movimentos de enigma** (para as masmorras; experimente no percurso a leste da sala de treino):
+  - **Empurrar** (`Pushable`, a pedra lavrada de `puzzle_build.py`): ande contra um lado do bloco por um instante e ele
+    encosta o ombro (`Push`). O bloco vai deslizando de 1 em 1 m, arrastando (`pedra_arrastar`), e ele vai junto, sem
+    parar, enquanto você segura a direção. O bloco anda só ao longo dos próprios lados e não entra em nada nem sai do
+    chão. Dá para subir nele por qualquer lado (E).
+  - **Subir** (`Climbable`, por qualquer lado do objeto, ou só pelos lados que a fase indicar): no pé de uma borda de
+    até 1,6 m, E pendura a lamparina no gancho, ele se agarra à borda e
+    sobe (`Climb_Ledge`), depois pega a lamparina de volta. Num muro mais alto (o "muro" com pedras salientes e uma
+    raiz), E o põe colado na parede (modo `CLIMB`): W sobe de apoio em apoio (`Climb_Step`), S desce, no alto ele passa
+    por cima e no pé S o solta. A câmera se afasta enquanto ele escala. Som `escalar`.
+  - **Pular** (`Jumpable`): na beira de um vão, sem arma na mão, aparece "Espaço · pular". Ele agacha, salta com os
+    joelhos encolhidos e cai do outro lado (`Jump`, som `pouso`). Com arma na mão, Espaço continua sendo a esquiva.
+  - Ainda falta: descer de uma borda ou de um muro pelo alto (hoje ele cai) e dano de queda.
 - **Ainda não dá para ganhar dinheiro.** Isso fica para depois, por exemplo com saques, missões ou o corpo dos mutantes.
 - **Sons:** moedas no balcão (`compra`) e o pano da atadura (`curativo`), do ElevenLabs.
 

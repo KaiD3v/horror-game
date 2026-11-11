@@ -8,7 +8,7 @@
 # Player drives it by the parameters: <l|f>_explore, _jog_mix, _run_mix, _walk_ts... (see player.gd).
 class_name PlayerAnimation
 
-const MODE_INPUTS := ["explore", "combat", "dead", "crouch", "xbow"]  # = Player.Mode
+const MODE_INPUTS := ["explore", "combat", "dead", "crouch", "xbow", "climb"]  # = Player.Mode
 const LEG_BONES := ["hips", "thigh.L", "thigh.R", "shin.L", "shin.R", "foot.L", "foot.R"]
 
 
@@ -55,12 +55,13 @@ static func build(model: Node3D, ap: AnimationPlayer) -> AnimationTree:
 		bt.connect_node(w[1] + "_ready", 0, w[0]); bt.connect_node(w[1] + "_ready", 1, w[1])
 
 	bt.add_node("death", anim.call("Death"))
+	bt.add_node("climb", anim.call("Climb_Idle_Loop"))  # on a wall: Climb_Step (a one-shot) moves him
 	var mode_node := AnimationNodeTransition.new(); mode_node.input_count = MODE_INPUTS.size(); mode_node.xfade_time = 0.2
 	for i in MODE_INPUTS.size():
 		mode_node.set_input_name(i, MODE_INPUTS[i])
 	bt.add_node("mode", mode_node)
 	for i in MODE_INPUTS.size():
-		bt.connect_node("mode", i, ["hands", "combat_ready", "death", "crouch_hands", "xbow_ready"][i])
+		bt.connect_node("mode", i, ["hands", "combat_ready", "death", "crouch_hands", "xbow_ready", "climb"][i])
 
 	bt.add_node("shot", anim.call("Draw_Machete"))
 	var one := AnimationNodeOneShot.new(); one.fadein_time = 0.06; one.fadeout_time = 0.12

@@ -225,12 +225,13 @@ def drape():
 
 
 def pose(aims, frame, turns=(), swing=0.0, left=None, armed=0.0, ground="feet", lift=0.0, lantern=None, sway=0.0,
-         right=None, xbow=0.0, cock=0.0, loaded=0.0, nock=0.0, carry=0.0):
+         right=None, xbow=0.0, cock=0.0, loaded=0.0, nock=0.0, carry=0.0, world=False):
     """Reset, aim bones, IK the left fist (left=(palm, blade, edge[, pole])), hang the lantern from the
     right fist (or place it at the world matrix `lantern`), swap the machete sheath->hand by `armed`,
     put the soles (ground="feet") or the whole body (ground="body") on the floor, raise by `lift`, key.
     right=(palm, blade, edge, pole, ".R") IKs the right fist instead; xbow swaps the crossbow holster->right hand;
-    lantern="hung" leaves the lantern on its belt hook."""
+    lantern="hung" leaves the lantern on its belt hook. world=True: the fists' targets are fixed in the world (a ledge,
+    a wall's holds), so both are solved after grounding / lifting (the lantern must be hung if `right` is given)."""
     for pb in P:
         pb.location = (0, 0, 0); pb.rotation_quaternion = (1, 0, 0, 0)
     bpy.context.view_layer.update()
@@ -239,9 +240,9 @@ def pose(aims, frame, turns=(), swing=0.0, left=None, armed=0.0, ground="feet", 
     for bone, axis, deg in turns:
         turn(bone, axis, deg)
     drape()
-    if left and ground == "feet":
+    if left and ground == "feet" and not world:
         hold(*(left() if callable(left) else left))
-    if right and ground == "feet":
+    if right and ground == "feet" and not world:
         hold(*(right() if callable(right) else right))
     grab.influence = armed; grab_x.influence = xbow; grab_b.influence = nock; grab_c.influence = carry
     P["xbow.string"].location = (0, -0.17 * cock, 0)            # cocked: string back on the catch
@@ -260,8 +261,10 @@ def pose(aims, frame, turns=(), swing=0.0, left=None, armed=0.0, ground="feet", 
     minz = min((ev.matrix_world @ ev.data.vertices[i].co).z for i in GROUND[ground]) - lift
     P["hips"].matrix = Matrix.Translation((0, 0, -minz)) @ P["hips"].matrix
     bpy.context.view_layer.update()
-    if left and ground != "feet":  # kneeling / lying down: targets are in the world, so solve after grounding
+    if left and (ground != "feet" or world):  # kneeling / lying down / climbing: world targets, solved after grounding
         hold(*(left() if callable(left) else left))
+    if right and world:
+        hold(*(right() if callable(right) else right))
     if lantern is not None:  # after grounding, so the hips shift does not move it
         P["lantern"].matrix = lantern
         bpy.context.view_layer.update()
@@ -892,6 +895,118 @@ pose(SHOW_UP + CROUCH_LEGS, 8, ground="legs", turns=[("head", "Z", 15)],
      left=((0.24, -0.08, 0.55), (0.2, 0.3, -1), (1, 0, 0), (1, 0.6, -0.2)))  # into the coat (the game hides it at 9)
 pose(HALF_UP + HALF_LEGS, 15, turns=[("head", "Z", -5)], swing=-4, ground="legs")
 pose(UPPER + IDLE_LEGS, 24, turns=[("head", "Z", -15)], swing=3)
+
+# --- pushing, climbing, jumping (scripts/world/pushable.gd, climbable.gd, jumpable.gd). The game moves the root along
+# the path (block, ledge, holds, arc) while these play in place; where a fist must stay on something fixed in the
+# world, its target here is that thing seen from the moving root (world=True).
+# Push: one step of a heavy block (1 m in 36 frames, the game slides block and root together). Shoulder and left
+# forearm against the face (PUSH_FACE m ahead of his feet), legs driving, the lantern held back low in the right.
+PUSH_FACE = 0.42
+PUSH_UP = [("spine", (0, -0.45, 1)), ("chest", (0, -0.6, 1)), ("neck", (0, -0.35, 1)), ("head", (0, -0.25, 1)),
+           ("upper_arm.R", (-0.45, 0.15, -0.85)), ("forearm.R", (-0.15, -0.35, -0.9)), ("hand.R", (-0.05, -0.6, -1))]
+PUSH_HAND = ((0.1, -PUSH_FACE + 0.04, 0.95), (-0.2, 0, 1), (0, -1, 0), (1, 0.6, -0.4))
+DRIVE = {"thigh.F": (0, -0.35, -1), "shin.F": (0, 0.15, -1), "foot.F": (0, -1, -0.3),   # front foot planted under him
+         "thigh.B": (0, 0.55, -1), "shin.B": (0, 0.85, -1), "foot.B": (0, 0.2, -1)}     # back leg long, on its toes
+STEP_UP = {"thigh.F": (0, -0.1, -1), "shin.F": (0, 0.2, -1), "foot.F": (0, -1, -0.5),
+           "thigh.B": (0, -0.55, -0.8), "shin.B": (0, 0.6, -0.8), "foot.B": (0, -1, -0.6)}  # the back leg brought through
+act("Push", 36)
+for f, key, front, tw in ((1, DRIVE, ".L", 4), (10, STEP_UP, ".L", 0), (19, DRIVE, ".R", -4), (28, STEP_UP, ".R", 0),
+                          (36, DRIVE, ".L", 4)):
+    pose(PUSH_UP + legs(key, front), f, turns=[("chest", "Z", tw)], left=PUSH_HAND, swing=-6)
+
+# Climb_Ledge: up onto a ledge LEDGE m high whose edge is LEDGE_FACE m ahead. The lantern goes on its hook, both hands
+# on the edge, he hauls himself up (the game lifts the root by LEDGE over RISE frames, then forward by LEDGE_IN over
+# IN frames), a knee on top, stands, takes the lantern back. Also how a wall climb ends (its last LEDGE m).
+LEDGE, LEDGE_FACE, LEDGE_IN = 1.25, 0.33, 0.6
+RISE, IN = (8, 22), (20, 30)
+
+
+def _ramp(f, a, b):
+    t = min(max((f - a) / (b - a), 0.0), 1.0)
+    return t * t * (3 - 2 * t)
+
+
+def edge(f, x):  # the ledge's edge under fist x, seen from the root at frame f
+    return (x, -LEDGE_FACE + LEDGE_IN * _ramp(f, *IN), LEDGE - LEDGE * _ramp(f, *RISE) + 0.02)
+
+
+def on_edge(f):
+    return dict(left=(edge(f, 0.18), (-1, 0, 0), (0, 0, -1), (1, 0.4, -0.5)),
+                right=(edge(f, -0.18), (1, 0, 0), (0, 0, -1), (-1, 0.4, -0.5), ".R"), world=True, lantern="hung")
+
+
+LOOK_UP = [("spine", (0, -0.05, 1)), ("chest", (0, 0, 1)), ("neck", (0, -0.1, 1)), ("head", (0, -0.6, 0.8))]
+HAUL = [("spine", (0, -0.2, 1)), ("chest", (0, -0.3, 1)), ("neck", (0, -0.4, 1)), ("head", (0, -0.7, 0.6))]
+OVER = [("spine", (0, -0.6, 1)), ("chest", (0, -0.9, 1)), ("neck", (0, -0.6, 1)), ("head", (0, -1, 0.4))]
+SCRABBLE = [("thigh.L", (0.1, -0.8, -0.6)), ("shin.L", (0, 0.4, -1)), ("foot.L", (0, -1, 0)),
+            ("thigh.R", (-0.05, 0.1, -1)), ("shin.R", (0, 0.25, -1)), ("foot.R", (0, -0.6, -1))]
+KNEE_UP = [("thigh.L", (0.1, -1, 0.15)), ("shin.L", (0, 0.15, -1)), ("foot.L", (0, -0.3, -1)),
+           ("thigh.R", (-0.05, 0.15, -1)), ("shin.R", (0, 0.3, -1)), ("foot.R", (0, -0.5, -1))]
+act("Climb_Ledge", 48)
+pose(UPPER + IDLE_LEGS, 1, turns=[("head", "Z", -15)])
+for f, hung in ((4, False), (5, True)):  # the lantern onto its hook (as Stow_Lantern)
+    pose(DRAW_UP + IDLE_LEGS, f, turns=[("head", "Z", -10)], right=HOOK, lantern="hung" if hung else None)
+pose(LOOK_UP + IDLE_LEGS, 9, **on_edge(9))
+pose(HAUL + SCRABBLE, 15, lift=-0.85, **on_edge(15))
+pose(OVER + KNEE_UP, 21, lift=-0.78, **on_edge(21))
+pose(no_right(CROUCH_UP) + free_arm(0, "crouch") + CROUCH_LEGS, 27, ground="legs", lantern="hung", swing=8)
+pose(no_right(HALF_UP) + free_arm(0.5, "crouch") + HALF_LEGS, 32, ground="legs", lantern="hung")
+pose(no_right(UPPER) + free_arm(0, "idle") + IDLE_LEGS, 37, turns=[("head", "Z", -15)], lantern="hung")
+for f, hung in ((41, True), (42, False)):  # and back in hand
+    pose(DRAW_UP + IDLE_LEGS, f, turns=[("head", "Z", -20)], right=HOOK, lantern="hung" if hung else None)
+pose(UPPER + IDLE_LEGS, 48, turns=[("head", "Z", -15)], swing=4)
+
+# Climbing a wall (mode CLIMB): flat against it, fists and boots on its holds (the face WALL_FACE m ahead of his feet),
+# the lantern on its hook. Climb_Idle_Loop hangs there; Climb_Step is one move up (the game lifts the root by RUNG over
+# its frames; backwards = down): the right fist reaches a hold higher, then the left, the legs push.
+WALL_FACE, RUNG = 0.30, 0.5
+CLING = [("spine", (0, -0.1, 1)), ("chest", (0, -0.06, 1)), ("neck", (0, -0.12, 1)), ("head", (0, -0.4, 1))]
+FEET_A = [("thigh.L", (0.14, -0.5, -0.85)), ("shin.L", (0.02, 0.4, -1)), ("foot.L", (0, -1, -0.2)),
+          ("thigh.R", (-0.1, -0.15, -1)), ("shin.R", (0, 0.22, -1)), ("foot.R", (0, -1, -0.35))]
+FEET_B = [("thigh.L", (0.12, -0.2, -1)), ("shin.L", (0.02, 0.2, -1)), ("foot.L", (0, -1, -0.35)),
+          ("thigh.R", (-0.14, -0.5, -0.85)), ("shin.R", (0, 0.4, -1)), ("foot.R", (0, -1, -0.2))]
+
+
+def holds(lz, rz):  # fists on holds at heights lz, rz (seen from the root)
+    return dict(left=((0.22, -WALL_FACE + 0.02, lz), (0, 0, 1), (0, -0.7, -0.7), (1, 0.6, -0.3)),
+                right=((-0.22, -WALL_FACE + 0.02, rz), (0, 0, 1), (0, -0.7, -0.7), (-1, 0.6, -0.3), ".R"),
+                world=True, lantern="hung")
+
+
+act("Climb_Idle_Loop", 61, loop=True)
+for f, b in ((1, 0), (31, 1), (61, 0)):
+    aims = [(n, (d[0], d[1] - 0.05 * b if n == "chest" else d[1], d[2])) for n, d in CLING]
+    pose(aims + FEET_A, f, **holds(1.85 + 0.01 * b, 1.6))
+act("Climb_Step", 20)
+for f, lz, rz, feet in ((1, 1.85, 1.6, FEET_A), (6, 1.85, 1.95, FEET_A), (10, 1.85, 2.1, FEET_B),
+                        (15, 2.25, 2.1, FEET_B), (20, 2.35, 2.1, FEET_A)):
+    r = RUNG * (f - 1) / 19
+    pose(CLING + feet, f, **holds(lz - r, rz - r))
+
+# Jump: across a gap (the game flies the root along an arc between JUMP_OFF and JUMP_LAND frames). Crouch, spring off
+# one foot, knees up in the air, the lantern swinging, reach down with both feet and take the landing in the knees.
+JUMP_OFF, JUMP_LAND = 8, 21
+LOAD = [("spine", (0, -0.4, 1)), ("chest", (0, -0.55, 1)), ("neck", (0, -0.3, 1)), ("head", (0, -0.4, 1)),
+        ("upper_arm.L", (0.25, 0.5, -0.8)), ("forearm.L", (0.1, 0.4, -0.9)), ("hand.L", (0.05, 0.3, -1))] + UPPER[4:7]
+REACH = [("spine", (0, -0.3, 1)), ("chest", (0, -0.35, 1)), ("neck", (0, -0.3, 1)), ("head", (0, -0.5, 1)),
+         ("upper_arm.L", (0.45, -0.6, 0.2)), ("forearm.L", (0.2, -0.9, 0.3)), ("hand.L", (0.1, -1, 0.2)),
+         ("upper_arm.R", (-0.5, -0.5, 0.1)), ("forearm.R", (-0.2, -0.9, 0.0)), ("hand.R", (-0.1, -1, -0.1))]
+CROUCHED = [("thigh.L", (0.06, -0.6, -0.8)), ("shin.L", (0, 0.5, -0.85)), ("foot.L", (0, -1, -0.2)),
+            ("thigh.R", (-0.06, -0.45, -0.85)), ("shin.R", (0, 0.55, -0.85)), ("foot.R", (0, -1, -0.2))]
+SPRING = [("thigh.L", (0.05, -1, -0.25)), ("shin.L", (0, 0.1, -1)), ("foot.L", (0, -0.6, -1)),
+          ("thigh.R", (-0.05, 0.45, -1)), ("shin.R", (0, 0.75, -1)), ("foot.R", (0, 0.6, -0.8))]
+TUCK = [("thigh.L", (0.08, -0.95, -0.35)), ("shin.L", (0, 0.35, -1)), ("foot.L", (0, -1, -0.3)),
+        ("thigh.R", (-0.08, -0.6, -0.8)), ("shin.R", (0, 0.65, -0.8)), ("foot.R", (0, -1, -0.3))]
+DOWN = [("thigh.L", (0.08, -0.45, -1)), ("shin.L", (0, -0.15, -1)), ("foot.L", (0, -1, -0.4)),
+        ("thigh.R", (-0.08, -0.3, -1)), ("shin.R", (0, -0.05, -1)), ("foot.R", (0, -1, -0.4))]
+act("Jump", 30)
+pose(UPPER + IDLE_LEGS, 1, turns=[("head", "Z", -15)])
+pose(LOAD + CROUCHED, 5, swing=10)
+pose(REACH + SPRING, JUMP_OFF, swing=-10)
+pose(REACH + TUCK, 14, swing=-22, sway=8)
+pose(REACH + DOWN, 19, swing=-6)
+pose(LOAD + CROUCHED, 23, swing=18)
+pose(UPPER + IDLE_LEGS, 30, turns=[("head", "Z", -15)], swing=-4)
 
 # the skirt is re-draped every other frame of every action, so the flaps also clear the legs between keys
 SKIRT_BONES = [b for chain in SKIRT for b in chain]

@@ -12,6 +12,7 @@ signal used(by: Node3D)
 @export var height := 1.6
 @export var requires := ""
 @export var refusal := ""   # "" = "Precisa de: <item>."
+@export var key := "interact"   # the action that uses it (Jumpable: "dodge", Space)
 var enabled := true
 
 

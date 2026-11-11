@@ -51,9 +51,10 @@ const CAM_EXPLORE := {"height": 1.55, "side": 0.45, "length": 1.7, "fov": 62.0}
 const CAM_COMBAT := {"height": 1.5, "side": 0.6, "length": 1.35, "fov": 54.0}
 const CAM_AIM := {"height": 1.5, "side": 0.55, "length": 1.1, "fov": 50.0}  # crossbow out: tighter, over the shoulder
 const CAM_KNEEL := {"height": 0.95, "side": 0.0, "length": 2.1, "fov": 55.0}  # at a trunk (Chest): down with him, centred
+const CAM_CLIMB := {"height": 1.4, "side": 0.0, "length": 2.8, "fov": 60.0}   # on a wall (Climbable): back, to see the holds
 const CAM_CROUCH := {"height": 1.15, "side": 0.4, "length": 1.5, "fov": 60.0}  # head drops ~0.4 m kneeling
 const CAM_BLEND := 5.0        # how fast the camera eases between the framings
-enum Mode { EXPLORE, COMBAT, DEAD, CROUCH, XBOW }  # = PlayerAnimation.MODE_INPUTS
+enum Mode { EXPLORE, COMBAT, DEAD, CROUCH, XBOW, CLIMB }  # CLIMB: on a wall (Climbable)  # = PlayerAnimation.MODE_INPUTS
 const SHOT_TIME := 2.0 / 30.0       # Shoot_Crossbow: the bolt leaves on frame 2
 const BOLT_RANGE := 40.0            # how far the crosshair looks for what to aim at
 
@@ -69,7 +70,9 @@ var action_len := 0.0
 var hit_done := false
 var swung := false        # the swing's whoosh has played (it leads the blow a little)
 var queued := ""
-var busy := false         # in a scripted moment (opening a trunk): no control, E / Q / keys do nothing
+var busy := false         # in a scripted moment (a trunk, a push, a climb, a jump): no control, E / Q / keys do
+                          # nothing, no gravity; whoever started it moves him
+var cam_override := {}    # a scripted moment's camera (CAM_KNEEL...), {} = the usual
 var wanted := -1          # a Mode chosen on the weapon wheel, on its way (-1 = none)
 var blocking := false     # RMB held with the machete out
 var aiming := false       # RMB held (or locked on) with the crossbow out
@@ -206,6 +209,15 @@ func _equip_next() -> void:
 		toggle_crossbow()
 	elif mode == Mode.CROUCH:
 		crouch()
+
+
+## Puts away whatever is in his hands and stands up; returns when he has (a scripted moment starts with them free).
+func free_hands() -> void:
+	if mode != Mode.EXPLORE:
+		equip(Mode.EXPLORE)
+	var t0 := Time.get_ticks_msec()
+	while (mode != Mode.EXPLORE or action != "") and Time.get_ticks_msec() - t0 < 4000:
+		await get_tree().process_frame
 
 
 ## Whether he has what that mode holds (WEAPON_ITEM; the lantern / crouching: always).
@@ -405,7 +417,7 @@ func sfx(n: String, db := 0.0, pitch := 1.0) -> void:
 
 # --- per frame -------------------------------------------------------------------------------------
 func _physics_process(delta: float) -> void:
-	if not is_on_floor():
+	if not is_on_floor() and not busy:
 		velocity.y -= gravity * delta
 	var move := Vector3.ZERO
 	var speed := 0.0
@@ -437,7 +449,10 @@ func _physics_process(delta: float) -> void:
 	if DODGE_DIR.has(action) and action_t >= DODGE_FROM and action_t < DODGE_TO:
 		hv = global_basis * DODGE_DIR[action] * DODGE_DIST / (DODGE_TO - DODGE_FROM)
 	velocity.x = hv.x; velocity.z = hv.z
-	move_and_slide()
+	if busy:
+		velocity = Vector3.ZERO  # moved by whoever made him busy
+	else:
+		move_and_slide()
 
 	# facing: exploring turns towards the movement, combat faces where the camera looks (strafe)
 	var target := rotation.y
@@ -513,8 +528,8 @@ func _tick_action(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	_track_lock(delta)
-	var goal: Dictionary = CAM_COMBAT if mode == Mode.COMBAT and raised else CAM_AIM if mode == Mode.XBOW and raised \
-		else CAM_CROUCH if mode == Mode.CROUCH else CAM_KNEEL if busy else CAM_EXPLORE
+	var goal: Dictionary = cam_override if not cam_override.is_empty() else CAM_COMBAT if mode == Mode.COMBAT and raised else CAM_AIM if mode == Mode.XBOW and raised \
+		else CAM_CROUCH if mode == Mode.CROUCH else CAM_EXPLORE
 	for k in goal:
 		cam_now[k] = lerp(float(cam_now[k]), float(goal[k]), min(1.0, CAM_BLEND * delta))
 	_apply_cam()

@@ -62,12 +62,8 @@ func _use(by: Node3D) -> void:
 
 
 func _open(p: Player) -> void:
-	busy = true; enabled = false; p.busy = true
-	if p.mode != Player.Mode.EXPLORE:  # whatever is in his hands goes away first
-		p.equip(Player.Mode.EXPLORE)
-		var t0 := Time.get_ticks_msec()
-		while (p.mode != Player.Mode.EXPLORE or p.action != "") and Time.get_ticks_msec() - t0 < 4000:
-			await get_tree().process_frame
+	busy = true; enabled = false; p.busy = true; p.cam_override = Player.CAM_KNEEL
+	await p.free_hands()
 	var held: Array = get_tree().get_nodes_in_group("enemy").filter(func(e): return e is Enemy and e.active)
 	for e in held:
 		e.active = false
@@ -105,7 +101,7 @@ func _open(p: Player) -> void:
 	for e in held:
 		if is_instance_valid(e):
 			e.active = true
-	p.busy = false; busy = false
+	p.busy = false; p.cam_override = {}; busy = false
 
 
 ## Waits until the player's one-shot reaches frame f (30 fps).

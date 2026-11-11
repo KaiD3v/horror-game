@@ -32,6 +32,9 @@ func _unhandled_input(e: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		var it := nearest()
-		if it:
+		if it and it.key == "interact":
 			it.use(player)
 			get_viewport().set_input_as_handled()
+	elif current and current.key != "interact" and e.is_action_pressed(current.key) and not player.get("busy"):
+		current.use(player)  # Space at a gap
+		get_viewport().set_input_as_handled()

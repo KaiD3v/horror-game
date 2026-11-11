@@ -32,13 +32,25 @@ func _ready() -> void:
 		for e in get_tree().get_nodes_in_group("enemy"):
 			if e is Enemy:
 				e.active = false  # dormant until a test wakes it
-	await run()
+	var only := only_suite()
+	if only != "" and has_method(only + "_tests"):  # `-- --autotest --only=<x>`: just <x>_tests()
+		await Callable(self, only + "_tests").call()
+	else:
+		await run()
 	print("AUTOTEST %s" % ("PASS" if fails.is_empty() else "FAILED: " + ", ".join(fails)))
 	get_tree().quit()
 
 
 func run() -> void:
 	pass
+
+
+## `--only=<x>` on the command line: run just that suite (x_tests) of the scene's test.
+static func only_suite() -> String:
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--only="):
+			return a.trim_prefix("--only=")
+	return ""
 
 
 # --- helpers ----------------------------------------------------------------------------------------------
@@ -172,13 +184,13 @@ func chest_suite() -> void:
 	var w: World3D = L.get_world_3d()
 	for c: Chest in here:
 		var spot := c.global_position + c.global_basis.z * Chest.FRONT
-		var down := w.direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(c.global_position + Vector3.UP, c.global_position + Vector3.DOWN))
-		var floor := L.ray(spot.x, spot.z, c.global_position.y + 1.5)
+		var down := w.direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(c.global_position + Vector3.UP * 0.05, c.global_position + Vector3.DOWN))  # from inside its own box
+		var under: Dictionary = L.ray(spot.x, spot.z, c.global_position.y + 1.5)
 		var room := w.direct_space_state.intersect_shape(_capsule_at(spot + Vector3(0, 0.95, 0)))
-		check(not down.is_empty() and absf(down.position.y - c.global_position.y) < 0.15 and not floor.is_empty()
-			and absf(floor.position.y - c.global_position.y) < 0.3 and room.is_empty(),
+		check(not down.is_empty() and absf(down.position.y - c.global_position.y) < 0.15 and not under.is_empty()
+			and absf(under.position.y - c.global_position.y) < 0.3 and room.is_empty(),
 			"trunk %s on the ground, room to kneel before it (floor %.2f / %.2f, %d in the way)"
-			% [c.id, floor.position.y if floor else INF, c.global_position.y, room.size()])
+			% [c.id, under.position.y if under else INF, c.global_position.y, room.size()])
 		put(player, spot + c.global_basis.z * 1.0, c.rotation.y); await wait(0.6); await shot("bau_" + c.id)
 
 

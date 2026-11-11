@@ -189,6 +189,7 @@ func run() -> void:
 	await inventory_tests()
 	await unlock_tests()
 	await chest_tests()
+	await course_tests()
 	player.health = 2
 
 	player.take_damage(2); await wait(1.8); await shot("9_dead")
@@ -548,3 +549,86 @@ func chest_tests() -> void:
 	for x in [c, bolts, locked]:
 		x.queue_free()
 	Inventory.reset(); Inventory.give_tools()
+
+
+# --- the puzzle moves (east of the room): push the block, up the ledge, across the gap, up the wall -----------------
+func course_tests() -> void:
+	player.velocity = Vector3.ZERO; player.health = 99
+	var b: Pushable = L.block
+	put(player, b.global_position + Vector3(0, 0, 0.8), 0.0); player.pivot.rotation.y = 0.0  # south of it, W = north
+	await wait(0.3)
+	Audio.heard.clear()
+	Input.action_press("forward")
+	var pushing := await until(func(): return player.action == "Push", 2.0)
+	await wait(0.5); await shot("50_empurrar")
+	await until(func(): return b.global_position.z < 3.02, 2.0)  # one step done...
+	var gaps := 0
+	for k in 40:  # ...and on into the next ones without a stop while W is held
+		await wait(0.03)
+		if player.action != "Push":
+			gaps += 1
+	Input.action_release("forward")
+	await until(func(): return not b.moving, 2.0); await wait(0.3)
+	var z := b.global_position.z
+	check(pushing and gaps == 0 and z < 2.02 and absf(z - roundf(z)) < 0.02 and absf(b.global_position.x - 8.0) < 0.01
+		and "pedra_arrastar" in Audio.heard and not player.busy and player.action == "",
+		"W held: he keeps pushing, step after step with no stop, until W is let go (z %.2f)" % z)
+	var stone := Pushable.make(L, Vector3(3, 0, 3.2))  # the pillar at (3, 2) right behind it
+	await wait(0.2)
+	put(player, stone.global_position + Vector3(0, 0, 0.8), 0.0)
+	Input.action_press("forward"); await wait(1.2); Input.action_release("forward")
+	check(is_equal_approx(stone.global_position.z, 3.2) and player.action != "Push", "a block with a pillar behind it does not move")
+	stone.queue_free()
+	put(player, b.global_position + Vector3(0.8, 0, 0), PI / 2); await wait(0.3)  # beside the block, facing it
+	check(L.hud.prompt.text == "E · subir", "the block can be climbed too: \"%s\"" % L.hud.prompt.text)
+	await tap("interact"); await until(func(): return not player.busy and player.action == "", 3.0)
+	check(player.global_position.y > 0.95 and absf(player.global_position.x - b.global_position.x) < 0.45,
+		"E: up onto the block, from its side (y %.2f)" % player.global_position.y)
+	# the ledge, from its east side
+	put(player, Vector3(12.0, 0, -2), PI / 2); await wait(0.3)
+	check(L.hud.prompt.text == "E · subir", "at the foot of a ledge, any side: \"%s\"" % L.hud.prompt.text)
+	await tap("interact")
+	await until(func(): return player.action == "Climb_Ledge" and player.action_t > 0.5, 2.0)
+	await shot("51_subir")
+	var up := await until(func(): return not player.busy, 3.0)
+	await wait(0.2)
+	check(up and player.global_position.y > 1.2 and player.global_position.x < 11.3 and player.lantern_out and not player.lantern_hung(),
+		"E: up onto it, the lantern back in hand (y %.2f x %.2f)" % [player.global_position.y, player.global_position.x])
+	# the gap
+	put(player, Vector3(10, 1.26, -2.4), 0.0); await wait(0.3)
+	check(L.hud.prompt.text == "Espaço · pular", "at the edge of a gap: \"%s\"" % L.hud.prompt.text)
+	Audio.heard.clear(); await tap("dodge")
+	await until(func(): return player.action == "Jump" and player.action_t > 0.42, 2.0)
+	await shot("52_pulo")
+	var mid := player.global_position
+	var over := await until(func(): return not player.busy, 2.0)
+	await wait(0.4)
+	check(over and mid.y > 1.5 and absf(player.global_position.z + 5.4) < 0.05 and player.global_position.y > 1.2 and "pouso" in Audio.heard,
+		"Space: across the gap (%.1f m up mid-air), landing on the far side" % (mid.y - 1.25))
+	await tap("draw"); await wait(1.3); await wait(0.1)
+	check(L.hud.prompt.text == "", "machete out: no jump on offer (Space is the dodge)")
+	await tap("draw"); await wait(1.3)
+	# the wall
+	put(player, Vector3(7.6, 0, -9.0), PI / 2); await wait(0.3)
+	check(L.hud.prompt.text == "", "the wall's plain side: no holds, nothing to climb")
+	put(player, Vector3(6, 0, -7.4), 0.0); await wait(0.3)
+	check(L.hud.prompt.text == "E · escalar", "at the foot of a wall: \"%s\"" % L.hud.prompt.text)
+	await tap("interact")
+	var on := await until(func(): return player.mode == Player.Mode.CLIMB, 2.0)
+	Input.action_press("forward"); await wait(1.5); Input.action_release("forward")
+	await until(func(): return player.action == "", 1.0)
+	var h := player.global_position.y
+	await shot("53_escalar")
+	check(on and h > 0.9 and player.busy, "E: flat against it; W climbs hold by hold (%.1f m)" % h)
+	Input.action_press("back")
+	var off := await until(func(): return player.mode == Player.Mode.EXPLORE and not player.busy, 6.0)
+	Input.action_release("back")
+	check(off and player.global_position.y < 0.05, "S climbs back down and lets go at the foot")
+	await tap("interact"); await until(func(): return player.mode == Player.Mode.CLIMB, 2.0)
+	Input.action_press("forward")
+	var topped := await until(func(): return not player.busy, 12.0)
+	Input.action_release("forward")
+	await wait(0.3); await shot("54_topo")
+	check(topped and player.global_position.y > 3.4 and player.global_position.z < -8.3 and player.mode == Player.Mode.EXPLORE,
+		"W to the top: over it and standing up there (y %.2f)" % player.global_position.y)
+	put(player, Vector3(0, 0, 4), 0.0); await wait(0.5)
