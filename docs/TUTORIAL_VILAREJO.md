@@ -1,6 +1,6 @@
 # O vilarejo como tutorial (plano)
 
-*Data: 2026-11-11. Plano. Feito: fases 1 a 4 (ver as seções "Fase N, feita" no fim). Coordenadas em Godot (x, z); no Blender é (x, -z).*
+*Data: 2026-11-11. Plano feito por inteiro: as cinco fases (ver as seções "Fase N, feita" no fim). Coordenadas em Godot (x, z); no Blender é (x, -z).*
 
 ## O problema
 
@@ -336,3 +336,33 @@ principal fica: facão, besta, chave, Colônia. Outra opção: a chave no fundo 
 - Sons novos (ElevenLabs, 15 créditos): `ossos_pisar`, `corda_arrebentar`, `garrafa_quebrar`.
 - Testes: `test_ossuario.gd` (o percurso inteiro), `test_capela.gd` (a porta da sacristia), `test_vilarejo.gd`
   `ossuario_tests` (Tenório, Firmina, a corda do poço, o Poceiro morto).
+
+## Fase 5, feita: o vilarejo se abre
+
+Tudo é achado uma vez só (Story `pego:<id>`); o que foi derrubado ou cortado e não foi pego continua lá
+(`vilarejo.gd` `THICKETS`, `HANGING`, `_finds`).
+
+- **Moitas que o facão corta** (`Breakable` "mato": touceiras de taquara e folha seca; "Mato fechado. Com um facão,
+  talvez."), cada uma com um achado atrás:
+
+  | Onde | Achado |
+  |---|---|
+  | atrás da casa queimada | Cr$ 10 |
+  | atrás do muro norte do cemitério | 4 virotes |
+  | atrás da casa do Zé (casa 04) | 2 ataduras |
+  | ao sul do alambique | Cr$ 6 |
+
+- **Coisas penduradas que a besta derruba** (a corda é um `Target`; o que estava pendurado cai no chão e fica para
+  pegar):
+  - uma lata enferrujada num varão espanta-passarinho, ao lado do espantalho: Cr$ 8;
+  - uma trouxa amarrada na janela da torre da capela, ao lado da porta: 2 ataduras.
+- **A casa do Zé** (casa 04, a da família levada, com o rastro de sangue): pregada por fora. O pé de cabra abre, e dentro
+  (`casa_ze_build.py`, `casa_ze.tscn`) há um quarto pequeno: a cama arrastada, as janelas pregadas por dentro, arranhões no
+  lado de dentro da porta, a cadeira caída, o oratório. Na mesa, o bilhete do Zé (nota `ze`: "Ela disse. Disse
+  certinho: Zezinho. Vou abrir."); num canto, um baú com uma garrafada.
+- **Dinheiro:** agora vem das tarefas (Bento Cr$ 15, Firmina Cr$ 20), da lata da ruína (Cr$ 5) e destes achados
+  (Cr$ 24 ao todo), o bastante para virotes e ataduras sem sobrar.
+- Mudou do plano: a terceira coisa pendurada (um saco na viga da ponte caída) ficou de fora: o que caísse dali cairia na
+  ravina, fora do alcance. A araucária também: as árvores são espalhadas ao acaso pelo gerador, sem um lugar fixo.
+- Testes: `test_vilarejo.gd` `finds_tests` (moitas alcançáveis da estrada, achados, cordas, a casa pregada) e
+  `test_casa_ze.gd` (o interior).

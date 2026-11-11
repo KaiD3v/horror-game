@@ -40,6 +40,9 @@ De noite, quando o sino toca, ele fecha a janela e reza.
 12. Preguei a porta do lado e escorei a da frente com a cana.
 14. Tem coisa no telhado. Os morcegos não param quietos.
 15. Bateram três vezes. Não vou abrir."},
+	{"id": "ze", "scene": "casa_ze", "from": 2.4, "at": Vector2(-0.3, -0.25), "yaw": 15.0, "paper": "caderno",  # on his table
+		"title": "Bilhete do Zé",
+		"text": "Mãe,\nse for a senhora mesmo, diz o meu apelido.\nA Colônia mandou dizer que a senhora morreu em 69. Eu enterrei um caixão fechado.\nEla disse. Disse certinho: Zezinho.\nVou abrir."},
 	{"id": "fiado", "scene": "venda", "from": 2.2, "at": Vector2(-3.0, 1.6), "yaw": 15.0, "paper": "caderno",
 		"title": "Caderno de fiado",
 		"text": "Fiado · março\nFirmina: querosene, vela, fumo. (levaram o filho)\nTonho: arroz, sal, 2 lt. querosene. Foi embora?\nZé da Rita: não volta.\nColônia: 20 lt. querosene, 3 cx. vela, algodão. Pago em dinheiro, de noite.\nA moça de branco que veio buscar não abriu a boca. Tinha a boca costurada, juro por Deus."},

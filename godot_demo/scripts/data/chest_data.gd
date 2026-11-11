@@ -7,6 +7,7 @@ class_name ChestData
 
 const CHESTS := [
 	{"id": "facao_juca", "scene": "alambique", "from": 7.5, "at": Vector2(5.2, 4.4), "yaw": 180.0, "item": "facao"},  # Juca's, up the tower
+	{"id": "ze_bau", "scene": "casa_ze", "from": 2.4, "at": Vector2(2.2, -1.6), "yaw": -90.0, "item": "garrafada"},  # Zé's
 	{"id": "garrafada_altar", "scene": "capela", "from": 2.2, "at": Vector2(2.6, -5.2), "yaw": -90.0, "item": "garrafada"},
 ]
 

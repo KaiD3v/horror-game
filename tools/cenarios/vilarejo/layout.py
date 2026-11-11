@@ -21,7 +21,8 @@ HOUSES = [
     (-10, -36, 90, 6.0, 5.0, "ruin", {"aula": True}),  # the classroom of the moves (construcoes.AULA)
     (9.5, -30, -90, 6.5, 5.5, "taipa", {"barra": "blue", "shutter": "blue", "chimney": True, "chained": True}),
     (-9.5, -20, 90, 6.0, 5.0, "wood", {"siding": "grey", "shutter": "green", "porch": True}),
-    (10, -15, -88, 7.5, 5.5, "taipa", {"barra": "ochre", "shutter": "green",  # the one they took: the trail starts here
+    (10, -15, -88, 7.5, 5.5, "taipa", {"barra": "ochre", "shutter": "green", "porta": "casa_ze",  # the one they took: the trail
+                                                                     # starts here; nailed up after (the crowbar: TUTORIAL_VILAREJO.md)
                                        "decais": [("picho_noite", "front", 0, 2.38, 3.6, 0.52, 0.02)]}),
     (-12, -4, 45, 6.0, 5.0, "taipa", {"barra": "oxblood", "shutter": "oxblood", "chimney": True}),
     (13, -1, -90, 6.0, 5.5, "wood", {"siding": "brown", "shutter": "blue", "decais": [("cartaz", "front", 1.9, 1.5, 0.32, 0.4, -0.08)]}),

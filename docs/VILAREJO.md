@@ -172,7 +172,8 @@ Gancho da missão (a definir): o filho de Dona Firmina foi levado para a Colôni
   - **Dano de queda** (`Player.fall_damage`): pular ou cair de até 2,2 m não machuca; acima disso, um ferimento a cada
     1,5 m a mais. O muro de 3,5 m custa 1 ferimento, 5 m custam 2, e de 6,6 m para cima a queda mata. Toda queda de
     mais de 1 m faz o baque (`pouso`) e sacode a tela; com ferimento aparece "A queda o machucou.".
-- **Ainda não dá para ganhar dinheiro.** Isso fica para depois, por exemplo com saques, missões ou o corpo dos mutantes.
+- **Dinheiro:** vem das tarefas e dos achados pelo vilarejo (moitas, coisas penduradas, a lata da ruína): ver
+  [TUTORIAL_VILAREJO.md](TUTORIAL_VILAREJO.md) "Fase 5".
 - **Sons:** moedas no balcão (`compra`) e o pano da atadura (`curativo`), do ElevenLabs.
 
 

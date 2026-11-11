@@ -55,6 +55,10 @@ for i, (hx, hy, face, w, d, kind, ex) in enumerate(HOUSES):  # doors you can go 
         x, y, yaw = at_house(i, *DOORS["casa_%02d" % (i + 1)])
         e = bpy.data.objects.new("porta_" + door, None); bpy.context.collection.objects.link(e)
         e.location = (x, y, H(x, y)); e.rotation_euler.z = math.radians(yaw)  # facing like the house
+    if ex.get("porta") and ex.get("lado") is None:  # the wall face at that door (vilarejo.gd nails planks there)
+        x, y, yaw = at_house(i, DOORS["casa_%02d" % (i + 1)][0], -HOUSES[i][4] / 2 - 0.06)
+        e = bpy.data.objects.new("parede_" + door, None); bpy.context.collection.objects.link(e)
+        e.location = (x, y, h_road(HOUSES[i][0], HOUSES[i][1]) + 0.35); e.rotation_euler.z = math.radians(yaw)
     if ex.get("lado") is not None:  # its side door: the marker faces out of the left wall
         x, y, yaw = at_house(i, *DOORS["casa_%02d_lado" % (i + 1)])
         e = bpy.data.objects.new("porta_%s_lado" % door, None); bpy.context.collection.objects.link(e)

@@ -73,6 +73,9 @@ func _build() -> void:
 	for d in DOORS:
 		Door.make(marker("porta_" + d), DOORS[d], Paths.interior(d), d)
 	_alambique()
+	var ze := marker("parede_casa_ze")  # Zé's house, nailed up after they took him
+	_nailed(ze.position, ze.rotation.y, marker("porta_casa_ze"), "casa_ze", "E · entrar na casa do Zé", Paths.interior("casa_ze"))
+	_finds.call_deferred()  # (they stand on the ground: once the colliders are in)
 	var well := marker("porta_poco")  # the ossuary's rope up the well (../docs/TUTORIAL_VILAREJO.md "Dungeon 2"): once
 	var down := Door.make(well, "E · descer pela corda", Paths.interior("ossuario"), "poco", 1.4)  # tied, a way back down
 	down.enabled = Story.has("corda:poco_largo")
@@ -208,14 +211,20 @@ func _finish(root: Node) -> void:
 			m.vertex_color_use_as_albedo = true)  # the baked AO (meshes without colours read white)
 
 
+## A door nailed up (the crowbar): the planks on the wall at `wall`, and once they are off, E at `door` goes in.
+func _nailed(wall: Vector3, yaw: float, door: Node3D, id: String, text: String, scene: String) -> void:
+	var nailed := BlockedDoor.make(self, wall, yaw, "tabuas", id, "", true)
+	var into := Door.make(door, text, scene, id, 1.6)
+	into.enabled = Story.has("aberta:" + id)
+	nailed.opened.connect(func(): into.enabled = true)
+
+
 ## Juca's still (../docs/TUTORIAL_VILAREJO.md "Dungeon 1"; casa_16): its side door nailed up (the crowbar, from Seu
 ## Bento), in by it once open; its front door shored up from inside, until the machete cuts the cane in there.
 func _alambique() -> void:
 	var side := marker("porta_alambique_lado")
-	var nailed := BlockedDoor.make(self, side.position - side.basis.z * 0.95, side.rotation.y, "tabuas", "alambique_lado", "", true)
-	var into := Door.make(side, "E · entrar no alambique", Paths.interior("alambique"), "alambique_lado", 1.6)
-	into.enabled = Story.has("aberta:alambique_lado")
-	nailed.opened.connect(func(): into.enabled = true)
+	_nailed(side.position - side.basis.z * 0.95, side.rotation.y, side, "alambique_lado", "E · entrar no alambique",
+		Paths.interior("alambique"))
 	var front := marker("porta_alambique")
 	if Story.has("quebrado:alambique_cana"):
 		Door.make(front, "E · entrar no alambique", Paths.interior("alambique"), "alambique", 1.6)
@@ -223,6 +232,88 @@ func _alambique() -> void:
 		var shut := Interactable.new(); shut.prompt = "E · abrir a porta"; shut.radius = 1.4; front.add_child(shut)
 		shut.used.connect(func(by): by.notice.emit("Trancada por dentro. Tem coisa pesada escorada do outro lado."))
 
+
+# What the machete and the crossbow open round the village (../docs/TUTORIAL_VILAREJO.md "O vilarejo se abre"): each
+# a find, taken once (Story "pego:<id>"). [id, x, z, yaw of its front, [item ("" = cruzeiros), how many]]
+const THICKETS := [["moita_queimada", -26.0, 11.6, 0.0, ["", 10]],   # behind the burnt house
+	["moita_cemiterio", -31.0, -18.4, PI, ["virote", 4]],          # behind the cemetery's north wall
+	["moita_casa04", 14.6, 15.0, -PI / 2, ["atadura", 2]],         # behind Zé's house
+	["moita_alambique", 43.5, 16.4, 0.0, ["", 6]]]                 # by the still, on its south side
+# [id, where its rope is tied (the thing hangs 0.75 m under), what hangs, [item, how many]]
+const HANGING := [["lata_espantalho", Vector3(30.6, 3.1, 26.6), "lata", ["", 8]],   # a bird-scarer's pole by the scarecrow
+	["trouxa_torre", Vector3.INF, "trouxa", ["atadura", 2]]]                        # (INF: at the chapel tower's window)
+
+
+## The thickets (Breakable "mato") with what they hide behind them, and the things hung up high (a Target: the rope)
+## that fall when a bolt cuts it; what was found but not taken lies where it fell.
+func _finds() -> void:
+	for t in THICKETS:
+		var g := ground(t[1], t[2]); var yaw: float = t[3]
+		var behind := g + Basis(Vector3.UP, yaw) * Vector3(0, 0.05, -0.5)
+		if Story.has("quebrado:" + t[0]):
+			_find(t[0], behind, t[4])
+		else:
+			var b := Breakable.make(self, g, yaw, t[0], "mato")
+			b.broken.connect(_find.bind(t[0], behind, t[4]))
+	for h in HANGING:
+		var top: Vector3 = h[1]
+		if top == Vector3.INF:
+			var door := marker("porta_capela")
+			top = door.position - door.basis.z * 0.75 + door.basis.x * 1.1 + Vector3(0, 5.6, 0)  # (the tower's face is 1.1 m in;
+			# off to the side of the door, so that where it falls is not the door's)
+		var under := ground(top.x, top.z, top.y - 0.6)
+		if h[2] == "lata":  # the pole it hangs from (tins clank on it in the wind: they scare the birds)
+			var wood := Color(0.35, 0.27, 0.2)
+			Looks.box(self, Vector3(top.x - 0.5, (top.y + 0.1 + under.y) / 2, top.z), Vector3(0.07, top.y + 0.1 - under.y, 0.07), wood)
+			Looks.box(self, top + Vector3(-0.25, 0.05, 0), Vector3(0.55, 0.05, 0.05), wood)
+		var lies := under + Vector3(0, 0.05, 0)
+		if Story.has("derrubado:" + h[0]):
+			_find(h[0], lies, h[3])
+			continue
+		var thing := _hung(h[2]); add_child(thing); thing.position = top - Vector3(0, 0.75, 0)
+		var rope := Target.make(self, top - Vector3(0, 0.25, 0), Vector3(0.12, 0.5, 0.12), _rope_mesh())
+		rope.hit.connect(_drop.bind(h, rope, thing, top, lies))
+
+
+func _drop(h: Array, rope: Target, thing: Node3D, top: Vector3, lies: Vector3) -> void:
+	Story.mark("derrubado:" + h[0]); rope.visible = false
+	Audio.play3d(self, "corda_arrebentar", top, -2.0, false, 4.0, 30.0)
+	var tw := create_tween()
+	tw.tween_property(thing, "position", lies + Vector3(0, 0.1, 0), 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.tween_callback(func():
+		Audio.play3d(self, "tabua_cair", lies, -6.0, false, 3.0, 25.0)
+		thing.queue_free(); _find(h[0], lies, h[3]))
+
+
+## What a thicket or a rope gave: lying there to take, once.
+func _find(id: String, at: Vector3, what: Array) -> void:
+	var p := Pickup.money(self, at, what[1], id, "o achado") if what[0] == "" else Pickup.make(self, at, what[0], what[1], id)
+	if not is_instance_valid(p) or p.is_queued_for_deletion():
+		return
+	var all: Node = load(Paths.PROP % "itens").instantiate()
+	var s: Node3D = all.find_child(what[0] if what[0] != "" else "embrulho", false)
+	if s == null:
+		s = all.find_child("embrulho", false)
+	all.remove_child(s); all.free(); p.add_child(s)
+
+
+func _hung(kind: String) -> Node3D:  # a rusty tin, or a cloth bundle tied up
+	var n := Node3D.new(); var mi := MeshInstance3D.new(); n.add_child(mi)
+	var mat := StandardMaterial3D.new()
+	if kind == "lata":
+		var c := CylinderMesh.new(); c.top_radius = 0.07; c.bottom_radius = 0.07; c.height = 0.16; mi.mesh = c
+		mat.albedo_color = Color(0.45, 0.28, 0.16); mat.metallic = 0.5
+	else:
+		var s := SphereMesh.new(); s.radius = 0.2; s.height = 0.34; mi.mesh = s
+		mat.albedo_color = Color(0.62, 0.55, 0.45)
+	mi.material_override = mat
+	return n
+
+
+func _rope_mesh() -> Mesh:
+	var c := CylinderMesh.new(); c.top_radius = 0.012; c.bottom_radius = 0.012; c.height = 0.5
+	var m := StandardMaterial3D.new(); m.albedo_color = Color(0.7, 0.58, 0.38); c.material = m
+	return c
 
 ## The classroom ruin's moves: up out of the hole either side, the jump across it, up onto the store and down off its
 ## back through the breach, "C · agachar" at the door (a ceiling slab down across it), and a tin with coins and a

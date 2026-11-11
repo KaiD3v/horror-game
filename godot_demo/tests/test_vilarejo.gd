@@ -679,6 +679,63 @@ func intro_tests() -> void:
 	await shot("intro_fim")
 
 
+# The village opens up (../docs/TUTORIAL_VILAREJO.md "O vilarejo se abre"): the thickets the machete cuts, each with a
+# find behind it, reachable from the road; the things hung up high a bolt brings down; Zé's house, nailed up, the
+# crowbar opens it.
+func finds_tests() -> void:
+	WorldTime.reset(10 * 60); L.day._step(0.0); Story.reset(); Inventory.reset(); Inventory.give_tools()
+	player.health = 99
+	await wait(1.0)  # (the navmesh syncs a moment after the level comes in)
+	var spawn: Vector3 = L.marker("spawn_jogador").position
+	var thickets: Array = L.find_children("*", "Breakable", true, false).filter(func(b): return b.kind == "mato")
+	check(thickets.size() == L.THICKETS.size(), "%d thickets round the village" % thickets.size())
+	for b: Breakable in thickets:
+		var front := b.global_position + b.global_basis.z * 1.0
+		var g: Vector3 = L.ground(front.x, front.z)
+		check(L.reachable(g, spawn), "%s: you can walk to it from the road" % b.id)
+		put(player, g, b.rotation.y + PI); await wait(0.3)
+		check(L.hud.prompt.text == "E · sacar o facão", "%s: \"%s\"" % [b.id, L.hud.prompt.text])
+		var money := Inventory.money; var items := Inventory.items.duplicate()
+		b.take_hit(9, "facao"); await wait(0.3)
+		var find: Pickup = L.find_children("*", "Pickup", true, false).filter(func(p): return p.id == b.id).front()
+		check(find != null and Story.has("quebrado:" + b.id), "%s cut down: something behind it" % b.id)
+		if find:
+			put(player, L.ground(find.global_position.x, find.global_position.z) + b.global_basis.z * 0.6, b.rotation.y + PI); await wait(0.3)
+			await tap("interact"); await wait(0.2)
+			check(Story.has("pego:" + b.id) and (Inventory.money > money or Inventory.items != items), "%s: taken (%s)" % [b.id, L.hud.message.text])
+		await shot("v80_%s" % b.id)
+	var ropes: Array = L.find_children("*", "Target", true, false)
+	check(ropes.size() == L.HANGING.size(), "%d things hung up high, on ropes" % ropes.size())
+	for r: Target in ropes:
+		var from := r.global_position + Vector3(0.3, -1.4, 0.3)  # from under it (what hangs there stops nothing)
+		var money := Inventory.money; var items := Inventory.items.duplicate()
+		Bolt.fire(L, from, (r.global_position - from).normalized(), player.get_rid())
+		await until(func(): return r.done, 2.0); await wait(1.2)
+		var find: Array = L.find_children("*", "Pickup", true, false).filter(func(p): return p.id.begins_with("lata") or p.id.begins_with("trouxa"))
+		var p: Pickup = find.filter(func(q): return not Story.has("pego:" + q.id)).front() if not find.is_empty() else null
+		check(r.done and p != null and p.global_position.y < r.global_position.y - 1.0, "a bolt in the rope: it falls to the ground")
+		if p:
+			var away: Vector3 = p.global_position - L.marker("porta_capela").position; away.y = 0
+			put(player, p.global_position + away.normalized() * 0.5, atan2(away.x, away.z)); await wait(0.3)  # (facing it)
+			await tap("interact"); await wait(0.2)
+			check(Inventory.money > money or Inventory.items != items, "...and lies there to take (%s)" % L.hud.message.text)
+	# Zé's house
+	Inventory.items.erase("pe_de_cabra")
+	var ze: Node3D = L.marker("porta_casa_ze")
+	put(player, L.ground(ze.position.x, ze.position.z), ze.rotation.y + PI); await wait(0.4)
+	check(L.hud.prompt.text == "E · arrombar a porta", "Zé's house, nailed up: \"%s\"" % L.hud.prompt.text)
+	Inventory.add("pe_de_cabra")
+	await tap("interact")
+	var banner: bool = await until(func(): return get_tree().get_first_node_in_group("found_banner") != null, 12.0)
+	await shot("v82_casa_ze")
+	await wait(0.9); await tap("interact"); await wait(1.2)
+	check(banner and L.hud.prompt.text == "E · entrar na casa do Zé", "the crowbar: the planks off (\"%s\")" % L.hud.prompt.text)
+	await tap("interact")
+	check(SceneRouter.requested == Paths.interior("casa_ze") and SceneRouter.arriving == "casa_ze", "E: into Zé's house")
+	SceneRouter.requested = ""; SceneRouter.arriving = ""
+	Story.reset(); Inventory.reset(); Inventory.give_tools()
+
+
 # The ossuary from up here (../docs/TUTORIAL_VILAREJO.md "Dungeon 2"): Tenório's task only with a blade; Dona Firmina
 # and the scapular; up the rope out by the square's well, and the rope a way back down; killed down there, O Poceiro
 # comes up no more.
