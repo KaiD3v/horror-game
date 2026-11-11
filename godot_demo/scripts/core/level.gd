@@ -16,6 +16,7 @@ var interactor: Interactor
 var footsteps: Footsteps
 var notes: NotesReader
 var shop: ShopMenu                 # the shop screen, for whichever seller you talk to
+var dialog: DialogBox              # talking to a villager
 var wheel: WeaponWheel             # Q: what he holds
 var env: Environment
 var nav: NavigationRegion3D
@@ -34,6 +35,7 @@ func _ready() -> void:
 	footsteps = Footsteps.new(player, floor_kind); add_child(footsteps)
 	notes = NotesReader.new(); add_child(notes)
 	shop = ShopMenu.new(); add_child(shop)
+	dialog = DialogBox.new(); add_child(dialog)
 	wheel = WeaponWheel.new(player); add_child(wheel)
 	notes.closed.connect(func(): hud.say("%d de %d notas · Tab relê" % [NotesReader.read.size(), NotesData.NOTES.size()], 2.5))
 	_place_notes.call_deferred()  # once the level's colliders are in the physics world

@@ -80,7 +80,20 @@ Gancho da missão (a definir): o filho de Dona Firmina foi levado para a Colôni
 
 ### Lojas (`scripts/shop/`, dados em `ItemCatalog` e `ShopCatalog`)
 
-- **Quem vende:** Seu Bento e Tenório. Atrás do balcão aparece "E · comprar com <nome>", e a tela de compra abre sobre papel envelhecido, com o jogo pausado.
+- **Conversas** (`Talk`, `DialogBox`, `Dialog`, falas em `scripts/data/dialogos/`): perto de qualquer NPC aparece
+  "E · falar com <nome>". Ele se vira para o NPC e o jogo pausa.
+  - Uma caixa escura atravessa o pé da tela, com moldura dourada gasta como um santinho, e o nome numa aba de fita
+    vermelha (a do terço). A fala sai letra por letra; E mostra o resto e passa a página.
+  - Depois vêm as opções numeradas: W/S ou o mouse apontam, E, clique ou o número escolhem, Esc sai.
+  - Cada um tem a sua voz e o seu menu: ver o que tem à venda (os dois vendedores), o que se fala por aí (rumores que
+    se alternam a cada vez e ensinam a lidar com as criaturas), sobre ele ou ela, e assuntos próprios (a Colônia, como
+    se mata aquilo, o caderno de fiado). A primeira conversa tem uma apresentação; depois, um cumprimento curto; de
+    noite a Firmina e o Bento falam diferente.
+  - **Tarefa da Dona Firmina** (`QuestData` "garrafada"): ela pede a garrafada que o padre guardava no baú do altar.
+    Entregue, ela fecha o seu corpo (cura os ferimentos) e dá Cr$ 20 do dízimo. O HUD avisa "Nova tarefa" e "Tarefa
+    cumprida".
+- **Quem vende:** Seu Bento e Tenório. "Ver o que tem à venda" abre a tela de compra sobre papel envelhecido; ao fechar,
+  a conversa continua.
   - A tela mostra a fala do vendedor, a lista com os preços, a descrição do item escolhido, quantos você tem, o estoque e o seu dinheiro.
   - W/S, as setas ou o mouse escolhem. E, Enter ou o clique compram. Esc ou Tab saem.
 - **O que cada um vende** (a moeda é o cruzeiro, Cr$):

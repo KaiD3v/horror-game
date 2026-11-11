@@ -505,3 +505,70 @@ func porch_tests() -> void:
 	await wait(0.3); await shot("v40_alpendre")
 	check(player.global_position.y - y0 > 0.4 and player.is_on_floor(),
 		"from the foot of the armaria's step, W: up onto the porch (%.2f m up)" % (player.global_position.y - y0))
+
+
+# --- talking (Talk, DialogBox, Dialog): Dona Firmina's lines, a rumour in turn, her task from start to end -------------
+func dialog_tests() -> void:
+	WorldTime.reset(10 * 60); L.day._step(0.0)
+	var npc: Npc = L.npcs["benzedeira"]
+	var front := npc.global_position + npc.global_basis.z * 1.3
+	put(player, L.ground(front.x, front.z), 0.0); await wait(0.4)
+	check(L.interactor.current == npc.talk and L.hud.prompt.text == "E · falar com Dona Firmina", "by her: \"%s\"" % L.hud.prompt.text)
+	await tap("interact"); await wait(0.3)
+	var box: DialogBox = L.dialog
+	var to := npc.global_position - player.global_position
+	check(box.visible and get_tree().paused and box.name_l.text == "Dona Firmina" and box.typing()
+		and absf(angle_difference(player.rotation.y, atan2(-to.x, -to.z))) < 0.05,
+		"E: he turns to her, the game pauses, her name on the tab, her words coming out letter by letter")
+	await wait(0.3); await shot("v41_dialogo_fala")
+	await tap("interact")
+	check(not box.typing() and box.text.text.begins_with("Ave Maria"), "E shows the rest of the page at once")
+	var said := [box.text.text]
+	for k in 12:  # one E a page (and one more to hurry a page still coming out)
+		if box.choosing:
+			break
+		if box.typing():
+			await tap("interact")
+		await tap("interact")
+		if not box.choosing:
+			said.append(box.text.text)
+	var pages := said.size()
+	var opts := box.rows.map(func(b): return b.text.substr(4))
+	check(box.choosing and pages == 3 and opts == ["Perguntar o que se fala por aí", "Perguntar sobre ela", "Perguntar sobre a Colônia",
+		"Perguntar se precisa de alguma coisa", "Ir embora"], "three pages of greeting, then her options: %s" % [opts])
+	await wait(0.2); await shot("v42_dialogo_opcoes")
+	await tap("back"); await wait(0.05)
+	check(box.focused() == 1, "S points at the next option")
+	box.pick(0); await tap("interact")
+	var rumour1 := box.text.text
+	box._choose(); box.pick(0); await tap("interact")
+	check(box.text.text != rumour1, "ask again what people say: another rumour (\"%s...\")" % box.text.text.substr(0, 30))
+	box._choose()
+	var e := InputEventKey.new(); e.physical_keycode = KEY_4; e.pressed = true; Input.parse_input_event(e)
+	await get_tree().process_frame; await get_tree().process_frame
+	check(Story.task("garrafada") == "ativa" and box.text.text.begins_with("Preciso"), "4 (\"se precisa de alguma coisa\"): she gives the task")
+	box._choose()
+	opts = box.rows.map(func(b): return b.text.substr(4))
+	check("Falar da garrafada" in opts and "Perguntar se precisa de alguma coisa" not in opts, "...which changes what you can ask: %s" % [opts])
+	await tap("ui_cancel"); await wait(0.2)
+	check(not box.visible and not get_tree().paused and L.hud.message.text == "Nova tarefa: A garrafada do altar",
+		"Esc ends the talk; the HUD: \"%s\"" % L.hud.message.text)
+	Inventory.add("garrafada"); player.health = 1.0
+	var money := Inventory.money
+	await tap("interact"); await wait(0.2)
+	check(box.text.text.begins_with("Ainda de pé"), "talking again: a shorter greeting (\"%s\")" % box.text.text.substr(0, 20))
+	box._choose()
+	opts = box.rows.map(func(b): return b.text.substr(4))
+	var give: int = opts.find("Entregar a garrafada")
+	box.pick(give)
+	check(Story.task("garrafada") == "feita" and not Inventory.has("garrafada") and Inventory.money == money + 20
+		and player.health == player.max_health, "the garrafada handed over: task done, healed, Cr$ 20 more")
+	box._choose()
+	opts = box.rows.map(func(b): return b.text.substr(4))
+	check(opts.all(func(o): return "garrafada" not in o and "precisa" not in o), "...and no more talk of it: %s" % [opts])
+	box.close(); await wait(0.1)
+	WorldTime.reset(22 * 60); L.day._step(0.0); L.night_watch = false
+	await tap("interact"); await wait(0.2)
+	check(box.text.text.begins_with("Não é hora"), "at night she would rather not talk (\"%s\")" % box.text.text.substr(0, 20))
+	box.close()
+	WorldTime.reset(10 * 60); L.day._step(0.0)

@@ -23,7 +23,7 @@ func _ready() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(Paths.CAPTURES))
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if L is Level:
-		Inventory.reset(); Inventory.give_tools(); Shop.reset(); Chest.reset()  # the tests hold every weapon (their own test takes them away)
+		Inventory.reset(); Inventory.give_tools(); Shop.reset(); Chest.reset(); Story.reset()  # the tests hold every weapon (their own test takes them away)
 		WorldTime.reset(16 * 60 + 30); Weather.force(1.0, 1.0)  # the same light every run: late afternoon, fog, drizzle
 		if L.day:
 			L.day._step(0.0)
@@ -200,12 +200,12 @@ func _capsule_at(at: Vector3) -> PhysicsShapeQueryParameters3D:  # the player's 
 	return q
 
 
-## Every seller here (an Npc with a ShopCounter): you can talk to them across the counter, their list opens (paused),
-## buying spends money and adds the goods, no money = no sale, the stock runs out, Esc closes.
+## Every seller here (an Npc with "loja"): you talk to them across the counter, "Ver o que tem à venda" opens their list
+## (paused), buying spends money and adds the goods, no money = no sale, the stock runs out, Esc back to the talk.
 func shop_suite() -> void:
 	for who in L.npcs:
 		var npc: Npc = L.npcs[who]
-		if npc.counter == null:
+		if not npc.info.has("loja"):
 			continue
 		var found := false
 		for k in 16:  # stand on the floor in front of them, within reach of the counter
@@ -216,19 +216,28 @@ func shop_suite() -> void:
 			if down.is_empty() or down.position.y > npc.global_position.y + 0.3:
 				continue
 			put(player, down.position, atan2(dir.x, dir.z)); await wait(0.4)
-			if L.interactor.current == npc.counter:
+			if L.interactor.current == npc.talk:
 				found = true; break
-		check(found and L.hud.prompt.text == "E · comprar com %s" % npc.info.nome, "%s sells: \"%s\"" % [who, L.hud.prompt.text])
+		check(found and L.hud.prompt.text == "E · falar com %s" % npc.info.nome, "%s: \"%s\"" % [who, L.hud.prompt.text])
 		await tap("interact"); await wait(0.3)
+		var box: DialogBox = L.dialog
+		box._choose()  # past their greeting
+		var at := -1
+		for i in box.rows.size():
+			if box.rows[i].text.ends_with("Ver o que tem à venda"):
+				at = i
+		check(box.visible and at >= 0, "talking to %s: \"Ver o que tem à venda\" among the options" % who)
+		box.pick(at); await wait(0.3)
 		var menu: ShopMenu = L.shop
-		var offers := Shop.offers(npc.counter.shop_id)
+		var shop_id: String = npc.info.loja
+		var offers := Shop.offers(shop_id)
 		check(menu.visible and get_tree().paused and menu.rows.size() == offers.size(), "E opens %s's list, the game paused (%d items)" % [who, menu.rows.size()])
 		var ambient: Array = L.find_children("*", "", true, false).filter(func(a):
 			return (a is AudioStreamPlayer or a is AudioStreamPlayer3D) and a.playing and a.process_mode == Node.PROCESS_MODE_ALWAYS)
 		await wait(0.3)
 		check(ambient.size() > 0 and ambient.all(func(a): return a.playing and not a.stream_paused and a.can_process()),
 			"the room's sounds go on while you buy (%d loops)" % ambient.size())
-		await shot("loja_%s" % npc.counter.shop_id)
+		await shot("loja_%s" % shop_id)
 		var o: Dictionary = offers[0]
 		var money := Inventory.money; var had := Inventory.count(o.item)
 		await tap("interact"); await wait(0.1)
@@ -243,12 +252,14 @@ func shop_suite() -> void:
 				limited = i
 		if limited >= 0:
 			Inventory.money = 9999
-			while Shop.left(npc.counter.shop_id, limited) > 0:
+			while Shop.left(shop_id, limited) > 0:
 				menu.buy(limited)
 			menu.buy(limited)
-			check(menu.line.text.contains("Acabou") and Shop.left(npc.counter.shop_id, limited) == 0, "the stock runs out: %s" % menu.line.text)
+			check(menu.line.text.contains("Acabou") and Shop.left(shop_id, limited) == 0, "the stock runs out: %s" % menu.line.text)
 		await tap("back"); await wait(0.1)
 		check(menu.focused() == 1 % menu.rows.size(), "S moves down the list")
 		await tap("ui_cancel"); await wait(0.2)
-		check(not menu.visible and not get_tree().paused, "Esc leaves the shop")
+		check(not menu.visible and box.visible and box.choosing and get_tree().paused, "Esc leaves the shop, back to the talk")
+		await tap("ui_cancel"); await wait(0.2)
+		check(not box.visible and not get_tree().paused, "Esc again ends the talk")
 		Inventory.reset(); Inventory.give_tools(); Shop.reset()

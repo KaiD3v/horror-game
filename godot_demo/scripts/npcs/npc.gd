@@ -1,5 +1,5 @@
 # A villager standing in the world (NpcCatalog): solid, idling out of step with the others, with the light and the
-# sound their catalog entry gives them, and a shop if it names one. No dialogue yet.
+# sound their catalog entry gives them; E talks to them (Talk -> DialogBox), their shop an option of the talk.
 class_name Npc
 extends StaticBody3D
 
@@ -8,7 +8,7 @@ var info: Dictionary
 var anim: AnimationPlayer
 var light: OmniLight3D
 var voice: AudioStreamPlayer3D
-var counter: ShopCounter   # when they sell (NpcCatalog "loja")
+var talk: Talk            # E · falar com <nome>
 
 
 static func spawn(parent: Node, who_: String, at: Transform3D) -> Npc:
@@ -29,8 +29,7 @@ func _ready() -> void:
 	if info.has("luz"):
 		var l: Dictionary = info.luz
 		light = Looks.omni(self, l.at, l.cor, l.energia, l.alcance)
-	if info.has("loja"):
-		counter = ShopCounter.make(self, info.loja, info.nome)
+	talk = Talk.make(self)
 	if info.has("som"):
 		var s: Dictionary = info.som
 		voice = Audio.play3d(self, s.nome, s.at, s.db, true, s.size, s.far)
