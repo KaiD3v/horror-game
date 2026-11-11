@@ -191,6 +191,7 @@ func run() -> void:
 	await unlock_tests()
 	await chest_tests()
 	await course_tests()
+	await pull_tests()
 	await steps_tests()
 	await descend_tests()
 	await hud_tests()
@@ -608,7 +609,7 @@ func course_tests() -> void:
 	check(is_equal_approx(stone.global_position.z, 3.2) and player.action != "Push", "a block with a pillar behind it does not move")
 	stone.queue_free()
 	put(player, b.global_position + Vector3(0.8, 0, 0), PI / 2); await wait(0.3)  # beside the block, facing it
-	check(L.hud.prompt.text == "E · subir", "the block can be climbed too: \"%s\"" % L.hud.prompt.text)
+	check(L.hud.prompt.text.begins_with("E · subir"), "the block can be climbed too: \"%s\"" % L.hud.prompt.text)
 	await tap("interact"); await until(func(): return not player.busy and player.action == "", 3.0)
 	check(player.global_position.y > 0.95 and absf(player.global_position.x - b.global_position.x) < 0.45,
 		"E: up onto the block, from its side (y %.2f)" % player.global_position.y)
@@ -677,6 +678,33 @@ func course_tests() -> void:
 
 
 # --- stairs (west of the room): he walks up and down them; an edge too high stops him; a mutant follows him up ------
+# --- the block held (right button at a side): S pulls it out after him, W pushes, letting go lets go ----------------
+func pull_tests() -> void:
+	var b: Pushable = L.block
+	var start := b.global_position
+	player.velocity = Vector3.ZERO
+	if player.mode != Player.Mode.EXPLORE:
+		await tap("draw"); await wait(1.2)
+	put(player, b.global_position + Vector3(0, 0, 0.8), 0.0); player.pivot.rotation.y = 0.0; await wait(0.4)
+	check(L.hud.prompt.text.ends_with("Botão direito · segurar"), "at the block: \"%s\"" % L.hud.prompt.text)
+	Input.action_press("block"); await wait(0.4)
+	check(b.held != Vector3.ZERO and player.busy and L.hud.prompt.text == Hints.TEXT.puxar or Hints.learned("puxar"),
+		"right button: he takes hold of it (\"%s\")" % L.hud.prompt.text)
+	Input.action_press("back")
+	await until(func(): return b.global_position.z > start.z + 0.98, 4.0)
+	Input.action_release("back"); await until(func(): return not b.moving, 4.0); await wait(0.3)
+	var z := b.global_position.z
+	check(z > start.z + 0.98 and absf(z - roundf(z)) < 0.02, "S: pulled towards him, a step at a time (z %.2f -> %.2f)" % [start.z, z])
+	await shot("58_puxar")
+	Input.action_press("forward")
+	await until(func(): return b.global_position.z < start.z + 0.02, 8.0)
+	Input.action_release("forward"); await until(func(): return not b.moving, 4.0); await wait(0.3)
+	check(absf(b.global_position.z - start.z) < 0.02 and player.busy, "W while holding it: pushed back, still holding")
+	Input.action_release("block"); await wait(0.3)
+	check(b.held == Vector3.ZERO and not player.busy, "the button let go: he lets go of it")
+	b.global_position = start
+
+
 func steps_tests() -> void:
 	player.velocity = Vector3.ZERO; player.health = 99
 	put(player, Vector3(-9, 0, 4.6), 0.0); player.pivot.rotation.y = 0.0; await wait(0.4)

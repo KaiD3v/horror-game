@@ -11,6 +11,7 @@ const TEXT := {
 	"mirar": "Botão direito · mirar",           # the crossbow out, not aimed (Player)
 	"curativo": "F · curativo",                 # hurt, with something to dress it (Player)
 	"agachar": "C · agachar",                   # a low way through (the level places it)
+	"puxar": "W · empurrar  ·  S · puxar",      # holding a block (Pushable)
 }
 
 

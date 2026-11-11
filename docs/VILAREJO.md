@@ -159,6 +159,9 @@ Gancho da missão (a definir): o filho de Dona Firmina foi levado para a Colôni
     encosta o ombro (`Push`). O bloco vai deslizando de 1 em 1 m, arrastando (`pedra_arrastar`), e ele vai junto, sem
     parar, enquanto você segura a direção. O bloco anda só ao longo dos próprios lados e não entra em nada nem sai do
     chão. Dá para subir nele por qualquer lado (E).
+    - **Segurar e puxar:** perto de um lado, segurando o botão direito, ele pega o bloco com as duas mãos (o aviso
+      "E · subir · Botão direito · segurar" mostra isso). Segurando: W empurra, S puxa o bloco atrás dele (se houver espaço
+      às costas), e soltar o botão solta o bloco. Assim um bloco empurrado para um canto ou contra a parede sempre volta.
   - **Subir** (`Climbable`, por qualquer lado do objeto, ou só pelos lados que a fase indicar): no pé de uma borda de
     até 1,6 m, E pendura a lamparina no gancho, ele se agarra à borda e
     sobe (`Climb_Ledge`), depois pega a lamparina de volta. Num muro mais alto (o "muro" com pedras salientes e uma

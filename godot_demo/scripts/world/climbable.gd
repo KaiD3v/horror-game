@@ -30,6 +30,7 @@ var top := LEDGE
 var size := Vector2.ONE
 var faces: Array[Vector3] = SIDES.duplicate()
 var busy := false
+var extra := ""             # added to "E · subir" (a block: how to take hold of it)
 
 
 ## A box to climb: base = the middle of its base, footprint `size` (x, z) turned by `yaw`, `top` high.
@@ -46,7 +47,7 @@ func _ready() -> void:
 
 
 func _up_prompt() -> String:
-	return "E · subir" if top <= LEDGE_MAX else "E · escalar"
+	return ("E · subir" if top <= LEDGE_MAX else "E · escalar") + extra
 
 
 ## The face he stands before (a local normal), or ZERO: at the foot (not on top), within NEAR of it, along it.
