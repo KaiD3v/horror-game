@@ -136,6 +136,7 @@ func _start() -> void:  # the bell, a slow fade, and the village opens from blac
 	SaveGame.pending = {}; SaveGame.checkpoint = {}
 	WorldTime.reset(); Weather.reset()  # a new game: 06:30, the morning fog
 	Inventory.reset(); Shop.reset(); Chest.reset(); Story.reset()  # ...the lantern, Cr$ 40, six bolts, a bandage; the shops full
+	NotesReader.read.clear(); Intro.pending = true  # ...and it opens with the intro (Intro, in the village)
 	for b in buttons:
 		b.disabled = true
 	if not SceneRouter.testing():

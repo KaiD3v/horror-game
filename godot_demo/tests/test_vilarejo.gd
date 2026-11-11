@@ -635,3 +635,46 @@ func gate_tests() -> void:
 	var again := Gate.make(L, gate.position + Vector3(0, 0, 30), gate.rotation.y, gate.id, "chave_portao", Paths.COLONIA, "")
 	check(again.chain == null and absf(rad_to_deg(again.leaves[0].rotation.y) - Gate.AJAR) < 1.0, "back in the village it is still open")
 	again.queue_free()
+
+
+# The opening (Intro, ../docs/INTRODUCAO.md): played through, a capture of each shot, the letters closed with E; then
+# where it leaves him. Again, skipped (E held) halfway: the same end.
+func intro_tests() -> void:
+	for skip in [false, true]:
+		Story.marks.erase("intro:vista"); Story.marks.erase("tarefa:colonia"); NotesReader.read.clear()
+		var spawn: Transform3D = L._player_start()
+		var hp := player.health
+		Intro.pending = true
+		var intro := Intro.new(L); L.add_child(intro); intro.run()
+		var seen := {}
+		var ended := [false]; intro.finished.connect(func(): ended[0] = true)
+		var t0 := Time.get_ticks_msec()
+		var last := t0; var frame := 0
+		while not ended[0] and Time.get_ticks_msec() - t0 < 120000:
+			if intro.shot not in seen and intro.shot > 0:
+				seen[intro.shot] = true; frame = 0
+			if not skip and intro.shot != 2 and Time.get_ticks_msec() - last >= 1500:  # a capture every 1.5 s
+				last = Time.get_ticks_msec(); frame += 1
+				await shot("intro_%d_%d" % [intro.shot, frame])
+			if L.notes.showing >= 0:
+				await wait(0.8)
+				if not skip:
+					await shot("intro_2_%s" % NotesReader.read[L.notes.showing])
+				await tap("interact")
+			if skip and intro.shot == 5:
+				Input.action_press("interact"); await wait(1.3); Input.action_release("interact")
+			await get_tree().process_frame
+		var how := "skipped" if skip else "played"
+		check(ended[0] and seen.size() == (5 if skip else 9), "%s: it ends (%d shots seen)" % [how, seen.size()])
+		await wait(0.3)
+		check(not player.busy and player.cam.current and L.hud.visible and player.global_position.distance_to(spawn.origin) < 0.6,
+			"%s: he stands at the road's end, the game's camera and HUD back (%.2f m off)" % [how, player.global_position.distance_to(spawn.origin)])
+		check(Story.has("intro:vista") and Story.task("colonia") == "ativa" and "obito" in NotesReader.read and "carta_mae" in NotesReader.read,
+			"%s: seen, the task \"Subir à Colônia\" on, both letters in the notebook" % how)
+		check(player.health == hp, "%s: unhurt (%d of %d)" % [how, player.health, hp])
+		var beam: Node3D = L.marker("ponte_viga_solta")
+		check(beam.global_position.distance_to(Intro.fallen(L).origin) < 0.05 and beam.global_position.y < L.ground(-2.6, 46.75).y - 3.0,
+			"%s: the beam lies down in the ravine (y=%.1f)" % [how, beam.global_position.y])
+		await walk(1.0)
+		check(player.global_position.z < spawn.origin.z - 0.3, "%s: he walks again" % how)
+	await shot("intro_fim")

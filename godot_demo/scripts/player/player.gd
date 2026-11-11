@@ -85,6 +85,7 @@ var swung := false        # the swing's whoosh has played (it leads the blow a l
 var queued := ""
 var fall_top := NAN        # airborne: the highest he was since he left the floor (NAN = on it)
 var step_lag := 0.0       # the body's lag behind a step the root just took (eases to 0)
+var walk_to := Vector3.INF  # busy, walked there by a script (Intro) at walk pace, feet and animation as usual
 var busy := false         # in a scripted moment (a trunk, a push, a climb, a jump): no control, E / Q / keys do
                           # nothing, no gravity; whoever started it moves him
 var cam_override := {}    # a scripted moment's camera (CAM_KNEEL...), {} = the usual
@@ -203,6 +204,13 @@ func play(n: String, backward := false) -> void:
 		tree.set("parameters/%s/request" % l, AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE if l == layer else AnimationNodeOneShot.ONE_SHOT_REQUEST_ABORT)
 	action = n; action_t = 0.0; hit_done = false; swung = false; queued = ""
 	action_len = tree.get_animation(n).length
+
+
+## Cut whatever he is doing short (dead; a skipped cutscene).
+func stop_action() -> void:
+	for l in SHOTS:
+		tree.set("parameters/%s/request" % l, AnimationNodeOneShot.ONE_SHOT_REQUEST_ABORT)
+	action = ""
 
 
 ## Whether he can walk: nothing playing, or an action that leaves the legs alone (LAYER).
@@ -462,9 +470,7 @@ func take_damage(n: float, from: Node3D = null) -> void:
 		shake = 0.25; flicker = 0.4
 		sfx("dano", -2.0)
 	if health <= 0.0:
-		for l in SHOTS:
-			tree.set("parameters/%s/request" % l, AnimationNodeOneShot.ONE_SHOT_REQUEST_ABORT)
-		action = ""
+		stop_action()
 		set_mode(Mode.DEAD)
 		died.emit()
 	elif mode == Mode.COMBAT:
@@ -494,7 +500,8 @@ func sfx(n: String, db := 0.0, pitch := 1.0) -> void:
 
 # --- per frame -------------------------------------------------------------------------------------
 func _physics_process(delta: float) -> void:
-	if not is_on_floor() and not busy:
+	var led := busy and walk_to != Vector3.INF  # walked by a script: physics as usual, the input ignored
+	if not is_on_floor() and (not busy or led):
 		velocity.y -= gravity * delta
 	var move := Vector3.ZERO
 	var speed := 0.0
@@ -524,6 +531,10 @@ func _physics_process(delta: float) -> void:
 			speed = CROUCH_SPEED
 		else:
 			speed = RUN_SPEED if _sprinting(input) else (WALK_SPEED if Input.is_action_pressed("walk") else JOG_SPEED)
+	elif led and legs_free():
+		move = walk_to - global_position; move.y = 0
+		move = move.normalized() if move.length() > 0.15 else Vector3.ZERO
+		speed = WALK_SPEED
 	_tick_stamina(delta, speed == RUN_SPEED)
 	var hv := Vector3.ZERO  # whole-body actions stop you dead
 	if legs_free():
@@ -531,7 +542,7 @@ func _physics_process(delta: float) -> void:
 	if DODGE_DIR.has(action) and action_t >= DODGE_FROM and action_t < DODGE_TO:
 		hv = global_basis * DODGE_DIR[action] * DODGE_DIST / (DODGE_TO - DODGE_FROM)
 	velocity.x = hv.x; velocity.z = hv.z
-	if busy:
+	if busy and not led:
 		velocity = Vector3.ZERO  # moved by whoever made him busy
 	else:
 		var y0 := global_position.y

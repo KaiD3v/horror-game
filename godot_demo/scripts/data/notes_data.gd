@@ -5,6 +5,21 @@
 class_name NotesData
 
 const NOTES := [
+	# the two he brings with him (Intro shows them; scene "": they lie nowhere)
+	{"id": "obito", "scene": "", "at": Vector2.ZERO, "yaw": 0.0, "paper": "oficio",
+		"title": "Ofício de óbito (1959)",
+		"text": "COLÔNIA SANTA CLARA
+Serviço de Profilaxia · Of. 48/59
+
+Ao responsável pelo menor nº 112: comunicamos o falecimento da interna nº 0187, sua mãe, em 12/08/1959. Sepultada no cemitério da Colônia. Não há pertences a reclamar.
+
+Dr. Euclides Moura, Diretor Clínico"},
+	{"id": "carta_mae", "scene": "", "at": Vector2.ZERO, "yaw": 0.0, "paper": "caderno",
+		"title": "Carta da mãe (1974)",
+		"text": "Meu filho,
+pra você disseram que eu morri, e pra mim que você tinha morrido. Era mentira. Estou viva, aqui em cima. O doutor não deixa ninguém sair e dá injeção toda semana. O Bento da venda põe esta no correio.
+Vem antes do fim de março. Depois não vai ter mais ninguém pra buscar. O portão fica no alto da estrada.
+tua mãe"},
 	{"id": "mala", "scene": "vilarejo", "at": Vector2(2.5, 41.8), "yaw": 30.0, "paper": "caderno",
 		"title": "Bilhete na mala",
 		"text": "Lurdes,\na ponte caiu. Caiu de noite, sem chuva, sem nada. O Juca jura que ouviu serrarem as vigas.\nVou pela trilha do rio. Se eu não voltar até domingo, não vem atrás. Fica na venda com o Bento, de porta trancada.\nDeixei a boneca da menina. Pesa demais para carregar.\n— Tonho"},

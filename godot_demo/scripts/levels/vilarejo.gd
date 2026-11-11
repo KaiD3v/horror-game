@@ -12,8 +12,9 @@ const ROAD := [Vector2(0.5, 44), Vector2(-0.5, 36), Vector2(1.0, 25), Vector2(0.
 const PLAY := AABB(Vector3(-50, -10, -61), Vector3(100, 40, 115))  # the navmesh and the weather cover this
 # What closes the map (../docs/VILAREJO.md "Bordas"): east and west a steep rocky bank, too steep to climb; north the
 # Colônia's wall; south the ravine, fenced along its brink. These invisible walls only back them up, out of sight.
+# (None south of the ravine: the intro walks him up the road there, and the fence keeps him out of it after.)
 const WALLS := [[Vector3(-54, 0, 0), Vector3(1, 80, 200)], [Vector3(54, 0, 0), Vector3(1, 80, 200)],
-	[Vector3(0, 0, -63), Vector3(200, 80, 1)], [Vector3(0, 0, 54), Vector3(200, 80, 1)]]
+	[Vector3(0, 0, -63), Vector3(200, 80, 1)]]
 const GATE := "portao_colonia"  # the Colônia's gate: locked (chave_portao); open, E takes you up to the Colônia
 # Doors into interiors (porta_<name> markers at the foot of the steps): E takes you in; coming out puts you back here.
 const DOORS := {"armaria": "E · entrar na Armaria do Tenório", "venda": "E · entrar na Venda do Seu Bento",
@@ -75,6 +76,10 @@ func _started() -> void:
 	_ambience()
 	_life()
 	day = DayCycle.outdoors(self, env, sun, haze, clima)  # the hour and the weather light it from here on
+	if Intro.pending:  # a new game: the opening (../docs/INTRODUCAO.md)
+		var intro := Intro.new(self); add_child(intro); intro.run()
+	elif Story.has("intro:vista"):  # the beam he climbed lies in the ravine (once the colliders are in: it asks the ground)
+		(func(): marker("ponte_viga_solta").global_transform = Intro.fallen(self)).call_deferred()
 
 
 func _process(_delta: float) -> void:

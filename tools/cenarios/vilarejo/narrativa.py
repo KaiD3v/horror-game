@@ -67,6 +67,19 @@ def bridge(b, rng):
     for sx in (-1, 1):  # what is left of the railing
         bx(b, (sx * 1.5, yN - 0.1, zN + 0.5), (0.12, 0.12, 1.1), "planks", rot=(0.15, sx * 0.1, 0))
         bx(b, (sx * 1.45, yS + 0.1, zS + 0.35), (0.12, 0.12, 0.8), "planks", rot=(-0.3, 0, 0))
+    for sx in (-1, 1):  # the beams' stubs on the south abutment, cut square: sawn, not broken (the intro shows them)
+        bx(b, (sx * 1.1, yS + 0.35, zS - 0.08), (0.24, 0.7, 0.24), "casca_musgo")
+        bx(b, (sx * 1.1, yS + 0.71, zS - 0.08), (0.22, 0.02, 0.22), "toco_top")  # the fresh cut face, pale
+    e = bpy.data.objects.new("intro_serrado", None); bpy.context.collection.objects.link(e)  # Intro frames it
+    e.location = (-1.1, yS + 0.72, zS - 0.08)
+
+
+def loose_beam():
+    """The beam he climbs up out of the ravine in the intro (Intro): leaning from the water to the north brink, its own
+    object so the game can drop it into the water behind him. Origin at its top end."""
+    top = Vector((-2.6, GULLY_Y + 4.1, H(-2.6, GULLY_Y + 4.1) - 0.15)); foot = Vector((-2.6, GULLY_Y + 1.2, H(-2.6, GULLY_Y + 1.2) + 0.1))
+    b = B(); frustum(b, (0, 0, 0), tuple(foot - top), 0.13, 0.12, 6, "casca_musgo", caps=True)
+    obj(b, "ponte_viga_solta", tuple(top))
 
 
 def suitcase(b, c, yaw, rng):
@@ -173,7 +186,9 @@ def narrative():
             bx(guard, (x, yg + s * 0.25, g_ + 0.45), (0.08, 0.08, 1.0), "fence", rot=(s * 0.45, 0, 0))
         bx(guard, (x, yg, g_ + 0.85), (0.9, 0.1, 0.1), "planks")
     bx(guard, (0, yg - 0.1, H(0, yg) + 0.95), (3.6, 0.05, 0.25), "planks", rot=(0, 0.06, 0))
+    wall_decal(guard, (Vector((0, yg - 0.07, 0)), -X, Y), 0.6, H(0, yg) + 0.95, 0.3, 0.38, "cartaz", rot=0.08)  # facing the village
     obj(guard, "ravina_cerca-col")
+    loose_beam()
     wall = B()  # the fence's reach, no gaps, 3 m over the ground: he never falls in
     for x in range(-56, 56, 4):
         h0 = min(H(x, yg), H(x + 4, yg)); h1 = max(H(x, yg), H(x + 4, yg))
