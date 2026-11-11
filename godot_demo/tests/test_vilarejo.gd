@@ -108,6 +108,7 @@ func run() -> void:
 	await day_tests()
 	await bruxa_tests()
 	await poceiro_tests()
+	await carpideira_tests()
 
 
 
@@ -233,6 +234,7 @@ func bruxa_tests() -> void:
 	var up: Array = L.bruxas.filter(func(b): return b.roost != null and b.global_position.distance_to(b.roost) < 0.4)
 	check(L.bruxas.size() == L.BRUXAS and up.size() == L.BRUXAS and L.perches.size() >= 8,
 		"at nightfall %d bruxas perch on roof ridges (%d ridges, %d up there)" % [L.bruxas.size(), L.perches.size(), up.size()])
+	_hush_carpideira()
 	for b in L.bruxas:
 		b.active = false
 	L.poceiro.active = false  # (poceiro_tests)
@@ -290,6 +292,7 @@ func poceiro_tests() -> void:
 	put(player, L.ground(-1.0, 24.0), PI)
 	Audio.heard.clear(); player.health = 99
 	WorldTime.reset(21 * 60); L.day._step(0.0); await wait(0.3)
+	_hush_carpideira()
 	for b in L.bruxas:
 		b.active = false
 	var p: Poceiro = L.poceiro
@@ -342,6 +345,134 @@ func poceiro_tests() -> void:
 	var gone := await until(func(): return not is_instance_valid(p), 30.0)
 	check(gone, "at dawn he goes back to the well and down it")
 	L.night_watch = false
+
+
+# --- A Carpideira (../docs/MUTANTES_NOITE.md): weeps down the alleys with a candle; seen, she screams the others in -
+func carpideira_tests() -> void:
+	WorldTime.reset(10 * 60); L.day._step(0.0)
+	L.night_watch = true; await wait(0.3)
+	if player.mode == Player.Mode.CROUCH:  # (poceiro_tests leaves him crouched)
+		await until(func(): return player.action == "", 2.0); player.crouch()
+	await _lantern(false)
+	put(player, L.ground(-1.0, 24.0), PI); player.health = 99
+	WorldTime.reset(21 * 60); L.day._step(0.0); await wait(0.3)
+	_hush_bruxas_poceiro()
+	var c: Carpideira = L.carpideira
+	check(c != null and L.alleys.size() >= 8 and c.global_position.distance_to(player.global_position) > 18.0
+		and c.candle.is_in_group("vela") and c.candle.light_energy > 1.0,
+		"at nightfall A Carpideira starts down an alley far off, her candle lit (%d alleys)" % L.alleys.size())
+	var from := c.global_position
+	await wait(4.0)
+	check(c.state == Enemy.State.IDLE and c.global_position.distance_to(from) > 1.0 and c.weeping.volume_db > -10.0,
+		"she walks the alleys weeping (%.1f m)" % c.global_position.distance_to(from))
+	Audio.heard.clear(); c.cry_in = 0.0; await wait(0.3)
+	check("carpideira_crianca" in Audio.heard and c.hush > 0.0, "now and then the weeping turns into a child's crying")
+	c.pause = 999.0  # she stands where she is from here on
+	# her candle calls a bruxa down off a roof: she circles it like a moth, no darts
+	var b: Bruxa = null; var spot := Vector3.INF
+	for x in L.bruxas:
+		spot = _below(x.roost)
+		if spot != Vector3.INF:
+			b = x; break
+	check(b != null, "open ground in plain view of a roof (%s)" % spot)
+	if b == null:
+		return
+	c.active = false; put(c, spot, 0.0)
+	put(player, L.ground(-1.0, 40.0), PI)
+	b.active = true
+	var moth := await until(func(): return b.lamp == c.candle and b.state == Enemy.State.CHASE and b.flight.is_empty(), 10.0)
+	await wait(1.5)
+	check(moth and b.global_position.distance_to(c.global_position) < Bruxa.ORBIT + 1.5 and not b.darting,
+		"her candle calls a bruxa down off the roof: she circles it (%.1f m off)" % b.global_position.distance_to(c.global_position))
+	var view := _open_from(c, 7.0)
+	if view != Vector3.INF:  # the picture: her and the moth round her candle, from 7 m
+		var v := c.global_position - view; c.rotation.y = atan2(v.x, v.z)
+		put(player, view, atan2(-v.x, -v.z)); player.pitch.rotation.x = 0.0; await wait(0.8); await shot("v35_carpideira_vela")
+	b.active = false
+	# what she sees: only in front of her, as far as your light lets her
+	var at := _open_from(c, 6.0)
+	check(at != Vector3.INF, "open ground 6 m from her (%s)" % at)
+	if at == Vector3.INF:
+		return
+	var d := at - c.global_position
+	c.rotation.y = atan2(d.x, d.z)  # her back to you
+	put(player, at, atan2(d.x, d.z)); await _lantern(true)
+	Audio.heard.clear(); c.active = true; await wait(1.0)
+	check(c.state == Enemy.State.IDLE and c.notice == 0.0, "behind her back, even with the lantern, she does not see you")
+	c.active = false; await _lantern(false); await until(func(): return player.action == "", 2.0); player.crouch()
+	c.rotation.y = atan2(-d.x, -d.z); c.active = true; await wait(1.0)  # turned to you
+	check(c.state == Enemy.State.IDLE, "in front of her at 6 m, crouched in the dark: she does not see you")
+	await until(func(): return player.action == "", 2.0); player.crouch()
+	var seen := await until(func(): return c.state == Enemy.State.ALERT, 2.0)
+	check(seen and "carpideira_suspiro" in Audio.heard, "standing up in the dark at 6 m: she sees you and gasps")
+	put(player, L.ground(-1.0, 40.0), PI)
+	var calm := await until(func(): return c.state == Enemy.State.IDLE, 4.0)
+	check(calm and "carpideira_grito" not in Audio.heard, "out of her sight before she screams: she goes back to weeping")
+	# the scream: the poceiro hears it, the bruxas come to it
+	put(player, at, atan2(d.x, d.z)); await _lantern(true)
+	var screamed := await until(func(): return "carpideira_grito" in Audio.heard, 4.0)
+	await wait(0.4); await shot("v36_carpideira_grito")
+	var called: Array = L.bruxas.filter(func(x): return is_instance_valid(x) and x.last_light.distance_to(player.global_position) < 1.0)
+	check(screamed and c.state == Enemy.State.CHASE and L.poceiro.heard_at.distance_to(player.global_position) < 1.0 and called.size() > 0,
+		"she stares, then screams: the poceiro hears where you are, %d bruxa(s) fly to it" % called.size())
+	# she follows at a distance, and loses you out of sight
+	await until(func(): return c.scream_t <= 0.0, 3.0)
+	var away := _open_from(c, 11.0)
+	if away != Vector3.INF:
+		put(player, away, 0.0)
+		var d0 := c.global_position.distance_to(player.global_position)
+		await wait(3.0)
+		check(c.global_position.distance_to(player.global_position) < d0 - 1.5,
+			"she follows you (%.1f -> %.1f m)" % [d0, c.global_position.distance_to(player.global_position)])
+	await _lantern(false); put(player, L.ground(-1.0, 40.0), PI)
+	var gave_up := await until(func(): return c.state == Enemy.State.IDLE, Carpideira.LOSE + 4.0)
+	check(gave_up, "out of her sight she gives up and goes back to weeping")
+	# weak: a slash from in front only makes her scream; anything from behind kills her
+	c.pause = 999.0; at = _open_from(c, 1.4)
+	d = at - c.global_position; c.rotation.y = atan2(-d.x, -d.z); put(player, at, atan2(d.x, d.z))
+	Audio.heard.clear(); c.take_hit(1)
+	var shriek := await until(func(): return "carpideira_grito" in Audio.heard, 2.0)
+	check(shriek and c.health == 1, "a slash from in front does not kill her: she screams")
+	c.active = false; await wait(0.2); c.rotation.y = atan2(d.x, d.z)  # her back to you
+	c.take_hit(1)
+	await wait(1.0)
+	check(c.state == Enemy.State.DEAD and not c.candle.is_in_group("vela") and c.candle.light_energy < 0.5 and not c.weeping.playing,
+		"from behind, one blow kills her: the candle goes out")
+	# dawn: a new night's Carpideira walks to the chapel and goes in
+	WorldTime.reset(10 * 60); L.day._step(0.0); await wait(0.3)
+	WorldTime.reset(21 * 60); L.day._step(0.0); await wait(0.3)
+	_hush_bruxas_poceiro()
+	c = L.carpideira
+	var door: Vector3 = L.marker("porta_capela").position
+	put(c, NavigationServer3D.map_get_closest_point(L.get_world_3d().navigation_map, door + Vector3(6.0, 0, 6.0)), 0.0)
+	await wait(0.3)
+	WorldTime.reset(6 * 60 + 1); L.day._step(0.0)
+	var gone := await until(func(): return not is_instance_valid(c), 20.0)
+	check(gone, "at dawn she walks to the chapel and goes in")
+	L.night_watch = false
+
+
+func _hush_carpideira() -> void:  # the other night tests run without her
+	L.carpideira.active = false; L.carpideira.candle.remove_from_group("vela")
+
+
+func _hush_bruxas_poceiro() -> void:
+	for b in L.bruxas:
+		b.active = false
+	L.poceiro.active = false
+
+
+## Open ground (on the navmesh) dist metres from c, with a clear line from her eyes.
+func _open_from(c: Node3D, dist: float) -> Vector3:
+	var w: World3D = L.get_world_3d()
+	for i in 24:
+		var a := TAU * i / 24.0
+		var q: Vector3 = L.ground(c.global_position.x + cos(a) * dist, c.global_position.z + sin(a) * dist, c.global_position.y + 3.0)
+		var rq := PhysicsRayQueryParameters3D.create(c.global_position + Vector3(0, 1.6, 0), q + Vector3(0, 1.3, 0), 1, [c.get_rid()])
+		if NavigationServer3D.map_get_closest_point(w.navigation_map, q).distance_to(q) < 0.3 \
+				and w.direct_space_state.intersect_ray(rq).is_empty():
+			return q
+	return Vector3.INF
 
 
 ## The lantern in hand (true) or on the belt, once he is free to move it.

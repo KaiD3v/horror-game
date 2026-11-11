@@ -159,8 +159,3 @@ func _home(delta: float) -> void:
 		go(State.CHASE, "Walk", 0.3)
 	_face(_route(beside, d), delta)
 	walk_forward()
-
-
-func _on_nav(p: Vector3) -> Vector3:
-	var map := get_world_3d().navigation_map
-	return NavigationServer3D.map_get_closest_point(map, p) if NavigationServer3D.map_get_regions(map).size() > 0 else p

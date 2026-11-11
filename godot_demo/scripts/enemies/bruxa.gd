@@ -4,6 +4,8 @@
 # it. On the ground she circles the light on wrists and feet out of reach and darts in now and then to rake at it.
 # Hang the lantern on the belt and she loses you beyond DIM: she hunts round where the light went out, then flies
 # back up to a roof. At dawn they all fly off towards the Colônia. No footsteps: wings and clicks.
+# A Carpideira's candle (group "vela") calls her too: she circles it like a moth, no darts, until your lantern takes
+# her off it. The Carpideira's scream sends her to where it pointed (call_to).
 class_name Bruxa
 extends Enemy
 
@@ -25,6 +27,7 @@ var orbit_dir := 1.0
 var last_light := Vector3.ZERO
 var searching := 0.0              # > 0: hunting round where the light went out
 var watching := 0.0
+var lamp: Node3D                  # the light she goes to: the player (the lantern) or a Carpideira's candle
 var wings: AudioStreamPlayer3D
 var shine: StandardMaterial3D     # the eyeshine (b_brilho), brighter when the lantern faces her
 
@@ -83,38 +86,74 @@ func take_hit(n: int) -> void:
 
 func _decide(to: Vector3, dist: float, delta: float) -> void:
 	match state:
-		State.IDLE:  # perched (or settled after losing you): the light calls her; she turns and watches it first
-			if target.lantern_out and dist < LURE and _clear_line(global_position + Vector3(0, 1.2, 0)):
-				_face(to, delta * 0.5); watching += delta
+		State.IDLE:  # perched (or settled after losing you): a light calls her; she turns and watches it first
+			var lure := _lure(dist)
+			if lure:
+				var l := lure.global_position - global_position; l.y = 0
+				_face(l, delta * 0.5); watching += delta
 				if watching >= WATCH:
-					watching = 0.0; go(State.ALERT, "Alert", 0.15)
+					watching = 0.0; lamp = lure; go(State.ALERT, "Alert", 0.15)
 			else:
 				watching = 0.0
 		State.ALERT:  # wings open, then down to the light
-			_face(to, delta)
+			if not is_instance_valid(lamp):
+				lamp = target
+			var l := lamp.global_position - global_position; l.y = 0
+			_face(l, delta)
 			if flight.is_empty() and t >= ap.get_animation("Alert").length:
 				_glide_down()
 		State.CHASE:
 			_hunt(to, dist, delta)
 
 
+## The light that calls her from where she is: the lantern in hand, or else a candle in plain view.
+func _lure(dist: float) -> Node3D:
+	var eye := global_position + Vector3(0, 1.2, 0)
+	if target.lantern_out and dist < LURE and _clear_line(eye):
+		return target
+	for v: Node3D in get_tree().get_nodes_in_group("vela"):
+		if eye.distance_to(v.global_position) < LURE:
+			var q := PhysicsRayQueryParameters3D.create(eye, v.global_position, 1, [get_rid(), v.get_meta("body").get_rid()])
+			if get_world_3d().direct_space_state.intersect_ray(q).is_empty():
+				return v
+	return null
+
+
+## The Carpideira's scream: she comes to where it pointed and hunts round it.
+func call_to(at: Vector3) -> void:
+	if state in [State.DEAD, State.ATTACK, State.HIT] or not flight.is_empty():
+		return
+	if state == State.CHASE and lamp == target and searching == 0.0:
+		return  # already on your light
+	lamp = target; last_light = at
+	var back := global_position - at; back.y = 0
+	fly_to(_on_nav(at + back.normalized() * 2.0), _landed)
+
+
 func _glide_down() -> void:
-	var back := global_position - target.global_position; back.y = 0
-	var p := target.global_position + back.normalized() * ORBIT
-	var map := get_world_3d().navigation_map
-	if NavigationServer3D.map_get_regions(map).size() > 0:
-		p = NavigationServer3D.map_get_closest_point(map, p)
-	fly_to(p, _landed)
+	if not is_instance_valid(lamp):
+		lamp = target
+	var back := global_position - lamp.global_position; back.y = 0
+	fly_to(_on_nav(lamp.global_position + back.normalized() * ORBIT), _landed)
 
 
 func _landed() -> void:
-	var from := global_position - target.global_position
+	if not is_instance_valid(lamp):
+		lamp = target
+	var from := global_position - lamp.global_position
 	orbit_a = atan2(from.z, from.x); orbit_dir = 1.0 if randf() < 0.5 else -1.0
 	dart_in = randf_range(1.5, 3.0); searching = 0.0
 	go(State.CHASE, "Walk", 0.2)
 
 
 func _hunt(to: Vector3, dist: float, delta: float) -> void:
+	if lamp != target:  # round a candle, a moth at a flame: no darts; your lantern (or you, close) takes her off it
+		if not is_instance_valid(lamp) or not lamp.is_in_group("vela"):
+			lamp = target; _go_roost(); return
+		if (target.lantern_out and dist < LURE) or dist < DIM:
+			lamp = target
+		else:
+			_circle(lamp.global_position, delta); return
 	var lit: bool = (target.lantern_out and dist < LURE * 1.3) or dist < DIM
 	if lit:
 		last_light = target.global_position; searching = 0.0
@@ -138,8 +177,12 @@ func _hunt(to: Vector3, dist: float, delta: float) -> void:
 		else:
 			_move(to if dist < 2.5 else _route(target.global_position, to), DART, delta)
 		return
-	orbit_a += orbit_dir * speed / ORBIT * delta  # round the light, out of reach
-	var goal := target.global_position + Vector3(cos(orbit_a), 0, sin(orbit_a)) * ORBIT
+	_circle(target.global_position, delta)
+
+
+func _circle(light: Vector3, delta: float) -> void:  # round the light, out of reach
+	orbit_a += orbit_dir * speed / ORBIT * delta
+	var goal := light + Vector3(cos(orbit_a), 0, sin(orbit_a)) * ORBIT
 	var g := goal - global_position; g.y = 0
 	_move(_route(goal, g), speed if g.length() > 0.3 else 0.0, delta)
 

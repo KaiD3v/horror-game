@@ -3,7 +3,7 @@
 # area. Fog does the rest: about 25 m of sight, thicker down in the valley. The GLB's markers place everything:
 # spawn_jogador, spawn_mutante, npc_<who>, porta_<interior>, corvo_NN, varal_*, marca_carcaca.
 # At night (noite, madrugada) the night mutants come (../docs/MUTANTES_NOITE.md): A Bruxa on the roof ridges, O Poceiro
-# up out of the well.
+# up out of the well, A Carpideira weeping down the alleys; her scream calls the other two (_alarm).
 extends Level
 
 # the road through the village (Godot x, z), south to north: puddles gather on it (Clima)
@@ -34,6 +34,8 @@ var perches: Array[Vector3] = []  # the roof ridges (found at the first nightfal
 var poceiro: Poceiro
 var well_out := Vector3.INF
 const WELL := Vector2(3.0, -3.0)  # the well's centre (x, z); he climbs out beside the crank's crossbar, towards the square
+var carpideira: Carpideira
+var alleys: Array[Vector3] = []   # where she walks: the navmesh beside each house
 var night := false
 var night_watch := true       # the autotest holds the night back until it tests it
 
@@ -81,9 +83,12 @@ func _process(_delta: float) -> void:
 					b.leave()
 			if is_instance_valid(poceiro):
 				poceiro.go_home()
+			if is_instance_valid(carpideira):
+				carpideira.go_home(marker("porta_capela").position)
 
 
-## The bruxas settle on roofs away from the player (last night's dead are cleared away).
+## The bruxas settle on roofs away from the player, O Poceiro climbs out of the well, A Carpideira starts down an
+## alley far from the player (last night's dead are cleared away).
 func _nightfall() -> void:
 	if perches.is_empty():
 		for c in Nodes.children_named(village, "casa_"):
@@ -96,6 +101,8 @@ func _nightfall() -> void:
 	bruxas.clear()
 	if is_instance_valid(poceiro):
 		poceiro.queue_free()
+	if is_instance_valid(carpideira):
+		carpideira.queue_free()
 	if well_out == Vector3.INF:  # beside the well (its little roof covers the centre); found once, before anyone stands there
 		var g: Vector3 = ground(WELL.x, WELL.y + 1.8)
 		well_out = NavigationServer3D.map_get_closest_point(get_world_3d().navigation_map, g)
@@ -103,12 +110,31 @@ func _nightfall() -> void:
 	poceiro = Poceiro.new()
 	add_enemy(poceiro, mouth - Vector3(0, 2.4, 0), 0.0)
 	poceiro.emerge(mouth, well_out)
+	if alleys.is_empty():
+		var map := get_world_3d().navigation_map
+		for c in Nodes.children_named(village, "casa_"):
+			var a := NavigationServer3D.map_get_closest_point(map, c.position)
+			if a.distance_to(c.position) < 8.0:
+				alleys.append(a)
+	var start := alleys.filter(func(a): return a.distance_to(player.global_position) > 18.0)
+	carpideira = Carpideira.new(); carpideira.walks = alleys
+	add_enemy(carpideira, start.pick_random() if start else alleys[0], randf() * TAU)
+	carpideira.screamed.connect(_alarm)
 	var far := perches.filter(func(p): return p.distance_to(player.global_position) > 12.0)
 	far.shuffle()
 	for p in far.slice(0, BRUXAS):
 		var b := Bruxa.new(); b.roosts = perches
 		add_enemy(b, p, randf() * TAU); b.perch_on(p)
 		bruxas.append(b)
+
+
+## A Carpideira screamed: O Poceiro hears it, the bruxas come to it.
+func _alarm(at: Vector3) -> void:
+	if is_instance_valid(poceiro) and poceiro.state != Enemy.State.DEAD:
+		poceiro.hear(at)
+	for b in bruxas:
+		if is_instance_valid(b):
+			b.call_to(at)
 
 
 func marker(n: String) -> Node3D:  # the village GLB sits at the origin: its markers' positions are world positions

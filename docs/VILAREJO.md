@@ -323,6 +323,6 @@ antigos (`sounds_build.py`) ficaram em `audio_fontes/sintetizados/` como reserva
 ## Fica para depois
 
 - Mais interiores (casas, a ruína), a Colônia atrás do portão; o andar de cima da venda.
-- Música; os outros dois mutantes da noite (ver [MUTANTES_NOITE.md](MUTANTES_NOITE.md)).
+- Música.
 - Kit modular reaproveitável para o jogo final.
 - Melhorias artísticas pendentes: ver [TODO_ARTE.md](TODO_ARTE.md).

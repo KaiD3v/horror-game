@@ -18,7 +18,7 @@ Outra regra: nenhum deles anda como gente. O Interno e a Enfermeira caminham em 
 |---|---|---|---|---|
 | **A Bruxa** (feita) | luz | nas cumeeiras dos telhados | pendura a lamparina no cinto | passa a enxergar pouco |
 | **O Poceiro** (feito) | som | sai do poço do largo | anda agachado, não corre, evita lutar | fica lento perto dele |
-| **A Carpideira** (planejada) | vista | anda pelas vielas com uma vela | mata em silêncio (besta) ou se esconde | se ela grita, chama os outros dois |
+| **A Carpideira** (feita) | vista | anda pelas vielas com uma vela | mata em silêncio (besta) ou se esconde | se ela grita, chama os outros dois |
 
 Os três se cruzam. Com a lamparina guardada, a Bruxa não acha o jogador, mas ele também não vê a Carpideira chegando. Correr da Bruxa acorda o Poceiro. A vela da Carpideira é a única outra luz no vilarejo à noite, e a Bruxa também vai atrás dela.
 
@@ -67,6 +67,7 @@ Os três se cruzam. Com a lamparina guardada, a Bruxa não acha o jogador, mas e
   - Atingida no ar, ela cai.
   - Atingida no telhado, ela desce planando em cima do jogador.
 - **Amanhecer** (06:00): as que estão vivas voam para o norte, por cima da Colônia, e somem.
+- **A Carpideira:** a vela dela também a chama, e ela circula em volta sem mergulhar. O grito dela a faz voar até onde está o jogador (`call_to`).
 - **Sem passos.** Os avisos são:
   - o farfalhar das asas enquanto voa e corre;
   - estalos secos ao ver a luz, de vez em quando no telhado e antes de cada mergulho.
@@ -144,6 +145,7 @@ O homem que cavou o poço do largo, desceu e ficou lá embaixo. É ele quem puxa
 - **Vida:** 10. Ser atingido conta a ele onde o jogador está. É melhor passar por ele do que lutar.
 - **O sino da capela**, que ninguém toca, faz ele ir até a porta da igreja.
 - A luta contra a Bruxa faz barulho: golpes e dano chamam o Poceiro.
+- O grito da Carpideira faz ele ir até onde está o jogador.
 
 ### Sons (`tools/sons/poceiro_sons.py`)
 
@@ -177,11 +179,102 @@ Capturas: `captures/demo_v33_poceiro_poco.png` e `demo_v34_poceiro_golpe.png`.
 - Se os sons sintetizados servem.
 - A ideia da nota que fala dele ("os baldes voltam cheios de manhã") continua em aberto.
 
-## A Carpideira (planejada)
+## A Carpideira (feita)
 
-Uma mulher de luto, de véu preto, que chora pelas vielas com uma vela na mão. É a carpideira dos velórios do sertão.
+É a carpideira dos velórios do sertão, a mulher que se paga para chorar o morto e que nunca mais parou. Anda pelas vielas de luto, de véu preto, com uma vela de igreja nas mãos.
 
-- **É ela quem vê.** Se enxerga o jogador, grita, e o grito chama a Bruxa e o Poceiro para onde ele está.
-- A vela é a única outra luz do vilarejo à noite. Dá para vê-la de longe e evitá-la, e a Bruxa também é atraída por ela.
-- É fraca: um virote ou um golpe por trás a matam antes do grito.
-- O choro é ouvido antes de ela aparecer, e ela imita o choro de uma criança para atrair o jogador.
+### Visual (`tools/personagens/carpideira_build.py`)
+
+- Mede 1,83 m. É magra, vestida de preto até o chão, com o corpete abotoado até o pescoço e a saia em sino rasgada na barra.
+- **Véu de renda preta:** cobre a cabeça e os ombros e cai pelas costas até a cintura. É aberto só no rosto.
+- **A vela:** é uma vela grossa de igreja, segura com as duas mãos na altura do peito.
+  - A cera escorreu pelos dedos e grudou as mãos nela.
+  - A chama tem material emissivo (`c_chama`).
+  - Um terço pende da mão esquerda até o joelho.
+- **O rosto, aceso por baixo pela vela:**
+  - olhos enormes e sem pálpebra, porque ela não consegue fechá-los: é ela quem vê;
+  - as bordas dos olhos são vermelhas de tanto chorar, e lágrimas de cera escorrem pelas bochechas;
+  - a mandíbula é comprida, num osso próprio, e cai até o peito quando ela grita.
+- O modelo tem 1540 triângulos e 17 ossos (16 mais a mandíbula), no mesmo kit dos outros.
+  - Os vértices da saia são pesados um a um: no quadril em cima e nas pernas embaixo, cada lado na sua perna.
+- Animações:
+  - `Idle`: parada, chorando; os soluços sacodem os ombros e a cabeça balança sobre a vela.
+  - `Walk`: passo de procissão, lento e curto; o vestido desliza e a vela fica parada. Faz 0,78 m/s em 1x.
+  - `Notice`: viu o jogador; a cabeça se ergue e vira, o corpo se inclina e a vela vai para a frente.
+  - `Scream`: joga a cabeça para trás, a mandíbula cai e a vela sobe por cima da cabeça.
+  - `Hit`: é jogada para trás.
+  - `Death`: os joelhos cedem, ela se dobra sobre a vela e tomba de lado.
+- Renders: `renders/carpideira/` (frente, ¾, lado e costas; um quadro sim, outro não de cada animação).
+
+### Comportamento (`godot_demo/scripts/enemies/carpideira.gd`, estende `Enemy`)
+
+- **Chegada:** ao anoitecer, ela começa numa viela a mais de 18 m do jogador.
+  - As vielas são os pontos do navmesh ao lado de cada `casa_NN`.
+  - Ela anda de uma viela para outra a 0,8 m/s e para de 4 a 9 s em cada uma.
+- **Ouve-se antes de se ver:**
+  - o choro toca em loop e é ouvido até 35 m; a névoa deixa ver uns 25 m;
+  - a cada 18 a 35 s, o choro vira um **choro de criança** por 4 s, para atrair o jogador.
+- **A vela é a única outra luz do vilarejo à noite.**
+  - É uma luz de 6 m presa à mão dela; ilumina o rosto e acompanha a vela no grito.
+  - Dá para vê-la de longe e desviar.
+  - **A Bruxa também vai atrás dela:** se a vela está à vista de uma cumeeira, a Bruxa desce e circula em volta, como mariposa, sem mergulhar.
+  - A lamparina do jogador na mão, ou ele chegar a menos de 2,5 m, tira a Bruxa da vela.
+  - Se a vela apaga, a Bruxa volta para o telhado.
+- **É ela quem vê,** só na frente dela (cerca de 66° para cada lado), sem nada no caminho, e até uma distância que depende do jogador:
+
+  | O jogador | Visto até |
+  |---|---|
+  | lamparina na mão | 20 m |
+  | lamparina no cinto, em pé | 8 m |
+  | lamparina no cinto, agachado | 4 m |
+
+  - Por trás ela não vê nada, nem a lamparina.
+- **O grito:**
+  - quando vê o jogador, ela suspira, para e o encara;
+  - depois de 1,2 s olhando, **grita**; se o jogador sai da vista antes, ela se acalma e volta a chorar;
+  - o grito (até 120 m) chama os outros dois para onde o jogador está: o Poceiro ouve o lugar, e as Bruxas voam até lá e rondam por 6 s;
+  - depois ela segue o jogador de longe, a 1,5 m/s (o trote, a 1,66 m/s, ganha distância devagar; a corrida, rápido) e para a 4 m dele;
+  - enquanto ainda vê o jogador, grita de novo a cada 6 s;
+  - se fica 6 s sem vê-lo, volta a chorar.
+- **Não ataca.** É fraca, com vida 2:
+  - um virote ou um golpe por cima a matam;
+  - qualquer golpe **por trás** a mata antes do grito;
+  - um golpe lateral pela frente tira 1, e ela grita;
+  - morta, a vela apaga.
+- **Amanhecer:** ela anda até a porta da capela e entra. O corpo de quem morreu some na noite seguinte.
+
+### Sons (`tools/sons/carpideira_sons.py`)
+
+Todos foram sintetizados localmente: uma voz feita de pulso glótico passando por formantes de vogal.
+
+- `carpideira_choro` (loop, 9,6 s): lamentos que descem, soluços e respiração entrecortada.
+- `carpideira_crianca_1..2`: o choro de criança ("uaa").
+- `carpideira_suspiro`: a respiração puxada quando ela vê o jogador, ou quando é atingida.
+- `carpideira_grito_1..2`: um grito agudo, que sobe, áspero, a voz quebrando.
+- `carpideira_queda`: a queda na morte e a vela rolando.
+- Não tem passos: o vestido desliza.
+
+### Testes (`vilarejo.tscn -- --autotest`, `carpideira_tests`)
+
+Os testes conferem que:
+- ao anoitecer, ela começa longe, com a vela acesa;
+- anda chorando, e o choro vira choro de criança;
+- a vela dela tira uma Bruxa do telhado, e a Bruxa circula em volta sem mergulhar;
+- por trás, nem com a lamparina ela vê;
+- pela frente, a 6 m, agachado no escuro, ela não vê;
+- em pé, a 6 m, ela vê e suspira;
+- se o jogador sai da vista antes do grito, ela volta a chorar;
+- quando ela grita, o Poceiro ouve onde o jogador está e as Bruxas voam até lá;
+- ela segue o jogador e desiste fora da vista;
+- um golpe pela frente só a faz gritar, e um golpe por trás a mata e apaga a vela;
+- no amanhecer, ela entra na capela.
+
+Capturas: `captures/demo_v35_carpideira_vela.png` e `demo_v36_carpideira_grito.png`.
+
+### Para o autor testar no jogo
+
+- As distâncias de visão (20, 8 e 4 m) e o 1,2 s antes do grito: se dá tempo de se esconder ou atirar.
+- Se ela seguindo e gritando a cada 6 s pesa demais com os outros dois chegando.
+- Se dá para chegar por trás dela para matar, e se isso é fácil demais.
+- Se o choro de criança engana e se os sons sintetizados servem.
+- Se uma Carpideira por noite basta.

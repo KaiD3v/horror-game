@@ -194,6 +194,12 @@ func _route(goal: Vector3, to: Vector3) -> Vector3:
 	return d if d.length() > 0.05 else to
 
 
+## The navmesh point closest to p (p itself where there is no navmesh).
+func _on_nav(p: Vector3) -> Vector3:
+	var map := get_world_3d().navigation_map
+	return NavigationServer3D.map_get_closest_point(map, p) if NavigationServer3D.map_get_regions(map).size() > 0 else p
+
+
 func _face(to: Vector3, delta: float) -> void:
 	if to.length() > 0.01:
 		rotation.y = lerp_angle(rotation.y, atan2(-to.x, -to.z), turn_speed * delta)
