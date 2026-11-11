@@ -167,7 +167,7 @@ Gancho da missão (a definir): o filho de Dona Firmina foi levado para a Colôni
   - **C agacha com qualquer arma.** Com o facão ou a besta na mão só as pernas se ajoelham (a arma fica como está), e ele anda agachado, ergue a guarda, mira e atira lá embaixo, com a câmera baixa. Um golpe ou uma esquiva o põem de pé.
   - Quem lê "agachado" (a Carpideira, o Poceiro, os corvos, os passos) usa `crouched`, com ou sem arma. Quem lê "lamparina na mão" (a Bruxa, a Carpideira, a Enfermeira) usa `holds_lantern()`: com a besta ela está sempre no gancho.
 - **A roda (segurar Q):** o tempo cai para 1/4 e aparece um terço de contas de madeira com o crucifixo pendurado embaixo.
-  - Sobre o terço ficam três plaquinhas de madeira com a arma pirografada, como os ex-votos de uma sala de milagres: Facão em cima, Besta à direita e Lamparina à esquerda, cada uma com a sua tecla.
+  - Sobre o terço ficam quatro plaquinhas de madeira com a arma pirografada, como os ex-votos de uma sala de milagres, nas diagonais: Facão em cima à esquerda, Besta em cima à direita, Picareta embaixo à direita e Lamparina embaixo à esquerda, cada uma com a sua tecla (1, 2, 4, 3). O crucifixo pende entre as duas de baixo.
   - O mouse (ou WASD) aponta uma plaquinha, e acende atrás dela uma luz de vela que tremula. No centro aparecem o nome e uma nota (os virotes que restam, na besta).
   - Soltar o Q põe a apontada na mão. Soltar sem apontar não muda nada, a não ser num toque rápido (menos de 0,25 s), que guarda a arma.
   - Uma fitinha vermelha amarrada marca o que ele tem na mão.

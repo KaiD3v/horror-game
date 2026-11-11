@@ -60,7 +60,7 @@ func take_hit(n: int, by := "") -> void:
 		if player:
 			player.notice.emit("A lâmina só lasca a pedra.")
 		return
-	Audio.play2d(self, "bloqueio", -2.0).pitch_scale = randf_range(0.55, 0.65)  # iron on stone
+	Audio.play2d(self, "picareta_pedra", -2.0).pitch_scale = randf_range(0.92, 1.08)  # iron on stone (two takes)
 	for k in mini(n, stones.size()):
 		var s: Node3D = stones.pop_back()
 		var tw := create_tween().set_parallel()  # it rolls off the heap and lies there
@@ -68,7 +68,7 @@ func take_hit(n: int, by := "") -> void:
 		tw.tween_property(s, "rotation", s.rotation + Vector3(randf_range(-2, 2), 0, randf_range(-2, 2)), 0.45)
 		tw.tween_property(s, "scale", Vector3.ONE * 0.45, 0.45)
 	if stones.is_empty():
-		Audio.play2d(self, "pedra_arrastar", -2.0)
+		Audio.play2d(self, "entulho_desabar", -2.0)
 		body.queue_free(); remove_from_group("breakable"); enabled = false
 		Story.mark("quebrado:" + id)
 		if player:

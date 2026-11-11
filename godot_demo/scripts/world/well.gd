@@ -65,7 +65,7 @@ func _use(by: Node3D) -> void:
 		return
 	if not roped():
 		Story.mark("corda:" + id)
-		Audio.play2d(self, "escalar", -6.0)
+		Audio.play2d(self, "corda_amarrar", -4.0)
 		by.notice.emit("A corda está amarrada na trave.")
 		_update()
 		return

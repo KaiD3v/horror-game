@@ -7,11 +7,15 @@
 class_name WeaponWheel
 extends CanvasLayer
 
-const WHEEL := [  # clockwise from the top, at the art's slots (roda_armas.py SLOTS); key = its number key
-	{"mode": Player.Mode.COMBAT, "nome": "Facão", "nota": "corpo a corpo", "arte": "facao", "tecla": "1"},
+# clockwise from the top left, at the art's slots (roda_armas.py SLOTS: the four diagonals); item = what COMBAT holds
+# (Player.held); key = its number key
+const WHEEL := [
+	{"mode": Player.Mode.COMBAT, "item": "facao", "nome": "Facão", "nota": "corpo a corpo", "arte": "facao", "tecla": "1"},
 	{"mode": Player.Mode.XBOW, "nome": "Besta", "nota": "virotes: %d", "arte": "besta", "tecla": "2"},
+	{"mode": Player.Mode.COMBAT, "item": "picareta", "nome": "Picareta", "nota": "quebra pedra", "arte": "picareta", "tecla": "4"},
 	{"mode": Player.Mode.EXPLORE, "nome": "Lamparina", "nota": "sem arma na mão", "arte": "lamparina", "tecla": "3"},
 ]
+const FIRST := -PI * 0.75  # the first slot's angle (top left)
 const PX := 2.0            # texels -> pixels
 const RADIUS := 64.0       # the rosary's radius, texels (roda_armas.py R)
 const SLOW := 0.25         # time scale while it is open
@@ -66,7 +70,7 @@ func _mid() -> Vector2:
 
 
 static func slice_dir(i: int) -> Vector2:
-	var a := -PI / 2 + i * TAU / WHEEL.size()
+	var a := FIRST + i * TAU / WHEEL.size()
 	return Vector2(cos(a), sin(a))
 
 
@@ -74,7 +78,7 @@ static func slice_dir(i: int) -> Vector2:
 static func slice_at(v: Vector2) -> int:
 	if v.length() < DEADZONE:
 		return -1
-	return wrapi(roundi((v.angle() + PI / 2) / (TAU / WHEEL.size())), 0, WHEEL.size())
+	return wrapi(roundi((v.angle() - FIRST) / (TAU / WHEEL.size())), 0, WHEEL.size())
 
 
 func _process(_delta: float) -> void:
@@ -92,7 +96,7 @@ func _process(_delta: float) -> void:
 			aim = keys * REACH
 		picked = slice_at(aim)
 		centre.text = WHEEL[picked].nome if picked >= 0 else ""
-		note.text = ("ainda não tem" if not player.owns(WHEEL[picked].mode)
+		note.text = ("ainda não tem" if not _has(picked)
 			else WHEEL[picked].nota % Inventory.count("virote") if "%d" in WHEEL[picked].nota
 			else WHEEL[picked].nota) if picked >= 0 else "aponte com o mouse"
 		ring.queue_redraw()  # the candle flickers
@@ -121,13 +125,21 @@ func _close(choose: bool) -> void:
 	open = false; ring.visible = false
 	Engine.time_scale = 1.0
 	if choose and picked >= 0:
-		player.equip(WHEEL[picked].mode)
+		player.equip(WHEEL[picked].mode, WHEEL[picked].get("item", "facao"))
 	elif choose and Time.get_ticks_msec() - _opened_at < TAP * 1000.0 and _holding() != Player.Mode.EXPLORE:
 		player.equip(Player.Mode.EXPLORE)  # a tap: the weapon away
 
 
 func _holding() -> int:  # crouched = hands as when exploring
 	return Player.Mode.EXPLORE if player.mode == Player.Mode.CROUCH else player.mode
+
+
+func _has(i: int) -> bool:  # whether he has slot i's weapon / tool
+	return Inventory.has(WHEEL[i].get("item", Player.WEAPON_ITEM.get(WHEEL[i].mode, "")))
+
+
+func _in_hand(i: int) -> bool:  # slot i is what he holds now
+	return WHEEL[i].mode == _holding() and WHEEL[i].get("item", player.held) == player.held
 
 
 func _exit_tree() -> void:  # never leave the next scene in slow motion
@@ -142,7 +154,7 @@ func _draw_ring() -> void:
 	var flicker := 0.85 + 0.1 * sin(Time.get_ticks_msec() * 0.013) + 0.05 * sin(Time.get_ticks_msec() * 0.031)
 	for i in WHEEL.size():
 		var at := c + slice_dir(i) * RADIUS * PX
-		var locked := not player.owns(WHEEL[i].mode)  # not found / bought yet: a dark, empty tablet
+		var locked := not _has(i)  # not found / bought yet: a dark, empty tablet
 		var lit := i == picked and not locked
 		if lit:
 			var g: Texture2D = art.brilho
@@ -152,6 +164,6 @@ func _draw_ring() -> void:
 		ring.draw_texture_rect(p, Rect2(top, p.get_size() * PX), false,
 			Color(1.25 * flicker + 0.1, 1.1 * flicker + 0.05, 0.9) if lit else Color(0.3, 0.28, 0.27, 0.6) if locked
 			else Color(0.72, 0.68, 0.64))
-		if WHEEL[i].mode == _holding():
+		if _in_hand(i):
 			var f: Texture2D = art.fita
 			ring.draw_texture_rect(f, Rect2(top + Vector2(p.get_width() - 7, -3) * PX, f.get_size() * PX), false)

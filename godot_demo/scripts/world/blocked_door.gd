@@ -69,7 +69,7 @@ func _use(by: Node3D) -> void:
 		return
 	opening = true
 	if kind == "cadeado":  # the key turned (Interactable spent it): the padlock is just gone
-		Audio.play2d(self, "tilintar", -6.0)
+		Audio.play2d(self, "cadeado_abrir", -4.0)
 		_opened(true)
 	else:
 		await _force(by)
@@ -87,13 +87,13 @@ func _force(p: Player) -> void:
 	var bar := p.hold_item("pe_de_cabra")
 	for plank in planks:
 		p.play("Push")
-		Audio.play2d(self, "rangido", -2.0).pitch_scale = randf_range(0.8, 1.0)
-		await get_tree().create_timer(0.7).timeout
+		Audio.play2d(self, "tabua_arrancar", -2.0).pitch_scale = randf_range(0.9, 1.05)  # the nails squeal, then it cracks
+		await get_tree().create_timer(1.6).timeout
 		var fall := create_tween().set_parallel()  # it comes away and drops
 		fall.tween_property(plank, "rotation:z", plank.rotation.z + randf_range(-1.2, 1.2), 0.4)
 		fall.tween_property(plank, "position", plank.position + Vector3(randf_range(-0.3, 0.3), -plank.position.y + 0.05, 0.4), 0.4)
 		await fall.finished
-		Audio.play2d(self, "pouso", -6.0)
+		Audio.play2d(self, "tabua_cair", -4.0).pitch_scale = randf_range(0.9, 1.1)
 		await get_tree().create_timer(0.3).timeout
 	await get_tree().create_timer(0.3).timeout
 	bar.queue_free()

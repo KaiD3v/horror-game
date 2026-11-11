@@ -351,9 +351,10 @@ func combat_tests() -> void:
 ## swapping straight from one weapon to the other. Then the number keys do the same without it.
 func wheel_tests() -> void:
 	var W: WeaponWheel = L.wheel
-	check(WeaponWheel.slice_at(Vector2(0, -60)) == 0 and WeaponWheel.slice_at(Vector2(60, 35)) == 1
-		and WeaponWheel.slice_at(Vector2(-60, 35)) == 2 and WeaponWheel.slice_at(Vector2(5, 5)) == -1,
-		"the tablets: machete up, crossbow lower right, lantern lower left, nothing in the middle")
+	check(WeaponWheel.slice_at(Vector2(-50, -50)) == 0 and WeaponWheel.slice_at(Vector2(50, -50)) == 1
+		and WeaponWheel.slice_at(Vector2(50, 50)) == 2 and WeaponWheel.slice_at(Vector2(-50, 50)) == 3
+		and WeaponWheel.slice_at(Vector2(5, 5)) == -1,
+		"the tablets: machete upper left, crossbow upper right, pickaxe lower right, lantern lower left, nothing in the middle")
 	var yaw := player.pivot.rotation.y; var p0 := player.global_position; var r0 := player.rotation.y
 	Input.action_press("weapons"); await get_tree().process_frame; await get_tree().process_frame
 	check(W.open and Engine.time_scale == WeaponWheel.SLOW and W.ring.visible, "Q held opens the wheel, time slows (x%.2f)" % Engine.time_scale)
@@ -373,11 +374,21 @@ func wheel_tests() -> void:
 	Input.action_press("left"); Input.action_press("back"); await get_tree().process_frame; await get_tree().process_frame
 	var by_keys := W.picked
 	Input.action_release("left"); Input.action_release("back"); Input.action_release("weapons"); await wait(1.5)
-	check(by_keys == 2 and player.mode == Player.Mode.EXPLORE and not player.crossbow_in_hand() and not player.lantern_hung(),
+	check(by_keys == 3 and player.mode == Player.Mode.EXPLORE and not player.crossbow_in_hand() and not player.lantern_hung(),
 		"A+S points at the lantern: the crossbow holstered, the lantern back in hand")
 	Input.action_press("weapons"); await wait(0.1)
 	Input.action_release("weapons"); await wait(0.4)
 	check(player.mode == Player.Mode.EXPLORE and player.action == "", "let go without pointing: nothing changes")
+	Input.action_press("weapons"); await wait(0.1); await _swipe(2)
+	check(W.centre.text == "Picareta" and W.note.text == "quebra pedra", "the pickaxe's tablet (%s)" % W.note.text)
+	await shot("2w_wheel_picareta")
+	Input.action_release("weapons"); await wait(1.4)
+	check(player.mode == Player.Mode.COMBAT and player.held == "picareta" and player.tool_hand.shape.visible, "...let go on it: the pickaxe in hand")
+	Input.action_press("weapons"); await wait(0.1); await _swipe(0)
+	Input.action_release("weapons"); await wait(2.8)
+	check(player.mode == Player.Mode.COMBAT and player.held == "facao" and player.machete_in_hand() and player.wanted == -1,
+		"pickaxe -> machete in one pick: put away, the machete drawn")
+	await player.free_hands()
 
 	var keys := {}
 	for a in ["draw", "crossbow", "lantern", "heal", "weapons"]:
@@ -1043,7 +1054,7 @@ func progression_tests() -> void:
 	await tap("interact"); await wait(1.4)
 	check(player.busy and player.action == "Push" or player.action == "", "the crowbar: he works at the planks")
 	await shot("prog_pe_de_cabra")
-	var banner: bool = await until(func(): return get_tree().get_first_node_in_group("found_banner") != null, 8.0)
+	var banner: bool = await until(func(): return get_tree().get_first_node_in_group("found_banner") != null, 12.0)
 	var fb: FoundBanner = get_tree().get_first_node_in_group("found_banner")
 	check(banner and fb.name_l.text == "Porta aberta", "...the planks off: \"Porta aberta\"")
 	await shot("prog_porta_aberta")
@@ -1085,6 +1096,8 @@ func progression_tests() -> void:
 	Inventory.add("corda")
 	await tap("interact"); await wait(0.2)
 	check(L.well.roped() and L.well.rope != null and L.hud.prompt.text == "E · descer pela corda", "the rope tied: \"%s\"" % L.hud.prompt.text)
+	check(["cadeado_abrir", "tabua_arrancar", "tabua_cair", "picareta_pedra", "entulho_desabar", "corda_amarrar"].all(func(n): return n in Audio.heard),
+		"each made its own sound: %s" % ", ".join(Audio.heard.slice(-12)))
 	await shot("prog_poco")
 	await tap("interact"); await wait(0.2)
 	check(SceneRouter.requested == "res://scenes/levels/poco.tscn" and Story.marks["poco:volta"] == [L.scene_file_path, "treino_poco"],

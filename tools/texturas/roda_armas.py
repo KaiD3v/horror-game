@@ -3,7 +3,7 @@
 # tablet per weapon, its picture burnt in like the ex-votos of a sala de milagres. Folk Catholicism, the 1970s
 # countryside: the benzedeira, the chapel of Santa Clara.
 #   roda_terco.png          176 x 214  the beads and string (centre = the wheel's centre), gaps where tablets sit
-#   roda_placa_<arma>.png    40 x 34   a tablet with its picture: facao, besta, lamparina
+#   roda_placa_<arma>.png    40 x 34   a tablet with its picture: facao, besta, picareta, lamparina
 #   roda_fita.png             9 x 18   the red ribbon tied on the tablet of what is in his hands
 #   roda_brilho.png          64 x 64   candlelight behind the pointed tablet (dithered, no smooth gradient)
 # Seeded. Run: python tools/texturas/roda_armas.py
@@ -20,7 +20,8 @@ rng = np.random.default_rng(1975)
 
 S, R = 176, 64                     # rosary image width, ring radius (texels); centre (S/2, S/2)
 SH = 214                           # its height: the crucifix hangs below the ring
-SLOTS = (-90, 30, 150)             # tablet angles in degrees, clockwise from the top (WeaponWheel.slice_dir)
+SLOTS = (-135, -45, 45, 135)       # tablet angles in degrees, clockwise (WeaponWheel.slice_dir): the four diagonals,
+                                   # the crucifix hanging free between the bottom two
 WOOD = np.array((0.52, 0.34, 0.19))
 DARK = np.array((0.13, 0.08, 0.05))
 BURNT = (40, 22, 12, 255)
@@ -56,7 +57,7 @@ def rosary():
     img = np.zeros((SH, S, 4))
     gap = 26  # degrees kept free around each tablet
     for i, a in enumerate(SLOTS):
-        b = SLOTS[(i + 1) % 3] + (360 if i == 2 else 0)
+        b = SLOTS[(i + 1) % len(SLOTS)] + (360 if i == len(SLOTS) - 1 else 0)
         mid = (a + b) / 2
         for t in np.arange(a + gap, b - gap + 0.1, 6.5):  # the Ave-Marias, small
             if abs(t - mid) > 5:
@@ -131,6 +132,12 @@ def lamparina(d):  # the oil lantern: the ring to hold it, the cap, the glass wi
     d.rectangle([(12, 27), (28, 29)], fill=1)
 
 
+def picareta(d):  # the pickaxe: the haft at a slant, the iron head across its top, curved, a point each end
+    d.line([(9, 29), (24, 10)], fill=1, width=3)
+    d.arc([(8, 4), (38, 26)], 200, 330, fill=1, width=3)
+    d.point([(9, 12), (35, 12)], fill=1)
+
+
 def ribbon():  # a fita: knotted at the top, two tails hanging apart, the ends cut in a V; red gone a little brown
     img = np.zeros((18, 9, 4))
     red, shade = np.array((0.66, 0.13, 0.09)), np.array((0.38, 0.07, 0.05))
@@ -153,8 +160,8 @@ def glow():  # candlelight: amber, ordered dither towards the edge
 
 
 save("roda_terco", rosary())
-for name, fn in (("facao", facao), ("besta", besta), ("lamparina", lamparina)):
+for name, fn in (("facao", facao), ("besta", besta), ("picareta", picareta), ("lamparina", lamparina)):
     save("roda_placa_" + name, burn(tablet(), fn))
 save("roda_fita", ribbon())
 save("roda_brilho", glow())
-print("roda: terço, 3 placas, fita, brilho ->", OUT)
+print("roda: terço, 4 placas, fita, brilho ->", OUT)
