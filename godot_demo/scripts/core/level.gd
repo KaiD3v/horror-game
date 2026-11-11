@@ -1,6 +1,6 @@
 # Base of every playable scene. It brings the parts every level shares: the player, the HUD, using things (E),
-# footsteps, the notes and trunks lying here, the villagers on their markers, doors, the navmesh and ground queries, Enter to
-# restart and the autotest hook (`-- --autotest` runs res://tests/test_<scene>.gd).
+# footsteps, the notes and trunks lying here, the villagers on their markers, doors, the navmesh and ground queries, the
+# pause and death menus (GameMenu) and the autotest hook (`-- --autotest` runs res://tests/test_<scene>.gd).
 # A level overrides _build() (environment, geometry, NPCs, enemies, navmesh), _player_start() and _started()
 # (sound, weather: once the player and the HUD exist).
 class_name Level
@@ -18,6 +18,7 @@ var notes: NotesReader
 var shop: ShopMenu                 # the shop screen, for whichever seller you talk to
 var dialog: DialogBox              # talking to a villager
 var wheel: WeaponWheel             # Q: what he holds
+var menu: GameMenu                 # Esc: the pause menu; dying: the death menu
 var env: Environment
 var nav: NavigationRegion3D
 var npcs := {}                     # who -> Npc
@@ -37,6 +38,7 @@ func _ready() -> void:
 	shop = ShopMenu.new(); add_child(shop)
 	dialog = DialogBox.new(); add_child(dialog)
 	wheel = WeaponWheel.new(player); add_child(wheel)
+	menu = GameMenu.new(player); add_child(menu)
 	notes.closed.connect(func(): hud.say("%d de %d notas · Tab relê" % [NotesReader.read.size(), NotesData.NOTES.size()], 2.5))
 	_place_notes.call_deferred()  # once the level's colliders are in the physics world
 	_started()
@@ -57,9 +59,7 @@ func _started() -> void:
 
 
 func _unhandled_input(e: InputEvent) -> void:
-	if e.is_action_pressed("restart"):
-		get_tree().reload_current_scene()
-	elif e.is_action_pressed("debug_time") and day:  # T: an hour on (to see the day go round)
+	if e.is_action_pressed("debug_time") and day:  # T: an hour on (to see the day go round)
 		day._step(60.0)
 
 

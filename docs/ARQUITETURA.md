@@ -17,7 +17,7 @@ protagonista-terror/
       npcs/                   Npc, Talk (o "E · falar com"), Dialog (as regras de uma conversa)
       shop/                   Shop (regras de compra), ShopMenu (a tela)
       world/                  Door, Pickup, Chest (os baús), Pushable, Climbable, Jumpable (enigmas), Footsteps, RandomEvents, Clima, Corvo
-      ui/                     Hud (+ HudStatus: corações, terço e itens nos cantos), menu, NotesReader, NotePaper, WeaponWheel (a roda de armas do Q), FoundBanner (o "Você encontrou"), DialogBox (a conversa)
+      ui/                     Hud (+ HudStatus: corações, terço e itens nos cantos), menu, GameMenu (pausa e morte; o painel de Controles), NotesReader, NotePaper, WeaponWheel (a roda de armas do Q), FoundBanner (o "Você encontrou"), DialogBox (a conversa)
       data/                   dados sem lógica: NpcCatalog, NotesData, ChestData, QuestData, dialogos/<npc> (o que cada um diz), Atmospheres, DayData, ItemCatalog, ShopCatalog
       levels/                 o script de cada fase: vilarejo, colonia, treino, interior (único para todos os interiores)
     shaders/                  sangue, visao, silhueta, neblina_bancos, poca, menu_neblina
@@ -60,7 +60,7 @@ Regras:
 - os NPCs nos marcadores;
 - as portas;
 - o navmesh e as consultas de chão (`ground`, `ray`, `reachable`);
-- Enter para recomeçar;
+- os menus de pausa (Esc) e de morte (`GameMenu`): Continuar / Controles / Voltar ao menu / Sair; Tentar de novo recarrega a cena desde o início;
 - o gancho de teste.
 
 Uma fase sobrescreve três métodos:

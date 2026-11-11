@@ -11,7 +11,7 @@
 # crossbow aims (strafing, the tight camera, the crosshair; only then LMB looses). LMB slash (again in its
 # follow-through: the overhead chop), E locks on the nearest enemy
 # ahead (armed; again releases it), Space dodge (+A/D: to that side), R or LMB when empty reloads, LMB looses,
-# F dresses a wound, H hurt yourself (debug), Esc frees the mouse. Swings and dodges spend stamina (COST).
+# F dresses a wound, H hurt yourself (debug). (Esc: the pause menu, GameMenu.) Swings and dodges spend stamina (COST).
 class_name Player
 extends CharacterBody3D
 
@@ -163,8 +163,6 @@ func _unhandled_input(e: InputEvent) -> void:
 		pitch.rotation.x = clamp(pitch.rotation.x - e.relative.y * MOUSE_SENS, -1.1, 0.35)
 	elif e is InputEventMouseButton and e.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	elif e.is_action_pressed("ui_cancel"):
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	elif e.is_action_pressed("debug_hurt"):
 		take_damage(1)
 	elif mode != Mode.DEAD and not busy:

@@ -195,6 +195,7 @@ func run() -> void:
 	await descend_tests()
 	await hud_tests()
 	await equip_tests()
+	await pause_tests()
 	player.health = 2
 
 	player.take_damage(2); await wait(1.8); await shot("9_dead")
@@ -204,6 +205,7 @@ func run() -> void:
 	check(player.global_position.distance_to(p) < 0.05, "no control after death")
 	await wait(2.2)
 	check(not player.condition.breath.playing and not player.condition.heart.playing, "dead: the breathing and the heart stop")
+	await death_tests()
 
 
 
@@ -856,3 +858,42 @@ func equip_tests() -> void:
 	await player.free_hands()
 	check(player.mode == Player.Mode.EXPLORE and not player.crouched, "free_hands: everything away, on his feet")
 	player.global_position = p0; player.velocity = Vector3.ZERO
+
+
+## Esc: the pause menu stops the game; Esc again (or Continuar) goes back; Controles over it; not over the notes.
+func pause_tests() -> void:
+	var m: GameMenu = L.menu
+	await wait(0.5)
+	await tap("ui_cancel"); await wait(0.2)
+	check(m.paused and get_tree().paused and m.veil.visible and m.buttons.size() == 4 and m.buttons[0].text == "•  Continuar",
+		"Esc pauses: Continuar, Controles, Voltar ao menu, Sair do jogo")
+	await shot("pausa")
+	await tap("ui_down"); await tap("ui_accept")
+	check(m.controls.visible, "Controles opens over it")
+	await tap("ui_cancel")
+	check(not m.controls.visible and m.paused, "Esc closes Controles, still paused")
+	await tap("ui_cancel")
+	check(not m.paused and not get_tree().paused and not m.veil.visible, "Esc again: back to the game")
+	await tap("ui_cancel"); m.buttons[2].pressed.emit(); await wait(0.1)
+	check(SceneRouter.requested == Paths.MENU and not get_tree().paused, "Voltar ao menu goes to the title")
+	m.pause(false)
+	NotesReader.read.append(NotesData.NOTES[0].id)
+	await tap("notes"); await wait(0.2)
+	await tap("ui_cancel"); await wait(0.2)
+	check(not m.paused and not get_tree().paused, "Esc over the notes closes them, no pause")
+	NotesReader.read.pop_back()
+
+
+## Dying: after a while "Morreu." and the hour, Tentar de novo (this scene again) / Voltar ao menu / Sair do jogo.
+func death_tests() -> void:
+	var m: GameMenu = L.menu
+	if player.mode != Player.Mode.DEAD:
+		player.take_damage(99)
+	await until(func(): return m.dead, GameMenu.DEATH_DELAY + 1.0); await wait(GameMenu.FADE)
+	check(m.veil.visible and m.title.text == "Morreu." and m.buttons.size() == 3 and m.buttons[0].text == "•  Tentar de novo",
+		"dead: \"Morreu.\" (%s), Tentar de novo, Voltar ao menu, Sair do jogo" % m.line.text)
+	await shot("morte")
+	await tap("ui_cancel")
+	check(not m.paused, "no pause menu over death")
+	await tap("ui_accept"); await wait(0.1)
+	check(SceneRouter.requested == L.scene_file_path, "Tentar de novo: this scene again")

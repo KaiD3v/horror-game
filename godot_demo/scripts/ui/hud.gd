@@ -1,12 +1,11 @@
 # What is on screen over the game, for every level: the controls line, the crosshair (crossbow up), the prompt of
 # whatever you can use, short messages (say), the body's state at the screen's edges (visao.gdshader: hurt and
-# tired), the hearts / breath / what he carries in the corners when they change (HudStatus), the death line, and
-# the fade in from black after a scene change.
+# tired), the hearts / breath / what he carries in the corners when they change (HudStatus) and the fade in from
+# black after a scene change. (Dying: GameMenu.)
 class_name Hud
 extends CanvasLayer
 
 const CONTROLS := "WASD trotar · Ctrl andar · Shift correr · E usar · 1 facão · 2 besta · 3 lamparina · Q roda (toque: guardar) · LMB golpe (2x: de cima) · RMB erguer (bloquear / mirar) · E travar mira · Espaço esquiva (+A/D lateral) · C agachar · R recarregar · F curativo · Tab notas"
-const DEATH := "Morreu. Enter para recomeçar."
 
 var player: Player
 var legend: Label
@@ -49,7 +48,7 @@ func _centred(t: String, at: float) -> Label:  # a line across the screen, at a 
 
 
 func _ready() -> void:
-	player.died.connect(func(): legend.text = DEATH; legend.add_theme_font_size_override("font_size", 24))
+	player.died.connect(func(): legend.visible = false)
 	player.notice.connect(say.bind(2.5))
 	var arrival := SceneRouter.take_arrival()
 	if arrival[0]:  # came through a door: it creaks and shuts behind you

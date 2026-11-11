@@ -66,7 +66,8 @@ func _ready() -> void:
 		buttons.append(b)
 	buttons[0].grab_focus.call_deferred()
 
-	controls = _controls_panel()
+	controls = GameMenu.controls_panel(self)  # (shared with the pause menu)
+	controls.gui_input.connect(func(e): if e is InputEventMouseButton and e.pressed: _show_controls(false))
 	var wind := AudioStreamPlayer.new(); add_child(wind)
 	wind.stream = Audio.sfx("vento", true); wind.volume_db = -10.0; wind.play()
 	if SceneRouter.testing():
@@ -98,30 +99,6 @@ func _process(delta: float) -> void:
 	_t += delta  # the flame: a slow breath plus a little nervous flicker
 	var f := 0.82 + 0.1 * sin(_t * 2.1) + 0.08 * sin(_t * 11.0 + sin(_t * 3.7) * 2.0)
 	glow.modulate.a = f; glow.scale = Vector2.ONE * (0.94 + 0.08 * f)
-
-
-func _controls_panel() -> Control:
-	var p := ColorRect.new(); add_child(p); p.color = Color(0, 0, 0, 0.78); p.size = Vector2(960, 600); p.visible = false
-	var rows := [["WASD", "trotar"], ["Ctrl / Shift", "andar / correr"], ["Mouse", "olhar"], ["E", "interagir · armado: travar mira"],
-		["1", "facão"], ["2", "besta"], ["3", "lamparina (no gancho / na mão)"], ["Q", "roda de armas (segurar) / guardar (toque)"],
-		["Mouse esq.", "golpe (de novo: de cima)"], ["Mouse dir.", "erguer: bloquear / mirar (segurar)"], ["Espaço", "esquiva"], ["C", "agachar"],
-		["R", "recarregar"], ["F", "curativo"], ["Tab", "notas"]]
-	var grid := GridContainer.new(); p.add_child(grid); grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 28); grid.add_theme_constant_override("v_separation", 0)
-	var head := Label.new(); p.add_child(head); head.text = "Controles"; head.position = Vector2(338, 50)
-	head.add_theme_font_size_override("font_size", 36)
-	head.add_theme_color_override("font_color", Color(0.86, 0.84, 0.78))
-	for r in rows:
-		for i in 2:
-			var l := Label.new(); grid.add_child(l); l.text = r[i]
-			l.add_theme_color_override("font_color", WARM if i == 0 else Color(0.8, 0.78, 0.74))
-			if i == 0:
-				l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT; l.custom_minimum_size.x = 150
-	grid.position = Vector2(160, 108)
-	p.gui_input.connect(func(e): if e is InputEventMouseButton and e.pressed: _show_controls(false))
-	var back := Label.new(); p.add_child(back); back.text = "Esc  voltar"; back.position = Vector2(338, 532)
-	back.add_theme_color_override("font_color", DIM)
-	return p
 
 
 func _show_controls(on: bool) -> void:

@@ -30,8 +30,8 @@ func _init(p: Player) -> void:
 
 func _ready() -> void:
 	layer = 20; process_mode = Node.PROCESS_MODE_ALWAYS
-	veil = ColorRect.new(); add_child(veil); veil.set_anchors_preset(Control.PRESET_FULL_RECT)
-	var col := VBoxContainer.new(); veil.add_child(col); col.set_anchors_preset(Control.PRESET_FULL_RECT)
+	veil = ColorRect.new(); veil.set_anchors_preset(Control.PRESET_FULL_RECT); add_child(veil)  # (anchors before entering
+	var col := VBoxContainer.new(); col.set_anchors_preset(Control.PRESET_FULL_RECT); veil.add_child(col)  # the tree)
 	col.alignment = BoxContainer.ALIGNMENT_CENTER; col.add_theme_constant_override("separation", 4)
 	title = Label.new(); col.add_child(title); title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 48)
