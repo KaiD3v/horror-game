@@ -142,7 +142,7 @@ func _start() -> void:  # the bell, a slow fade, and the village opens from blac
 		return
 	started = true
 	WorldTime.reset(); Weather.reset()  # a new game: 06:30, the morning fog
-	Inventory.reset(); Shop.reset()     # ...the lantern, Cr$ 40, six bolts, a bandage; the shops full
+	Inventory.reset(); Shop.reset(); Chest.reset()  # ...the lantern, Cr$ 40, six bolts, a bandage; the shops full
 	for b in buttons:
 		b.disabled = true
 	if not SceneRouter.testing():

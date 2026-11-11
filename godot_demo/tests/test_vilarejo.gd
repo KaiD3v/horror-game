@@ -105,6 +105,7 @@ func run() -> void:
 	check(ok, "the mutant follows the navmesh over the terrain to you (%.1f m away)" % L.enemy.global_position.distance_to(player.global_position))
 	L.enemy.active = false; put(L.enemy, L.ground(-30.0, 40.0), 0.0)
 	await notes_suite()
+	await chest_suite()
 	await day_tests()
 	await bruxa_tests()
 	await poceiro_tests()

@@ -20,6 +20,7 @@ func run() -> void:
 	await tour()
 	check(L.footsteps.steps - s0 >= 2, "footsteps on the %s floor (%d)" % [L.footsteps.kind, L.footsteps.steps - s0])
 	await notes_suite()
+	await chest_suite()
 	await shop_suite()
 	put(player, entry + Vector3(0, 0.02, 0), 0.0); await wait(0.4)
 	check(L.hud.prompt.visible, "at the door: \"%s\"" % L.hud.prompt.text)

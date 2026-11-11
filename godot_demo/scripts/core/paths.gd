@@ -9,6 +9,7 @@ const INTERIOR := "res://scenes/interiors/%s.tscn"   # % armaria, venda, capela
 
 const CHARACTER := "res://models/characters/%s.glb"  # % protagonista, monster, enfermeira, npc_<who>
 const LEVEL_MODEL := "res://models/levels/%s.glb"    # % vilarejo, armaria, venda, capela
+const PROP := "res://models/props/%s.glb"            # % bau, itens (../tools/cenarios/bau_build.py)
 const SOUND := "res://sounds/%s.wav"
 const TEXTURE := "res://textures/%s.png"
 const SHADER := "res://shaders/%s.gdshader"

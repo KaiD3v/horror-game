@@ -1,5 +1,5 @@
 # Base of every playable scene. It brings the parts every level shares: the player, the HUD, using things (E),
-# footsteps, the notes lying here, the villagers on their markers, doors, the navmesh and ground queries, Enter to
+# footsteps, the notes and trunks lying here, the villagers on their markers, doors, the navmesh and ground queries, Enter to
 # restart and the autotest hook (`-- --autotest` runs res://tests/test_<scene>.gd).
 # A level overrides _build() (environment, geometry, NPCs, enemies, navmesh), _player_start() and _started()
 # (sound, weather: once the player and the HUD exist).
@@ -65,6 +65,8 @@ func _place_notes() -> void:
 	for n in NotesData.in_scene(scene_id):
 		if n.id not in NotesReader.read:
 			NotePaper.make(self, n)
+	for c in ChestData.in_scene(scene_id):  # the trunks: opened ones stay, open and empty
+		Chest.make(self, c)
 
 
 # --- shared building blocks ---------------------------------------------------------------------------------

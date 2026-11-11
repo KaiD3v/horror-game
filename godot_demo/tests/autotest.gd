@@ -23,7 +23,7 @@ func _ready() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(Paths.CAPTURES))
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if L is Level:
-		Inventory.reset(); Inventory.give_tools(); Shop.reset()  # the tests hold every weapon (their own test takes them away)
+		Inventory.reset(); Inventory.give_tools(); Shop.reset(); Chest.reset()  # the tests hold every weapon (their own test takes them away)
 		WorldTime.reset(16 * 60 + 30); Weather.force(1.0, 1.0)  # the same light every run: late afternoon, fog, drizzle
 		if L.day:
 			L.day._step(0.0)
@@ -163,6 +163,29 @@ func notes_suite() -> void:
 	var reread: bool = L.notes.showing == NotesReader.read.size() - 1 and get_tree().paused
 	await tap("notes"); await wait(0.2)
 	check(reread and not get_tree().paused, "Tab rereads the notes found, Tab closes")
+
+
+## Every trunk ChestData puts here: on the ground, with clear floor in front of it where he kneels; a capture of it.
+func chest_suite() -> void:
+	var here: Array = L.find_children("*", "Chest", true, false)
+	check(here.size() == ChestData.in_scene(L.scene_id).size(), "%d trunk(s) here" % here.size())
+	var w: World3D = L.get_world_3d()
+	for c: Chest in here:
+		var spot := c.global_position + c.global_basis.z * Chest.FRONT
+		var down := w.direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(c.global_position + Vector3.UP, c.global_position + Vector3.DOWN))
+		var floor := L.ray(spot.x, spot.z, c.global_position.y + 1.5)
+		var room := w.direct_space_state.intersect_shape(_capsule_at(spot + Vector3(0, 0.95, 0)))
+		check(not down.is_empty() and absf(down.position.y - c.global_position.y) < 0.15 and not floor.is_empty()
+			and absf(floor.position.y - c.global_position.y) < 0.3 and room.is_empty(),
+			"trunk %s on the ground, room to kneel before it (floor %.2f / %.2f, %d in the way)"
+			% [c.id, floor.position.y if floor else INF, c.global_position.y, room.size()])
+		put(player, spot + c.global_basis.z * 1.0, c.rotation.y); await wait(0.6); await shot("bau_" + c.id)
+
+
+func _capsule_at(at: Vector3) -> PhysicsShapeQueryParameters3D:  # the player's body standing at `at` (its middle)
+	var q := PhysicsShapeQueryParameters3D.new(); var cap := CapsuleShape3D.new(); cap.radius = 0.25; cap.height = 1.6
+	q.shape = cap; q.transform = Transform3D(Basis(), at); q.exclude = [player.get_rid()]
+	return q
 
 
 ## Every seller here (an Npc with a ShopCounter): you can talk to them across the counter, their list opens (paused),

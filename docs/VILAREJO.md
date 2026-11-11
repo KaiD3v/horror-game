@@ -91,19 +91,28 @@ Gancho da missão (a definir): o filho de Dona Firmina foi levado para a Colôni
   | Seu Bento | garrafada de arnica (fecha 2) | Cr$ 18 | 2 |
   | Tenório (Armas e Munição) | 3 virotes | Cr$ 9 | sem limite |
   | Tenório | 8 virotes | Cr$ 20 | 3 |
-  | Tenório | facão | Cr$ 10 | 1 |
   | Tenório | besta | Cr$ 20 | 1 |
 
   Os virotes só se compram depois da besta (`requires` na oferta). Sem ela, o Tenório pergunta com que você vai
   atirar. Uma ferramenta que você já tem aparece como "já tem".
 
 - **O inventário** (`Inventory`) continua entre as cenas e volta ao início num jogo novo. O estoque das lojas também.
-  - Um jogo novo começa com a lamparina, Cr$ 40, 6 virotes e 1 atadura. Facão e besta se compram na armaria.
+  - Um jogo novo começa com a lamparina, Cr$ 40, 6 virotes e 1 atadura. O facão está num baú junto à casa em
+    ruínas da entrada; a besta se compra na armaria.
   - **Itens que desbloqueiam** (`tipo: "ferramenta"`, ver `docs/ARQUITETURA.md`): sem o facão ou a besta, a placa
     da roda fica escura ("ainda não tem") e as teclas 1 e 2 só dizem "Sem facão." / "Sem besta.".
   - A sala de treino e a Colônia dão todas as ferramentas ao abrir (são cenas de teste, sem entrada pelo vilarejo).
   - Cada recarga da besta tira um virote da aljava. Sem virotes não há recarga, e a mira mostra quantos restam.
   - F usa o primeiro curativo que tiver.
+- **Baús** (`Chest`, dados em `ChestData`, modelo `bau_build.py`): sem menu, como nos jogos de aventura antigos.
+  - É um baú de tropeiro: madeira forrada de couro de boi, tampa abaulada, cintas e cantoneiras de ferro, tachas de latão.
+  - Com E, ele guarda o que tem na mão, vai até a frente do baú e se ajoelha (`Open_Chest`). Levanta a tampa pelo
+    ferrolho e ela cai para trás com um rangido (`bau_abrir`), e sai uma luz quente de dentro. Ele pega o item e o
+    ergue diante do rosto. A câmera vem para o lado esquerdo dele.
+  - O mundo prende a respiração: os inimigos param e ele não se move. Na faixa de baixo aparecem "Você encontrou",
+    o nome e a descrição, com o acorde de viola (`bau_achado`). O item entra no inventário nessa hora.
+  - Com E de novo, ele guarda o item no casaco e se levanta (`Stow_Item`). O baú fica aberto e vazio até um jogo novo.
+  - Hoje há dois: o facão (junto à casa em ruínas da entrada da vila) e uma garrafada (ao lado do altar da capela).
 - **Ainda não dá para ganhar dinheiro.** Isso fica para depois, por exemplo com saques, missões ou o corpo dos mutantes.
 - **Sons:** moedas no balcão (`compra`) e o pano da atadura (`curativo`), do ElevenLabs.
 

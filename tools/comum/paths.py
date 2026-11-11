@@ -32,6 +32,10 @@ def level(name):
     return out("godot_demo", "models", "levels", name + ".glb")
 
 
+def prop(name):
+    return out("godot_demo", "models", "props", name + ".glb")
+
+
 def blend(kind, name):
     """kind: personagens, npcs, cenarios."""
     return out("blender", kind, name + ".blend")

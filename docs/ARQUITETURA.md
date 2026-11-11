@@ -16,13 +16,14 @@ protagonista-terror/
       enemies/                Enemy (base), Mutante, Enfermeira, Bruxa, Poceiro, Carpideira, Dummy
       npcs/                   Npc
       shop/                   Shop (regras de compra), ShopMenu (a tela), ShopCounter (o "E · comprar" de um vendedor)
-      world/                  Door, Pickup, Footsteps, RandomEvents, Clima, Corvo
-      ui/                     Hud, menu, NotesReader, NotePaper, WeaponWheel (a roda de armas do Q)
-      data/                   dados sem lógica: NpcCatalog, NotesData, Atmospheres, DayData, ItemCatalog, ShopCatalog
+      world/                  Door, Pickup, Chest (os baús), Footsteps, RandomEvents, Clima, Corvo
+      ui/                     Hud, menu, NotesReader, NotePaper, WeaponWheel (a roda de armas do Q), FoundBanner (o "Você encontrou")
+      data/                   dados sem lógica: NpcCatalog, NotesData, ChestData, Atmospheres, DayData, ItemCatalog, ShopCatalog
       levels/                 o script de cada fase: vilarejo, colonia, treino, interior (único para todos os interiores)
     shaders/                  sangue, visao, silhueta, neblina_bancos, poca, menu_neblina
     models/characters/        protagonista, monster, enfermeira, bruxa, poceiro, carpideira, npc_<quem> (.glb gerados)
     models/levels/            vilarejo, armaria, venda, capela (.glb gerados)
+    models/props/             bau (o baú e a tampa), itens (cada item na mão, pelo id do ItemCatalog)
     textures/ sounds/ ui/     texturas, sons e interface (fonte, tema, arte do menu)
     tests/                    AutoTest (base) e um test_<cena>.gd por cena; check_scripts.gd
     captures/                 saída dos testes (capturas de tela)
@@ -31,7 +32,7 @@ protagonista-terror/
     personagens/              protagonista_build + protagonista_rig, monster_build, enfermeira_build, bruxa_build, poceiro_build,
                               carpideira_build,
                               npcs_build (roda npcs/<quem>.py)
-    cenarios/                 vilarejo_build (+ pacote vilarejo/), armaria_build, venda_build, capela_build
+    cenarios/                 vilarejo_build (+ pacote vilarejo/), armaria_build, venda_build, capela_build, bau_build (baú + itens)
     texturas/                 scenery_textures, notas_papeis, fonte, roda_armas (o terço e as plaquinhas da roda)
     sons/                     sounds_import (ElevenLabs), clima_sons, enfermeira_sons, ferido_sons, sounds_build
     renders/                  renders de conferência (protagonista, mutante, vilarejo, NPCs lado a lado)
@@ -77,6 +78,7 @@ Uma fase sobrescreve três métodos:
 | **um vendedor** | Pôr `"loja": "<id>"` na entrada do NPC em `NpcCatalog` e criar a loja em `ShopCatalog` (título, fala, ofertas com item, quantidade, preço e estoque). O NPC ganha "E · comprar com <nome>" e a tela de compra. **Sem código.** |
 | **um item** | Uma entrada em `ItemCatalog` com nome, descrição e `tipo`. Os tipos de hoje são `"cura"` (usado com F), `"municao"` (o virote, gasto pela besta) e `"ferramenta"` (ver a linha abaixo). Um tipo novo de efeito é um caso a mais em `Inventory.use()`. |
 | **um item que desbloqueia algo** (chave, arma, ferramenta) | 1. Uma entrada em `ItemCatalog` com `tipo: "ferramenta"`: não se gasta, e ter o item é o que desbloqueia. 2. Um jeito de pegar: oferta em `ShopCatalog`, `Pickup.make(fase, posição, id)` no chão (o visual é o que a fase pendurar nele; some se você já tem) ou `Inventory.add(id)` numa recompensa. 3. O que ele abre pergunta `Inventory.has(id)`: em qualquer `Interactable` (portas incluídas), `requires = id` e `refusal = "por que não"`; numa oferta de loja, `"requires": id`; num inimigo, `weak_to = [id]` (só esses itens o ferem; o resto diz `Enemy.SHRUG`); numa arma da roda, `Player.WEAPON_ITEM`. **Sem código novo.** Um jogo novo começa só com a lamparina (`Inventory.START_ITEMS`). |
+| **um baú** | Uma entrada em `ChestData`: id (único no jogo), cena, posição, direção, item e quantidade; opcionalmente `requires` e `refusal` para um baú trancado. O `Level` põe o baú no chão, e um baú já aberto volta aberto e vazio. **Sem código.** Se o item ainda não tem modelo, aparece na mão como um embrulho de pano; para dar forma a ele, uma função com o id dele em `tools/cenarios/bau_build.py`. |
 | **uma nota** | Uma entrada em `NotesData`: cena, posição, papel e texto. Ela aparece no chão, tem leitor e entra na coleção. |
 | **algo para usar com E** | Um `Interactable` (prompt e raio) e o tratamento no sinal `used`, ou uma subclasse que sobrescreve `_use()`. Exemplos: `Door`, `NotePaper` e o ferrolho da Colônia. |
 | **uma porta entre cenas** | `Door.make(marcador, "E · entrar...", cena, chegada)`. |
@@ -149,6 +151,7 @@ Rodar a partir da raiz do projeto:
 B="C:/Program Files/Blender Foundation/Blender 5.2/blender.exe"
 "$B" -b --factory-startup --python tools/cenarios/vilarejo_build.py
 "$B" -b --factory-startup --python tools/personagens/npcs_build.py          # ou npcs/<quem>.py sozinho
+"$B" -b --factory-startup --python tools/cenarios/bau_build.py              # o baú e os itens na mão
 "$B" -b --factory-startup --python tools/personagens/protagonista_build.py --python tools/personagens/protagonista_rig.py
 python tools/texturas/scenery_textures.py ; python tools/sons/clima_sons.py ; ...
 ```

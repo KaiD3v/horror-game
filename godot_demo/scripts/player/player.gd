@@ -50,6 +50,7 @@ const COMBO_FROM := 12.0 / 30.0   # LMB after this point of a slash queues the o
 const CAM_EXPLORE := {"height": 1.55, "side": 0.45, "length": 1.7, "fov": 62.0}
 const CAM_COMBAT := {"height": 1.5, "side": 0.6, "length": 1.35, "fov": 54.0}
 const CAM_AIM := {"height": 1.5, "side": 0.55, "length": 1.1, "fov": 50.0}  # crossbow out: tighter, over the shoulder
+const CAM_KNEEL := {"height": 0.95, "side": 0.0, "length": 2.1, "fov": 55.0}  # at a trunk (Chest): down with him, centred
 const CAM_CROUCH := {"height": 1.15, "side": 0.4, "length": 1.5, "fov": 60.0}  # head drops ~0.4 m kneeling
 const CAM_BLEND := 5.0        # how fast the camera eases between the framings
 enum Mode { EXPLORE, COMBAT, DEAD, CROUCH, XBOW }  # = PlayerAnimation.MODE_INPUTS
@@ -68,6 +69,7 @@ var action_len := 0.0
 var hit_done := false
 var swung := false        # the swing's whoosh has played (it leads the blow a little)
 var queued := ""
+var busy := false         # in a scripted moment (opening a trunk): no control, E / Q / keys do nothing
 var wanted := -1          # a Mode chosen on the weapon wheel, on its way (-1 = none)
 var blocking := false     # RMB held with the machete out
 var aiming := false       # RMB held (or locked on) with the crossbow out
@@ -147,7 +149,7 @@ func _unhandled_input(e: InputEvent) -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	elif e.is_action_pressed("debug_hurt"):
 		take_damage(1)
-	elif mode != Mode.DEAD:
+	elif mode != Mode.DEAD and not busy:
 		if e.is_action_pressed("draw"):  # 1, 2: that weapon out, or away again if it is the one in hand
 			equip(Mode.EXPLORE if mode == Mode.COMBAT else Mode.COMBAT)
 		elif e.is_action_pressed("crossbow"):
@@ -417,7 +419,7 @@ func _physics_process(delta: float) -> void:
 	for n in ["combat_ready", "xbow_ready"]:
 		tree.set("parameters/%s/blend_amount" % n, raise_amt)
 	tree.set("parameters/block/blend_amount", block_amt)
-	if action == "" and mode != Mode.DEAD:
+	if action == "" and mode != Mode.DEAD and not busy:
 		var input := Input.get_vector("left", "right", "forward", "back")
 		move = pivot.global_basis * Vector3(input.x, 0, input.y)
 		move.y = 0
@@ -512,7 +514,7 @@ func _tick_action(delta: float) -> void:
 func _process(delta: float) -> void:
 	_track_lock(delta)
 	var goal: Dictionary = CAM_COMBAT if mode == Mode.COMBAT and raised else CAM_AIM if mode == Mode.XBOW and raised \
-		else CAM_CROUCH if mode == Mode.CROUCH else CAM_EXPLORE
+		else CAM_CROUCH if mode == Mode.CROUCH else CAM_KNEEL if busy else CAM_EXPLORE
 	for k in goal:
 		cam_now[k] = lerp(float(cam_now[k]), float(goal[k]), min(1.0, CAM_BLEND * delta))
 	_apply_cam()

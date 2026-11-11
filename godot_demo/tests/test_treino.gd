@@ -188,6 +188,7 @@ func run() -> void:
 	await wound_tests()
 	await inventory_tests()
 	await unlock_tests()
+	await chest_tests()
 	player.health = 2
 
 	player.take_damage(2); await wait(1.8); await shot("9_dead")
@@ -456,9 +457,9 @@ func unlock_tests() -> void:
 	# the shop: the bolts wait for the crossbow, a tool sells once
 	Inventory.money = 100
 	check(Shop.buy("armaria", 0) == Shop.Result.LOCKED and Inventory.count("virote") == 6, "no bolts for sale without the crossbow")
-	check(Shop.buy("armaria", 3) == Shop.Result.OK and Inventory.has("besta") and Shop.buy("armaria", 0) == Shop.Result.OK,
+	check(Shop.buy("armaria", 2) == Shop.Result.OK and Inventory.has("besta") and Shop.buy("armaria", 0) == Shop.Result.OK,
 		"the crossbow bought, then the bolts")
-	check(Shop.left("armaria", 3) == 0 and Shop.buy("armaria", 3) == Shop.Result.SOLD_OUT, "a crossbow is bought once")
+	check(Shop.left("armaria", 2) == 0 and Shop.buy("armaria", 2) == Shop.Result.SOLD_OUT, "a crossbow is bought once")
 	Shop.reset()
 	# found lying about
 	var knife := Pickup.make(L, player.global_position, "facao")
@@ -481,4 +482,69 @@ func unlock_tests() -> void:
 	m.take_hit(2, "besta")
 	check(m.health == m.max_health - 2, "...a bolt does")
 	m.queue_free()
+	Inventory.reset(); Inventory.give_tools()
+
+
+# --- a trunk (Chest): E, he kneels, opens it, holds up what was inside while its name shows; E, he tucks it away -----
+func chest_tests() -> void:
+	Inventory.reset()
+	player.velocity = Vector3.ZERO
+	var at := player.global_position + Vector3(0, 0, -1.1)
+	var c := Chest.make(L, {"id": "teste", "at": Vector2(at.x, at.z), "yaw": 0.0, "item": "facao"})
+	var m: Mutante = L.add_enemy(Mutante.new(), Vector3(9, 0, 9), 0.0)
+	await wait(0.3)
+	check(L.interactor.current == c and L.hud.prompt.text == "E · abrir o baú", "a trunk: \"%s\"" % L.hud.prompt.text)
+	await shot("40_bau")
+	Audio.heard.clear(); await tap("interact")
+	var kneels := await until(func(): return player.action == "Open_Chest", 2.0)
+	check(kneels and player.busy and not m.active, "E: he steps up to it and goes down on one knee, the world holds still")
+	var spot := c.global_position + c.global_basis.z * Chest.FRONT
+	check(Vector2(player.global_position.x - spot.x, player.global_position.z - spot.z).length() < 0.05
+		and absf(angle_difference(player.rotation.y, c.rotation.y)) < 0.05, "...right in front of it, facing it")
+	await until(func(): return player.action_t > 27 / 30.0, 2.0)
+	await shot("41_bau_abrindo")
+	check(c.lid.rotation.x < -1.0 and "bau_abrir" in Audio.heard, "the lid comes up in his hand, creaking (%.0f deg)" % rad_to_deg(-c.lid.rotation.x))
+	var p0 := player.global_position
+	Input.action_press("forward")
+	var shown := await until(func(): return get_tree().get_first_node_in_group("found_banner") != null, 4.0)
+	Input.action_release("forward")
+	var banner: FoundBanner = get_tree().get_first_node_in_group("found_banner")
+	var grip: BoneAttachment3D = player.skeleton.get_children().filter(func(n): return n is BoneAttachment3D and n.bone_name == "grip.L").front()
+	await wait(0.3); await shot("42_bau_achado")
+	check(shown and banner.name_l.text == "Facão" and Inventory.has("facao") and "bau_achado" in Audio.heard,
+		"he holds it up: \"%s\" at the bottom of the screen, in the bag" % (banner.name_l.text if banner else ""))
+	check(grip != null and grip.get_child_count() == 1 and grip.get_child(0).name == "facao", "the machete itself in his hand")
+	check(player.global_position.distance_to(p0) < 0.02 and not player.tree.active, "...held there: W does not move him")
+	await tap("interact"); await wait(0.1)
+	check(is_instance_valid(banner) and banner.is_inside_tree(), "the E that opened it does not skip the name")
+	await wait(0.6); await tap("interact"); await wait(0.1)
+	check(not is_instance_valid(banner) and player.action == "Stow_Item", "E again: the name goes, he tucks it away")
+	var back := await until(func(): return not player.busy, 3.0)
+	check(back and not is_instance_valid(grip) and player.action == "" and m.active and "teste" in Chest.opened
+		and not c.enabled and L.hud.prompt.text == "", "...and stands up, the world moves again; the trunk stays open and empty")
+	await wait(0.3); await shot("43_bau_aberto")
+	var again := Chest.make(L, {"id": "teste", "at": Vector2(at.x + 3, at.z), "yaw": 0.0, "item": "facao"})
+	await wait(0.1)
+	check(not again.enabled and again.lid.rotation.x < -1.0, "found before: open and empty when the scene comes back")
+	again.queue_free()
+	m.active = false; m.queue_free()
+	# a weapon out: put away first; three bolts in one go
+	await tap("draw"); await wait(1.3)
+	var bolts := Chest.make(L, {"id": "teste2", "at": Vector2(at.x - 2.5, at.z), "yaw": 0.0, "item": "virote", "qtd": 3})
+	var had := Inventory.count("virote")
+	bolts.use(player)
+	shown = await until(func(): return get_tree().get_first_node_in_group("found_banner") != null, 7.0)
+	banner = get_tree().get_first_node_in_group("found_banner")
+	check(shown and player.mode == Player.Mode.EXPLORE and banner.name_l.text == "Virote (3)" and Inventory.count("virote") == had + 3,
+		"machete out: sheathed first; \"%s\"" % (banner.name_l.text if banner else ""))
+	await wait(0.9); await tap("interact")
+	await until(func(): return not player.busy, 3.0)
+	# a locked one
+	var locked := Chest.make(L, {"id": "teste3", "at": Vector2(at.x + 2.5, at.z), "yaw": 0.0, "item": "garrafada",
+		"requires": "besta", "refusal": "Um cadeado enferrujado."})
+	Inventory.items.erase("besta")
+	locked.use(player)
+	check(not player.busy and L.hud.message.text == "Um cadeado enferrujado." and not Inventory.has("garrafada"), "a padlocked trunk: \"%s\"" % L.hud.message.text)
+	for x in [c, bolts, locked]:
+		x.queue_free()
 	Inventory.reset(); Inventory.give_tools()

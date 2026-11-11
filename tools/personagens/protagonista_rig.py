@@ -260,7 +260,7 @@ def pose(aims, frame, turns=(), swing=0.0, left=None, armed=0.0, ground="feet", 
     minz = min((ev.matrix_world @ ev.data.vertices[i].co).z for i in GROUND[ground]) - lift
     P["hips"].matrix = Matrix.Translation((0, 0, -minz)) @ P["hips"].matrix
     bpy.context.view_layer.update()
-    if left and ground == "body":  # lying down: targets are on the floor, so solve after grounding
+    if left and ground != "feet":  # kneeling / lying down: targets are in the world, so solve after grounding
         hold(*(left() if callable(left) else left))
     if lantern is not None:  # after grounding, so the hips shift does not move it
         P["lantern"].matrix = lantern
@@ -851,6 +851,47 @@ for f in (24, 45):  # impact, then settle
           ("upper_arm.L", (0.45, -1, -0.08)), ("forearm.L", (0.2, -1, -0.05)), ("hand.L", (0.2, -1, -0.15))]
          + PRONE_LEGS, f, turns=[("head", "Y", 75 if f == 45 else 60)], armed=1, ground="body", lantern=DROPPED,
          left=((0.45, -0.75, 0.05), (0.6, -0.8, 0), (0.8, 0.6, 0), (0.6, 0, 0.8)))  # machete flat on the floor
+
+# --- a trunk (chest.gd): one knee down before it, the left hand lifts the lid by its hasp and throws it back, reaches
+# in, takes what lies there (on grip.L, as the machete) and holds it up before his face, the lantern low in the right.
+# The game holds the last frames while the name shows (Open_Chest), then Stow_Item tucks it into the coat and stands
+# him up (its last frame = Idle_Lantern's first). The trunk (bau_build.py) stands with its front CHEST_FRONT m ahead
+# of his feet; its lid hinges HINGE (y, z) and its hasp is LID m in front of the hinge. The game turns the lid to
+# match: CHEST_LID degrees at those frames.
+CHEST_FRONT, HINGE, LID = 0.42, (-0.86, 0.40), 0.44
+CHEST_LID = {1: 0, 14: 0, 22: 55, 26: 75, 32: 108}
+
+
+def hasp(deg, dz=-0.02):  # where the hasp is with the lid open deg degrees
+    a = math.radians(deg)
+    return (0.02, HINGE[0] + LID * math.cos(a), HINGE[1] + dz + LID * math.sin(a))
+
+
+REACH_UP = [("spine", (0, -0.5, 1)), ("chest", (0, -0.85, 1)), ("neck", (0, -0.5, 1)), ("head", (0, -0.6, 0.6))] + CROUCH_UP[4:]
+SHOW_UP = [("spine", (0, -0.15, 1)), ("chest", (0, -0.2, 1)), ("neck", (0.05, -0.35, 1)), ("head", (0.25, -0.75, 0.6))] \
+    + CROUCH_UP[4:]
+SHOW = ((0.1, -0.36, 0.98), (-0.2, -0.25, 1), (1, 0.4, 0), (1, 0.2, -0.6))  # palm, item up, its edge to his left, elbow out
+act("Open_Chest", 64)
+pose(UPPER + IDLE_LEGS, 1, turns=[("head", "Z", -15)])
+pose(HALF_UP + HALF_LEGS, 7, turns=[("head", "Z", -5)], swing=6, ground="legs")
+pose(REACH_UP + CROUCH_LEGS, 14, ground="legs", swing=-6, left=(hasp(0), (1, 0, 0), (0, -0.3, 1), (1, 0.2, -0.6)))
+pose(REACH_UP + CROUCH_LEGS, 22, ground="legs", swing=-2, left=(hasp(55), (1, 0, 0), (0, 0.4, 1), (1, 0.2, -0.6)))
+pose(REACH_UP + CROUCH_LEGS, 26, ground="legs", swing=3, left=(hasp(75), (1, 0, 0), (0, 0.8, 0.6), (1, 0.2, -0.6)))
+pose(REACH_UP + CROUCH_LEGS, 30, ground="legs", left=((0.08, -0.55, 0.62), (1, 0, 0), (0, 0.3, 1), (1, 0.2, -0.6)))
+for f in (36, 38):  # into the trunk: he takes it (the game puts it in his hand at 36)
+    pose(REACH_UP + CROUCH_LEGS, f, ground="legs", turns=[("chest", "X", -8)],
+         left=((0.02, -0.62, 0.3), (0, -0.3, 1), (1, 0.3, 0), (1, 0.2, -0.6)))
+pose(REACH_UP + CROUCH_LEGS, 44, ground="legs", left=((0.06, -0.5, 0.66), (-0.1, -0.3, 1), (1, 0.4, 0), (1, 0.2, -0.6)))
+for f, br in ((52, 0), (58, 1), (64, 0)):  # held up, looked at; the game stops here
+    aims = [(n, (d[0], d[1] + 0.05 * br if n in ("chest", "neck") else d[1], d[2])) for n, d in SHOW_UP]
+    pose(aims + CROUCH_LEGS, f, ground="legs", swing=2 * br, left=SHOW)
+
+act("Stow_Item", 24)
+pose(SHOW_UP + CROUCH_LEGS, 1, ground="legs", left=SHOW)
+pose(SHOW_UP + CROUCH_LEGS, 8, ground="legs", turns=[("head", "Z", 15)],
+     left=((0.24, -0.08, 0.55), (0.2, 0.3, -1), (1, 0, 0), (1, 0.6, -0.2)))  # into the coat (the game hides it at 9)
+pose(HALF_UP + HALF_LEGS, 15, turns=[("head", "Z", -5)], swing=-4, ground="legs")
+pose(UPPER + IDLE_LEGS, 24, turns=[("head", "Z", -15)], swing=3)
 
 # the skirt is re-draped every other frame of every action, so the flaps also clear the legs between keys
 SKIRT_BONES = [b for chain in SKIRT for b in chain]

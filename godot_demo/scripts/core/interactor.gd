@@ -13,7 +13,7 @@ func _init(p: Node3D, h: Hud) -> void:
 
 
 func _process(_delta: float) -> void:
-	current = nearest()
+	current = null if player.get("busy") else nearest()
 	hud.set_prompt(current.prompt if current else "")
 
 
@@ -27,7 +27,7 @@ func nearest() -> Interactable:
 
 
 func _unhandled_input(e: InputEvent) -> void:
-	if e.is_action_pressed("interact") and player.get("mode") != Player.Mode.DEAD:
+	if e.is_action_pressed("interact") and player.get("mode") != Player.Mode.DEAD and not player.get("busy"):
 		if player is Player and player.toggle_lock():  # armed, E locks on an enemy first
 			get_viewport().set_input_as_handled()
 			return

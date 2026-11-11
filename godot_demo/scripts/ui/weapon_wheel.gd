@@ -78,7 +78,7 @@ static func slice_at(v: Vector2) -> int:
 
 
 func _process(_delta: float) -> void:
-	if get_tree().paused or player.mode == Player.Mode.DEAD:
+	if get_tree().paused or player.mode == Player.Mode.DEAD or player.busy:
 		_close(false)
 		return
 	var q := Input.is_action_pressed("weapons")
