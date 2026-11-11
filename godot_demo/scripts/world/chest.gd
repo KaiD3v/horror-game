@@ -118,7 +118,7 @@ func _at(f: int, fn: Callable) -> void:
 ## left-hand grip as the machete sits there.
 func _in_hand(p: Player) -> Node3D:
 	var all: Node = load(Paths.PROP % "itens").instantiate()
-	var thing: Node3D = all.find_child(item, false)
+	var thing: Node3D = all.find_child(ItemCatalog.item(item).get("modelo", item), false)
 	if thing == null:
 		thing = all.find_child("embrulho", false)
 	all.remove_child(thing); all.free()

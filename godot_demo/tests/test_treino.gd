@@ -197,6 +197,7 @@ func run() -> void:
 	await equip_tests()
 	await pause_tests()
 	await save_tests()
+	await keys_tests()
 	player.health = 2
 
 	player.take_damage(2); await wait(1.8); await shot("9_dead")
@@ -942,3 +943,31 @@ func save_tests() -> void:
 		"Tentar de novo: the money and what happened as when he came in")
 	SaveGame.pending = {}
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(SaveGame.path()))
+
+
+## The progression items (ItemCatalog): the crowbar, the pickaxe and the rope are tools (only shown to a lock); a key
+## opens only its own lock and is spent on it, the lock staying open; each has its shape for the trunk.
+func keys_tests() -> void:
+	for id in ["pe_de_cabra", "picareta", "corda"]:
+		check(ItemCatalog.tool(id), "%s: a tool" % id)
+	check(ItemCatalog.key("chave_sacristia") and not ItemCatalog.key("corda") and not ItemCatalog.key(""), "chave_sacristia: a key")
+	var all: Node = load(Paths.PROP % "itens").instantiate()
+	for id in ["pe_de_cabra", "picareta", "corda", "chave_sacristia"]:
+		check(all.find_child(ItemCatalog.item(id).get("modelo", id), false) != null, "%s: its shape in itens.glb" % id)
+	all.free()
+	var door := Interactable.new(); door.requires = "chave_sacristia"; L.add_child(door)
+	var opened := [0]
+	door.used.connect(func(_b): opened[0] += 1)
+	Inventory.items.erase("chave_sacristia")
+	door.use(player)
+	check(opened[0] == 0 and L.hud.message.text == "Precisa de: Chave da sacristia.", "no key: locked (\"%s\")" % L.hud.message.text)
+	Inventory.add("chave_sacristia")
+	door.use(player)
+	check(opened[0] == 1 and Inventory.count("chave_sacristia") == 0 and Story.has("destrancado:chave_sacristia")
+		and L.hud.message.text == "Usou: Chave da sacristia.", "the key: it opens, and stays in the lock")
+	door.use(player)
+	check(opened[0] == 2, "...open for good after")
+	var tool := Interactable.new(); tool.requires = "pe_de_cabra"; L.add_child(tool)
+	Inventory.add("pe_de_cabra"); tool.use(player)
+	check(Inventory.has("pe_de_cabra"), "a tool is not spent")
+	door.queue_free(); tool.queue_free()

@@ -145,6 +145,44 @@ def garrafada():  # a bottle of cachaça with arnica and herbs, corked
     return b
 
 
+def chave():  # an old iron key (every key: ItemCatalog "modelo"), a bit of red string through the bow
+    b = B()
+    frustum(b, (-0.022, 0, GRIP), (0.022, 0, GRIP), 0.02, 0.02, 8, "iron")         # the bow, a ring
+    bx(b, (0, 0, GRIP + 0.07), (0.008, 0.008, 0.12), "iron")                         # the shank
+    bx(b, (0, -0.012, GRIP + 0.115), (0.006, 0.02, 0.025), "iron")                   # the bit
+    bx(b, (0, -0.008, GRIP + 0.13), (0.006, 0.012, 0.006), "iron")
+    bx(b, (0, 0.02, GRIP - 0.01), (0.004, 0.004, 0.05), "cloth_red", rot=(0.4, 0, 0))
+    return b
+
+
+def pe_de_cabra():  # a crowbar: a bar of dark iron, the claw bent back at the top, the flat end at the bottom
+    b = B()
+    bx(b, (0, 0, 0.21), (0.016, 0.016, 0.46), "iron")
+    bx(b, (0, -0.028, 0.44), (0.016, 0.07, 0.016), "iron", rot=(-0.35, 0, 0))       # the hook
+    for x in (-0.005, 0.005):
+        bx(b, (x, -0.06, 0.43), (0.005, 0.014, 0.035), "iron")                       # the claw's two teeth
+    bx(b, (0, 0.006, -0.02), (0.02, 0.026, 0.016), "iron", rot=(-0.3, 0, 0))         # the flat end
+    return b
+
+
+def picareta():  # a pickaxe: a wooden handle, the iron head across its top, a point and a chisel end
+    b = B()
+    bx(b, (0, 0, 0.2), (0.024, 0.03, 0.44), "grip")
+    bx(b, (0, 0, 0.42), (0.034, 0.04, 0.05), "iron")                                 # the eye
+    for s in (-1, 1):
+        frustum(b, (0, 0, 0.42), (0, s * 0.19, 0.42 - 0.03), 0.018, 0.004 if s < 0 else 0.012, 6, "iron", caps=True)
+    return b
+
+
+def corda():  # a coil of sisal rope, tied round its middle, the end hanging down
+    b = B()
+    for i in range(5):
+        frustum(b, (-0.035, 0, GRIP + 0.012 * (i - 2)), (0.035, 0, GRIP + 0.012 * (i - 2)), 0.06, 0.06, 10, "twine", caps=False)
+    bx(b, (0, -0.062, GRIP), (0.02, 0.012, 0.075), "burlap")                         # the tie
+    bx(b, (0.02, -0.064, GRIP - 0.07), (0.012, 0.012, 0.1), "twine", rot=(0, 0.2, 0))  # the end
+    return b
+
+
 def embrulho():  # anything with no shape of its own yet: a cloth bundle tied with twine
     b = B()
     bx(b, (0, 0, GRIP), (0.1, 0.08, 0.1), "burlap")
@@ -154,7 +192,7 @@ def embrulho():  # anything with no shape of its own yet: a cloth bundle tied wi
     return b
 
 
-items = [obj(f(), f.__name__) for f in (facao, besta, virote, atadura, garrafada, embrulho)]
+items = [obj(f(), f.__name__) for f in (facao, besta, virote, atadura, garrafada, chave, pe_de_cabra, picareta, corda, embrulho)]
 for o in [bau, tampa] + items:
     o.select_set(False)
 

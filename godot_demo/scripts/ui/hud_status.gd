@@ -179,6 +179,12 @@ func _draw_row(id: String, at: Vector2, a: float) -> void:
 			draw_rect(Rect2(g + Vector2(-7, -5), Vector2(12, 10)), Color(BONE, 0.8 * a))
 			draw_line(g + Vector2(-1, -3), g + Vector2(-1, 3), Color(BLOOD, a), 2.0)
 			draw_line(g + Vector2(-4, 0), g + Vector2(2, 0), Color(BLOOD, a), 2.0)
+		"chave":  # a key: ring, shank, bit
+			var k := Color(FAINT, a)
+			draw_arc(g + Vector2(-6, 0), 3.5, 0.0, TAU, 10, k, 1.5)
+			draw_line(g + Vector2(-2.5, 0), g + Vector2(8, 0), k, 1.5)
+			draw_line(g + Vector2(6, 0), g + Vector2(6, 4), k, 1.5)
+			draw_line(g + Vector2(3, 0), g + Vector2(3, 3), k, 1.5)
 		_:  # no mark yet: its name
 			var w := _font.get_string_size(it.nome, HORIZONTAL_ALIGNMENT_LEFT, -1, size_f - 4).x
 			draw_string(_font, Vector2(g.x + 4 - w, at.y), it.nome, HORIZONTAL_ALIGNMENT_LEFT, -1, size_f - 4, Color(FAINT, a))
