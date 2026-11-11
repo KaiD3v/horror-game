@@ -192,6 +192,7 @@ func run() -> void:
 	await course_tests()
 	await steps_tests()
 	await descend_tests()
+	await hud_tests()
 	player.health = 2
 
 	player.take_damage(2); await wait(1.8); await shot("9_dead")
@@ -427,7 +428,7 @@ func inventory_tests() -> void:
 	Inventory.items["virote"] = 1
 	await tap("crossbow"); await wait(1.4)
 	await tap("reload"); await wait(2.2)
-	check(player.loaded and Inventory.count("virote") == 0 and L.hud.ammo.visible, "a reload takes a bolt from the quiver (%d left)" % Inventory.count("virote"))
+	check(player.loaded and Inventory.count("virote") == 0 and L.hud.status.rows.has("virote"), "a reload takes a bolt from the quiver (%d left)" % Inventory.count("virote"))
 	Input.action_press("block"); await wait(0.3)
 	await tap("attack"); await wait(0.6)
 	Input.action_release("block")
@@ -726,3 +727,39 @@ func descend_tests() -> void:
 		"walking off the 3.5 m top: a hard landing, one wound (hp %.1f)" % player.health)
 	put(player, Vector3(0, 5.0, 6), 0.0); await until(func(): return player.global_position.y < 0.1 and player.is_on_floor(), 3.0); await wait(0.2)
 	check(player.health == 0.0 and player.mode == Player.Mode.DEAD, "5 m more with two wounds left: dead (hp %.1f)" % player.health)
+
+
+## The corners (HudStatus): empty while nothing changes; a blow shows the hearts, spent breath the beads, a count that
+## changes its row (+N), the crossbow its bolts while it is out; each fades after HOLD. More max health / stamina:
+## more hearts / beads.
+func hud_tests() -> void:
+	var st: HudStatus = L.hud.status
+	var gone := HudStatus.HOLD + HudStatus.FADE + 0.2
+	Inventory.give_tools()
+	player.health = player.max_health; player.stamina = player.stamina_max; player.winded = false
+	if player.mode == Player.Mode.CROUCH:
+		await tap("crouch"); await wait(0.6)
+	await wait(gone)
+	check(st.hearts_t <= 0.0 and st.beads_t <= 0.0 and st.rows.is_empty(), "nothing in the corners while nothing changes")
+	player.take_damage(1); await wait(0.2)
+	check(st.hearts_t > HudStatus.HOLD and st.beads_t <= 0.0, "a blow shows the hearts, only them")
+	await wait(gone)
+	check(st.hearts_t <= 0.0, "...and they fade")
+	player.stamina = 1.0; player.rest = 0.0; await wait(0.2)
+	check(st.beads_t > HudStatus.HOLD and st.hearts_t <= 0.0, "spent breath shows the beads")
+	player.stamina = player.stamina_max; await wait(gone)
+	check(st.beads_t <= 0.0, "...gone once full")
+	Inventory.add("atadura", 2); await wait(0.2)
+	check(st.rows.has("atadura") and st.delta_n.get("atadura", 0) == 2 and not st.rows.has("virote"), "a count that changes shows (+2)")
+	await tap("crossbow"); await wait(1.4)
+	await wait(gone)
+	check(st.rows.has("virote") and not st.rows.has("atadura"), "the crossbow out: its bolts stay; the bandages faded")
+	player.health = 1.25; player.stamina = 2.2; player.max_health = 4; player.stamina_max = 5.0
+	Inventory.add("virote", 3); Inventory.money += 20; await wait(0.3)
+	check(st.glow_t > 0.0 and st.hearts_t > 0.0 and st.rows.has("dinheiro"), "a new heart glows in; money that comes in shows")
+	await shot("hud")
+	await tap("crossbow"); await wait(1.2)
+	await wait(gone)
+	check(st.rows.is_empty(), "the crossbow away: its bolts fade too")
+	player.max_health = 3; player.stamina_max = Player.STAMINA_MAX
+	player.health = player.max_health; player.stamina = player.stamina_max

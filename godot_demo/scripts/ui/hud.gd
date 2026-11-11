@@ -1,6 +1,7 @@
 # What is on screen over the game, for every level: the controls line, the crosshair (crossbow up), the prompt of
-# whatever you can use, short messages (say), the body's state at the screen's edges instead of bars
-# (visao.gdshader: hurt and tired), the death line, and the fade in from black after a scene change.
+# whatever you can use, short messages (say), the body's state at the screen's edges (visao.gdshader: hurt and
+# tired), the hearts / breath / what he carries in the corners when they change (HudStatus), the death line, and
+# the fade in from black after a scene change.
 class_name Hud
 extends CanvasLayer
 
@@ -10,7 +11,7 @@ const DEATH := "Morreu. Enter para recomeçar."
 var player: Player
 var legend: Label
 var crosshair: Label
-var ammo: Label        # with the crossbow up: the bolts left in the quiver
+var status: HudStatus  # hearts, breath, ammo and counts, shown when they matter
 var prompt: Label
 var message: Label
 var vision: ColorRect
@@ -30,7 +31,7 @@ func _build(controls: String) -> void:
 	legend = Label.new(); add_child(legend); legend.position = Vector2(10, 8); legend.text = controls
 	legend.add_theme_font_size_override("font_size", 12)  # the game font at 1x: the controls line fits
 	crosshair = _centred("+", 0.48); crosshair.visible = false
-	ammo = _centred("", 0.56); ammo.visible = false; ammo.add_theme_font_size_override("font_size", 12)
+	status = HudStatus.new(player); add_child(status)
 	message = _centred("", 0.83); message.visible = false
 	prompt = _centred("", 0.88); prompt.visible = false
 	lock_mark = Control.new(); add_child(lock_mark); lock_mark.visible = false
@@ -71,8 +72,6 @@ func _process(delta: float) -> void:
 	_message_t -= delta
 	message.visible = _message_t > 0.0
 	crosshair.visible = player.aiming and player.action == ""
-	ammo.visible = player.mode == Player.Mode.XBOW
-	ammo.text = "virotes %d%s" % [Inventory.count("virote"), " · armada" if player.loaded else ""]
 	var at := Vector3.ZERO if player.lock == null else player.lock.global_position + Vector3(0, 2.25, 0)
 	lock_mark.visible = player.lock != null and not player.cam.is_position_behind(at)
 	if lock_mark.visible:

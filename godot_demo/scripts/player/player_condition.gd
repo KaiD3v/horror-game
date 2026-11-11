@@ -60,6 +60,6 @@ func _process(delta: float) -> void:
 	_breath_amp = move_toward(_breath_amp, 1.0 if heavy else 0.0, BREATH_FADE * delta)
 	Audio.fade(breath, _breath_amp, -6.0)
 	Audio.fade(heart, _breath_amp, -3.0)
-	var t := 1.0 if player.winded else clampf((PANT_FROM - player.stamina / Player.STAMINA_MAX) / PANT_FROM, 0.0, 1.0)
+	var t := 1.0 if player.winded else clampf((PANT_FROM - player.stamina / player.stamina_max) / PANT_FROM, 0.0, 1.0)
 	tired = move_toward(tired, t if alive else 0.0, delta)
 	Audio.fade(pant, tired, -8.0)

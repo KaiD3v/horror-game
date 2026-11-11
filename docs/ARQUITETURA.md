@@ -17,7 +17,7 @@ protagonista-terror/
       npcs/                   Npc, Talk (o "E · falar com"), Dialog (as regras de uma conversa)
       shop/                   Shop (regras de compra), ShopMenu (a tela)
       world/                  Door, Pickup, Chest (os baús), Pushable, Climbable, Jumpable (enigmas), Footsteps, RandomEvents, Clima, Corvo
-      ui/                     Hud, menu, NotesReader, NotePaper, WeaponWheel (a roda de armas do Q), FoundBanner (o "Você encontrou"), DialogBox (a conversa)
+      ui/                     Hud (+ HudStatus: corações, terço e itens nos cantos), menu, NotesReader, NotePaper, WeaponWheel (a roda de armas do Q), FoundBanner (o "Você encontrou"), DialogBox (a conversa)
       data/                   dados sem lógica: NpcCatalog, NotesData, ChestData, QuestData, dialogos/<npc> (o que cada um diz), Atmospheres, DayData, ItemCatalog, ShopCatalog
       levels/                 o script de cada fase: vilarejo, colonia, treino, interior (único para todos os interiores)
     shaders/                  sangue, visao, silhueta, neblina_bancos, poca, menu_neblina
@@ -87,6 +87,8 @@ Uma fase sobrescreve três métodos:
 | **algo para usar com E** | Um `Interactable` (prompt e raio) e o tratamento no sinal `used`, ou uma subclasse que sobrescreve `_use()`. Exemplos: `Door`, `NotePaper` e o ferrolho da Colônia. |
 | **uma porta entre cenas** | `Door.make(marcador, "E · entrar...", cena, chegada)`. |
 | **um evento ambiente aleatório** | `RandomEvents.add(nome, primeira, intervalo, função)`. |
+| **mais vida ou fôlego (upgrade)** | Aumentar `player.max_health` (um coração a mais, que acende no HUD) ou `player.stamina_max` (uma conta a mais no terço a cada 0,5). O `HudStatus` desenha quantos houver. |
+| **a munição de uma arma nova no HUD** | Uma entrada em `HudStatus.AMMO` (modo da arma → id do item): a contagem fica no canto enquanto a arma está em mãos. Um item novo de `tipo` "municao" ou "cura" já ganha o desenho do tipo; outro tipo mostra o nome. |
 | **uma arma na roda (Q)** | Uma entrada em `WHEEL` de `weapon_wheel.gd` (modo, nome, nota, arte, tecla) e a plaquinha dela em `tools/texturas/roda_armas.py` (uma função que desenha a figura pirografada e um ângulo em `SLOTS`). Com uma tecla própria, mais uma linha em `GameInput.KEYS` e em `Player._unhandled_input`. A arma em si é um `Player.Mode` com as animações de sacar e guardar; `Player.equip()` guarda o que estiver na mão antes de sacar a nova. O item que libera a arma vai em `Player.WEAPON_ITEM`. |
 | **o dia e o clima numa fase** | Usar `day = DayCycle.outdoors(self, env, sol, materiais_de_silhueta, clima)` ao ar livre, ou `DayCycle.indoors(self, luzes_de_janela, vidros)` num interior. O relógio (`WorldTime`) e o clima (`Weather`) continuam entre as cenas. Horários, cores e chances ficam em `DayData`. |
 | **um som** | `Audio.play2d` / `play3d`, ou `loop_player` mais `fade` para um loop que entra e sai. |

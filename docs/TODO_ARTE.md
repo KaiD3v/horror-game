@@ -42,6 +42,10 @@ Os quatro itens estão feitos e falta o teste do autor no jogo. A descrição es
   - A barra de stamina saiu. Abaixo de 60% de stamina ele começa a ofegar (`ofego.wav`, de `ferido_sons.py`). Sem fôlego, o ofego fica forte e as bordas da tela escurecem e abrem no ritmo dele.
   - A vida aparece na tela por `godot_demo/shaders/visao.gdshader`. A cada golpe a cor vai sumindo e um vermelho escuro fecha pelas bordas. No último golpe a borda pulsa, como sangue nas têmporas.
   - Isso se soma ao sangue no corpo e à respiração pesada do "Jogador ferido".
+- [~] **HUD mínimo nos cantos** (`godot_demo/scripts/ui/hud_status.gd`). Feito, falta o teste do autor no jogo. Nada fica na tela parado:
+  - vida: corações de ex-voto (de lata, com a chama do Sagrado Coração quando inteiros) no canto inferior esquerdo, só quando a vida muda; tremem no golpe, o último bate, um coração novo acende;
+  - fôlego: o terço logo abaixo, uma conta por 0,5 de stamina, só enquanto não está cheio; vermelho quando sem fôlego;
+  - itens: canto inferior direito, os virotes enquanto a besta está em mãos (o desenho acende com um virote armado) e qualquer contagem que muda (+N/−N), dinheiro incluído.
 - [~] **Notas e documentos.** Feito, falta o teste do autor no jogo.
   - São 7 papéis (`godot_demo/scripts/ui/notes_reader.gd` e `scripts/data/notes_data.gd`):
     - três no vilarejo: na mala da estrada, na porta da `casa_04` e no portão da Colônia;

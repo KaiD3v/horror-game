@@ -61,9 +61,10 @@ enum Mode { EXPLORE, COMBAT, DEAD, CROUCH, XBOW, CLIMB }  # CLIMB: on a wall (Cl
 const SHOT_TIME := 2.0 / 30.0       # Shoot_Crossbow: the bolt leaves on frame 2
 const BOLT_RANGE := 40.0            # how far the crosshair looks for what to aim at
 
-@export var max_health := 3
+@export var max_health := 3   # an upgrade raises it (the HUD gets another heart)
 var health := 3.0           # a blocked blow takes a fraction (BLOCK_CHIP)
 var stamina := STAMINA_MAX
+var stamina_max := STAMINA_MAX  # an upgrade raises it (the HUD's rosary gets more beads)
 var winded := false
 var rest := 0.0           # time since the last sprint
 var mode := Mode.EXPLORE
@@ -388,7 +389,6 @@ func use_cure() -> void:
 		notice.emit("Não está ferido.")
 	elif Inventory.use(id, self):
 		sfx("curativo", -3.0)
-		notice.emit("%s · restam %d" % [ItemCatalog.item(id).nome, Inventory.count(id)])
 
 
 ## A blow (from = who struck it). Blocking with it in front, the machete takes it: only BLOCK_CHIP gets through.
@@ -526,7 +526,7 @@ func _tick_stamina(delta: float, sprinting: bool) -> void:
 	else:
 		rest += delta
 		if rest >= REGEN_DELAY:
-			stamina = min(STAMINA_MAX, stamina + STAMINA_REGEN * delta)
+			stamina = min(stamina_max, stamina + STAMINA_REGEN * delta)
 		if winded and stamina >= WINDED_UNTIL:
 			winded = false
 
