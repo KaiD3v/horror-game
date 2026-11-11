@@ -104,7 +104,9 @@ func _started() -> void:
 
 
 func _process(_delta: float) -> void:
-	if night_watch and WorldTime.is_night() != night:
+	# (not before the navigation map has synced: the night's places come from it. Arriving at night, up the well's rope
+	# or out of a door, the first frames have none yet)
+	if night_watch and WorldTime.is_night() != night and NavigationServer3D.map_get_iteration_id(get_world_3d().navigation_map) > 0:
 		night = not night
 		if night:
 			_nightfall()
@@ -160,7 +162,9 @@ func _nightfall() -> void:
 			var a := NavigationServer3D.map_get_closest_point(map, c.position)
 			if a.distance_to(c.position) < 8.0:
 				alleys.append(a)
-	if who.carpideira:
+		if alleys.size() < 3:  # (nothing found: try again the next night)
+			alleys.clear()
+	if who.carpideira and not alleys.is_empty():
 		var start := alleys.filter(func(a): return a.distance_to(player.global_position) > 18.0)
 		carpideira = Carpideira.new(); carpideira.walks = alleys
 		add_enemy(carpideira, start.pick_random() if start else alleys[0], randf() * TAU)
@@ -294,7 +298,7 @@ func _find(id: String, at: Vector3, what: Array) -> void:
 	var s: Node3D = all.find_child(what[0] if what[0] != "" else "embrulho", false)
 	if s == null:
 		s = all.find_child("embrulho", false)
-	all.remove_child(s); all.free(); p.add_child(s)
+	all.remove_child(s); s.owner = null; all.free(); p.add_child(s)
 
 
 func _hung(kind: String) -> Node3D:  # a rusty tin, or a cloth bundle tied up

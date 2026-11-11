@@ -187,7 +187,7 @@ obj(t, "objetos")
 
 # --- markers for capela.gd (interior.gd) ------------------------------------------------------------------------
 sac = B()  # the sacristy's door, in the left wall by the altar (docs/TUTORIAL_VILAREJO.md "Dungeon 2"): down to the ossuary
-R_.quad(sac, "left", 4.85, 5.75, 0.25, 2.3, "door")
+R_.quad(sac, "left", 4.85, 5.75, 0.25, 2.3, "door", e=0.035)  # (in front of the painted band: a 2 cm box at 0.012)
 obj(sac, "porta_sacristia_folha")
 for name, loc, yaw in (("porta_sacristia", (-WX, 5.3, 0.25), 90), ("entrada_sacristia", (-2.7, 5.3, 0.25), -90)):
     e = bpy.data.objects.new(name, None); bpy.context.collection.objects.link(e); e.location = loc

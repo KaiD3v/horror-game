@@ -16,8 +16,9 @@ func tour() -> void:
 	# and it goes down to the ossuary, whose stairs bring you back up beside it
 	Inventory.items.erase("chave_sacristia"); Story.marks.erase("destrancado:chave_sacristia")
 	var d: BlockedDoor = L.sacristy
-	put(player, d.global_position + d.global_basis.z * 0.9, d.rotation.y + PI); await wait(0.4)
+	put(player, d.global_position + d.global_basis.z * 1.0, d.rotation.y); await wait(0.4)  # (facing it)
 	check(L.hud.prompt.text == "E · abrir o cadeado", "at the sacristy door: \"%s\"" % L.hud.prompt.text)
+	await shot("capela_6a_sacristia_porta")
 	await tap("interact"); await wait(0.2)
 	check(L.hud.message.text.begins_with("Trancada com cadeado"), "no key: \"%s\"" % L.hud.message.text)
 	Inventory.add("chave_sacristia")

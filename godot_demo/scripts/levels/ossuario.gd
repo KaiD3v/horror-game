@@ -62,7 +62,7 @@ func _shape(p: Pickup, id: String) -> void:
 	var s: Node3D = all.find_child(ItemCatalog.item(id).get("modelo", id), false)
 	if s == null:
 		s = all.find_child("embrulho", false)
-	all.remove_child(s); all.free(); p.add_child(s); s.position.y = 0.04; s.rotation.x = -PI / 2
+	all.remove_child(s); s.owner = null; all.free(); p.add_child(s); s.position.y = 0.04; s.rotation.x = -PI / 2
 
 
 ## The plank on its hinge at the cut's far edge, on end, and the rope from its top to the ring: a bolt in the rope and

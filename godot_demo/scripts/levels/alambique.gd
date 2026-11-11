@@ -54,7 +54,7 @@ func _build() -> void:
 		var all_items: Node = load(Paths.PROP % "itens").instantiate()
 		var roll: Node3D = all_items.find_child("atadura", false)
 		if roll:
-			all_items.remove_child(roll); aid.add_child(roll); roll.position.y = 0.05
+			all_items.remove_child(roll); roll.owner = null; aid.add_child(roll); roll.position.y = 0.05
 		all_items.free()
 
 
