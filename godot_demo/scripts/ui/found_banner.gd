@@ -15,6 +15,13 @@ var name_l: Label
 var desc: Label
 
 
+## Anything else to announce the same way (a door forced open): its head, its name, a line.
+static func tell(from: Node, head_text: String, title: String, line: String) -> void:
+	var b := FoundBanner.new(); from.get_tree().current_scene.add_child(b)
+	b.head.text = head_text; b.name_l.text = title; b.desc.text = line
+	await b.done
+
+
 static func open(from: Node, item: String, qtd := 1) -> void:
 	var b := FoundBanner.new(); from.get_tree().current_scene.add_child(b)
 	var it := ItemCatalog.item(item)

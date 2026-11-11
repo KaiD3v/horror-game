@@ -5,7 +5,7 @@
 class_name Hud
 extends CanvasLayer
 
-const CONTROLS := "WASD trotar · Ctrl andar · Shift correr · E usar · 1 facão · 2 besta · 3 lamparina · Q roda (toque: guardar) · LMB golpe (2x: de cima) · RMB erguer (bloquear / mirar) · E travar mira · Espaço esquiva (+A/D lateral) · C agachar · R recarregar · F curativo · Tab caderno"
+const CONTROLS := "WASD trotar · Ctrl andar · Shift correr · E usar · 1 facão · 2 besta · 3 lamparina · 4 picareta · Q roda (toque: guardar) · LMB golpe (2x: de cima) · RMB erguer (bloquear / mirar) · E travar mira · Espaço esquiva (+A/D lateral) · C agachar · R recarregar · F curativo · Tab caderno"
 
 var player: Player
 var legend: Label

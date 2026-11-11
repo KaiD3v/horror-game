@@ -114,14 +114,5 @@ func _at(f: int, fn: Callable) -> void:
 	get_tree().create_timer((f - 1) / 30.0).timeout.connect(fn)
 
 
-## The thing itself (models/props/itens.glb, by its ItemCatalog id; a cloth bundle for one with no shape yet), on his
-## left-hand grip as the machete sits there.
-func _in_hand(p: Player) -> Node3D:
-	var all: Node = load(Paths.PROP % "itens").instantiate()
-	var thing: Node3D = all.find_child(ItemCatalog.item(item).get("modelo", item), false)
-	if thing == null:
-		thing = all.find_child("embrulho", false)
-	all.remove_child(thing); all.free()
-	var grip := BoneAttachment3D.new(); grip.bone_name = "grip.L"; p.skeleton.add_child(grip)
-	grip.add_child(thing); thing.transform = Transform3D.IDENTITY
-	return grip
+func _in_hand(p: Player) -> Node3D:  # the thing itself, held up (Player.hold_item)
+	return p.hold_item(item)

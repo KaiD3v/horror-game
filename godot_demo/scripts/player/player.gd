@@ -11,7 +11,7 @@
 # crossbow aims (strafing, the tight camera, the crosshair; only then LMB looses). LMB slash (again in its
 # follow-through: the overhead chop), E locks on the nearest enemy
 # ahead (armed; again releases it), Space dodge (+A/D: to that side), R or LMB when empty reloads, LMB looses,
-# F dresses a wound, H hurt yourself (debug). (Esc: the pause menu, GameMenu.) Swings and dodges spend stamina (COST).
+# F dresses a wound, H hurt yourself (debug). 4: the pickaxe (held as the machete is: COMBAT with `held`). (Esc: the pause menu, GameMenu.) Swings and dodges spend stamina (COST).
 class_name Player
 extends CharacterBody3D
 
@@ -89,6 +89,9 @@ var busy := false         # in a scripted moment (a trunk, a push, a climb, a ju
                           # nothing, no gravity; whoever started it moves him
 var cam_override := {}    # a scripted moment's camera (CAM_KNEEL...), {} = the usual
 var wanted := -1          # a Mode chosen on the weapon wheel, on its way (-1 = none)
+var held := "facao"       # what COMBAT holds in the left hand: the machete, or a tool held the same way (picareta)
+var wanted_held := "facao"
+var tool_hand: ToolInHand # holding a tool: the machete hidden, the tool where it would be
 var blocking := false     # RMB held with the machete out
 var aiming := false       # RMB held (or locked on) with the crossbow out
 var raised := false       # the weapon up (guard / aim): strafing at combat pace; down = carried, walking freely
@@ -138,6 +141,7 @@ func _ready() -> void:
 	condition = PlayerCondition.new(self); add_child(condition)
 	hook = LanternHook.new(); hook.bone = skeleton.find_bone("lantern"); hook.active = false
 	skeleton.add_child(hook)
+	tool_hand = ToolInHand.new(); tool_hand.player = self; skeleton.add_child(tool_hand)
 
 	var ba := BoneAttachment3D.new(); ba.bone_name = "lantern"; skeleton.add_child(ba)
 	lantern = OmniLight3D.new(); ba.add_child(lantern)
@@ -166,8 +170,10 @@ func _unhandled_input(e: InputEvent) -> void:
 	elif e.is_action_pressed("debug_hurt"):
 		take_damage(1)
 	elif mode != Mode.DEAD and not busy:
-		if e.is_action_pressed("draw"):  # 1, 2: that weapon out, or away again if it is the one in hand
-			equip(Mode.EXPLORE if mode == Mode.COMBAT else Mode.COMBAT)
+		if e.is_action_pressed("draw"):  # 1, 2, 4: that one out, or away again if it is the one in hand
+			equip(Mode.EXPLORE if mode == Mode.COMBAT and held == "facao" else Mode.COMBAT)
+		elif e.is_action_pressed("pickaxe"):
+			equip(Mode.EXPLORE if mode == Mode.COMBAT and held == "picareta" else Mode.COMBAT, "picareta")
 		elif e.is_action_pressed("crossbow"):
 			equip(Mode.EXPLORE if mode == Mode.XBOW else Mode.XBOW)
 		elif e.is_action_pressed("attack"):
@@ -222,21 +228,27 @@ func set_mode(m: Mode) -> void:
 
 
 ## What to hold (the weapon wheel, Q): whatever is in his hands goes away first (sheathe / holster / stand up),
-## then the chosen one comes out, one clip after the other. EXPLORE = the lantern, no weapon.
-func equip(m: Mode) -> void:
-	if not owns(m):
-		notice.emit("Sem %s." % ItemCatalog.item(WEAPON_ITEM[m]).nome.to_lower())
+## then the chosen one comes out, one clip after the other. EXPLORE = the lantern, no weapon. COMBAT holds `what`
+## (the machete, or the pickaxe in its place).
+func equip(m: Mode, what := "facao") -> void:
+	var need: String = what if m == Mode.COMBAT else WEAPON_ITEM.get(m, "")
+	if not Inventory.has(need):
+		notice.emit("Sem %s." % ItemCatalog.item(need).nome.to_lower())
 		return
 	wanted = m
+	if m == Mode.COMBAT:
+		wanted_held = what
 	_equip_next()
 
 
 func _equip_next() -> void:
 	if wanted < 0 or action != "" or mode == Mode.DEAD:
 		return
-	if mode == wanted or (wanted == Mode.EXPLORE and unarmed()):  # crouched: he stays down
-		wanted = -1
+	if (mode == wanted and (mode != Mode.COMBAT or held == wanted_held)) or (wanted == Mode.EXPLORE and unarmed()):
+		wanted = -1  # (crouched: he stays down)
 	elif mode == Mode.COMBAT or (unarmed() and wanted == Mode.COMBAT):
+		if unarmed():
+			held = wanted_held  # what comes out of the draw
 		toggle_weapon()
 	elif mode == Mode.XBOW or (unarmed() and wanted == Mode.XBOW):
 		toggle_crossbow()
@@ -253,9 +265,9 @@ func free_hands() -> void:
 		await get_tree().process_frame
 
 
-## Whether he has what that mode holds (WEAPON_ITEM; the lantern / crouching: always).
+## Whether he has what that mode holds (WEAPON_ITEM, COMBAT: what it holds; the lantern / crouching: always).
 func owns(m: Mode) -> bool:
-	return Inventory.has(WEAPON_ITEM.get(m, ""))
+	return Inventory.has(held if m == Mode.COMBAT else WEAPON_ITEM.get(m, ""))
 
 
 func toggle_weapon() -> void:
@@ -591,12 +603,12 @@ func _tick_action(delta: float) -> void:
 	if HIT_TIME.has(action) and not hit_done and action_t >= HIT_TIME[action]:
 		hit_done = true
 		var struck := false
-		for e in get_tree().get_nodes_in_group("enemy"):
+		for e in get_tree().get_nodes_in_group("enemy") + get_tree().get_nodes_in_group("breakable"):  # (Breakable: rock)
 			var to: Vector3 = e.global_position - global_position
 			to.y = 0
 			if to.length() < HIT_RANGE and (-global_basis.z).dot(to.normalized()) > 0.4:
-				e.take_hit(HIT_DAMAGE[action], WEAPON_ITEM[Mode.COMBAT]); struck = true
-		if struck:
+				e.take_hit(HIT_DAMAGE[action], held); struck = true
+		if struck and held == "facao":  # (the rock makes its own)
 			sfx("facao_acerto", -2.0)
 	if action_t >= action_len:
 		if action == "Reload_Crossbow":
@@ -656,6 +668,19 @@ func lantern_hung() -> bool:  # on its belt hook = its rest spot relative to the
 	var h := skeleton.find_bone("hips"); var l := skeleton.find_bone("lantern")
 	var hook := skeleton.get_bone_global_pose(h) * skeleton.get_bone_global_rest(h).affine_inverse() * skeleton.get_bone_global_rest(l)
 	return skeleton.get_bone_global_pose(l).origin.distance_to(hook.origin) < 0.03
+
+
+## An item's shape (models/props/itens.glb, by its ItemCatalog id or "modelo"; a cloth bundle for one with none) in
+## his left hand, on grip.L as the machete sits there. Free it when done.
+func hold_item(id: String) -> Node3D:
+	var all: Node = load(Paths.PROP % "itens").instantiate()
+	var thing: Node3D = all.find_child(ItemCatalog.item(id).get("modelo", id), false)
+	if thing == null:
+		thing = all.find_child("embrulho", false)
+	all.remove_child(thing); all.free()
+	var grip := BoneAttachment3D.new(); grip.bone_name = "grip.L"; skeleton.add_child(grip)
+	grip.add_child(thing); thing.transform = Transform3D.IDENTITY
+	return grip
 
 
 func machete_in_hand() -> bool:  # on the fighting grip (grip.L) or the at-ease carry grip (grip.Lc)

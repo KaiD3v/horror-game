@@ -199,6 +199,7 @@ func run() -> void:
 	await save_tests()
 	await keys_tests()
 	await caderno_tests()
+	await progression_tests()
 	player.health = 2
 
 	player.take_damage(2); await wait(1.8); await shot("9_dead")
@@ -1011,3 +1012,82 @@ func caderno_tests() -> void:
 	await tap("ui_cancel"); await wait(0.1)
 	check(not c.visible and not get_tree().paused, "Esc closes the notebook")
 	NotesReader.read.pop_back(); Story.reset(); Inventory.items.erase("chave_sacristia")
+
+
+## What the progression items open (the south of the room): the padlock (its key, spent on it), the boarded door (the
+## crowbar: the planks forced off, "Porta aberta"), the heap of stone (the pickaxe in hand, blow by blow), the well (the
+## rope tied, then down to the bottom scene).
+func progression_tests() -> void:
+	if player.mode != Player.Mode.EXPLORE:
+		await player.free_hands()
+	player.health = player.max_health
+	# the padlock
+	put(player, Vector3(-9, 0, 9.0), PI); await wait(0.3)
+	check(L.hud.prompt.text == "E · abrir o cadeado", "the padlocked door: \"%s\"" % L.hud.prompt.text)
+	await tap("interact"); await wait(0.2)
+	check(not Story.has("aberta:treino_cadeado") and L.hud.message.text == "Trancada com cadeado. Precisa da chave.", "no key: \"%s\"" % L.hud.message.text)
+	put(player, Vector3(-9, 0, 7.6), PI); await wait(0.3)
+	await tap("interact"); await wait(0.2)
+	check(Inventory.has("chave_cadeado"), "the key picked up off the floor")
+	put(player, Vector3(-9, 0, 9.0), PI); await wait(0.3)
+	await tap("interact"); await wait(1.2)
+	check(not Inventory.has("chave_cadeado") and L.locked.lock_shape == null and L.locked.leaf.rotation.y > 1.5 and not L.locked.enabled,
+		"E with the key: the padlock gone, the key spent, the door open")
+	await shot("prog_cadeado")
+	# the boarded door
+	Inventory.items.erase("pe_de_cabra")
+	put(player, Vector3(-3, 0, 9.0), PI); await wait(0.3)
+	await tap("interact"); await wait(0.2)
+	check(L.hud.message.text.begins_with("Pregada com tábuas"), "no crowbar: \"%s\"" % L.hud.message.text)
+	Inventory.add("pe_de_cabra")
+	await tap("interact"); await wait(1.4)
+	check(player.busy and player.action == "Push" or player.action == "", "the crowbar: he works at the planks")
+	await shot("prog_pe_de_cabra")
+	var banner: bool = await until(func(): return get_tree().get_first_node_in_group("found_banner") != null, 8.0)
+	var fb: FoundBanner = get_tree().get_first_node_in_group("found_banner")
+	check(banner and fb.name_l.text == "Porta aberta", "...the planks off: \"Porta aberta\"")
+	await shot("prog_porta_aberta")
+	await wait(0.9); await tap("interact"); await wait(1.2)
+	check(Story.has("aberta:treino_tabuas") and L.boarded.leaf.rotation.y > 1.5 and not player.busy, "...and the door swings open")
+	# the heap of stone
+	put(player, Vector3(3, 0, 9.0), PI); await wait(0.3)
+	check(L.hud.prompt.text == "E · pegar a picareta", "the heap: \"%s\"" % L.hud.prompt.text)
+	await tap("interact"); await until(func(): return player.action == "", 2.0); await wait(0.2)
+	var shape: Node3D = player.tool_hand.shape
+	check(player.mode == Player.Mode.COMBAT and player.held == "picareta" and shape != null and shape.visible, "E: the pickaxe in his hand")
+	var blade := [1.0]  # (a skeleton modifier: read once the modifiers have run)
+	player.skeleton.skeleton_updated.connect(func(): blade[0] = player.skeleton.get_bone_pose_scale(player.skeleton.find_bone("machete")).x, CONNECT_ONE_SHOT)
+	await player.skeleton.skeleton_updated
+	check(blade[0] < 0.01, "...the machete hidden (scale %.3f)" % blade[0])
+	var look := player.pivot.rotation.y
+	player.pivot.rotation.y = player.rotation.y - 2.0; await wait(0.6)
+	await shot("prog_picareta")
+	player.pivot.rotation.y = look; await wait(0.3)
+	var stones: int = L.rubble.stones.size()
+	player.stamina = player.stamina_max; player.attack("Attack_Slash"); await wait(0.9)
+	check(L.rubble.stones.size() == stones - 1, "a blow knocks a stone off (%d left)" % L.rubble.stones.size())
+	for k in 6:
+		if not is_instance_valid(L.rubble) or L.rubble.stones.is_empty():
+			break
+		player.stamina = player.stamina_max; player.attack("Attack_Overhead"); await wait(1.1)
+	check(Story.has("quebrado:treino_entulho") and L.rubble.stones.is_empty() and not is_instance_valid(L.rubble.body),
+		"...until the heap is gone and the way open")
+	await shot("prog_entulho")
+	await tap("draw"); await until(func(): return player.held == "facao" and player.action == "" and player.mode == Player.Mode.COMBAT, 4.0)
+	check(player.held == "facao" and player.machete_in_hand() and player.skeleton.get_bone_pose_scale(player.skeleton.find_bone("machete")).x > 0.9,
+		"1: the pickaxe away, the machete back in hand")
+	await player.free_hands()
+	# the well
+	Inventory.items.erase("corda")
+	put(player, Vector3(9, 0, 8.1), PI); await wait(0.3)
+	await tap("interact"); await wait(0.2)
+	check(not L.well.roped() and L.hud.message.text.begins_with("Escuro e fundo"), "no rope: \"%s\"" % L.hud.message.text)
+	Inventory.add("corda")
+	await tap("interact"); await wait(0.2)
+	check(L.well.roped() and L.well.rope != null and L.hud.prompt.text == "E · descer pela corda", "the rope tied: \"%s\"" % L.hud.prompt.text)
+	await shot("prog_poco")
+	await tap("interact"); await wait(0.2)
+	check(SceneRouter.requested == "res://scenes/levels/poco.tscn" and Story.marks["poco:volta"] == [L.scene_file_path, "treino_poco"],
+		"E again: down to the bottom of the well")
+	var up: Transform3D = Well.arrival(L, "treino_poco", Transform3D.IDENTITY)
+	check(up.origin.distance_to(L.well.position) < 2.0 and up.origin.z < L.well.position.z, "coming up: beside the well, in front of it")

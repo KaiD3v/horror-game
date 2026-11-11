@@ -31,7 +31,9 @@ func _ready() -> void:
 	add_to_group("level")  # navmesh source: every StaticBody3D below, on collision layer 1
 	GameInput.setup()
 	_build()
-	player = Player.new(); player.transform = SaveGame.start(scene_file_path, _player_start())  # before it enters the tree
+	var arrive := SceneRouter.arriving  # (_player_start may use it up: up out of a well is decided after)
+	player = Player.new(); player.transform = SaveGame.start(scene_file_path, Well.arrival(self, arrive, _player_start()))
+	SceneRouter.arriving = ""
 	add_child(player)
 	SaveGame.settle(player, scene_file_path)  # a restored game: his health, his lantern; and this scene's return point
 	hud = Hud.new(player, title, controls_extra); add_child(hud)

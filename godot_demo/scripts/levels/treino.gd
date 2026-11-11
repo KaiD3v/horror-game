@@ -1,5 +1,6 @@
 # The training room: a stone floor, five pillars, a dummy to hit and the mutant past the far pillar; to the east a
-# course of the puzzle moves (push, ledge, gap, wall), to the west a flight of stairs. For trying the
+# course of the puzzle moves (push, ledge, gap, wall), to the west a flight of stairs, to the south what the
+# progression items open (a padlocked door and its key, a boarded door, a heap of stone, a well). For trying the
 # protagonist's controls and fights (tests/test_treino.gd plays it all through).
 extends Level
 
@@ -7,6 +8,10 @@ var dummy: Dummy
 var enemy: Mutante
 var block: Pushable
 var gap: Jumpable
+var locked: BlockedDoor
+var boarded: BlockedDoor
+var rubble: Breakable
+var well: Well
 
 
 func _init() -> void:
@@ -24,6 +29,7 @@ func _build() -> void:
 	enemy = Mutante.new(); add_enemy(enemy, Vector3(2.5, 0, -10), PI * 0.8)  # past the far pillar
 	_course()
 	_stairs()
+	_progression()
 
 
 ## Off to the east, the moves for puzzles: a block to push, a ledge to haul up onto, a gap to jump to a second one, and
@@ -51,3 +57,20 @@ func _stairs() -> void:
 	Looks.box(self, Vector3(-9, 0.5, 1.25), Vector3(2, 1, 1), rock)
 	Looks.box(self, Vector3(-12.5, 0.3, 2.5), Vector3(1.5, 0.6, 1), rock)
 	Looks.box(self, Vector3(-6, 0.225, 2.5), Vector3(1.5, 0.45, 1), rock)   # a porch's stone step: 45 cm
+
+
+## Off to the south, facing the room, what each progression item opens: a door with a padlock (its key lies before
+## it), a door boarded up (the crowbar), a heap of stone across a gap in a wall (the pickaxe) and a well (the rope).
+func _progression() -> void:
+	locked = BlockedDoor.make(self, Vector3(-9, 0, 10), PI, "cadeado", "treino_cadeado", "chave_cadeado")
+	if not Story.has("destrancado:chave_cadeado") and not Inventory.has("chave_cadeado"):
+		var key := Pickup.make(self, Vector3(-9, 0.02, 7.6), "chave_cadeado")
+		var all: Node = load(Paths.PROP % "itens").instantiate()
+		var shape: Node3D = all.find_child("chave", false); all.remove_child(shape); all.free()
+		key.add_child(shape); shape.rotation.x = -PI / 2; shape.position.z = 0.08  # lying flat on the floor
+	boarded = BlockedDoor.make(self, Vector3(-3, 0, 10), PI, "tabuas", "treino_tabuas")
+	var wall := Looks.triplanar("plaster", 0.5, Color(0.72, 0.68, 0.6))
+	for x in [1.0, 5.0]:  # a wall with a gap, the heap in the gap
+		Looks.box(self, Vector3(x, 1.3, 10.15), Vector3(1.8, 2.6, 0.3), wall)
+	rubble = Breakable.make(self, Vector3(3, 0, 10), PI, "treino_entulho")
+	well = Well.make(self, Vector3(9, 0, 9.5), PI, "treino_poco", "res://scenes/levels/poco.tscn")

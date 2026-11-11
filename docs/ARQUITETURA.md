@@ -8,7 +8,7 @@
 protagonista-terror/
   godot_demo/                 o jogo (projeto Godot 4.7)
     project.godot             cena inicial: scenes/menu.tscn; tema: ui/tema.tres
-    scenes/                   menu.tscn · levels/ (vilarejo, colonia, treino) · interiors/ (armaria, venda, capela)
+    scenes/                   menu.tscn · levels/ (vilarejo, colonia, treino, poco: o fundo do poço) · interiors/ (armaria, venda, capela)
     scripts/
       core/                   base de tudo: Level, Paths, Audio, Looks, Nodes, GameInput, SceneRouter,
                               Interactable, Interactor, Steps (degraus e escadas), Story (o que já aconteceu)
@@ -19,7 +19,7 @@ protagonista-terror/
       world/                  Door, Pickup, Chest (os baús), Pushable, Climbable, Jumpable (enigmas), Footsteps, RandomEvents, Clima, Corvo
       ui/                     Hud (+ HudStatus: corações, terço e itens nos cantos), menu, GameMenu (pausa e morte; o painel de Controles), Caderno (Tab: tarefas, bolso, notas), NotesReader, NotePaper, WeaponWheel (a roda de armas do Q), FoundBanner (o "Você encontrou"), DialogBox (a conversa)
       data/                   dados sem lógica: NpcCatalog, NotesData, ChestData, QuestData, dialogos/<npc> (o que cada um diz), Atmospheres, DayData, ItemCatalog, ShopCatalog
-      levels/                 o script de cada fase: vilarejo, colonia, treino, interior (único para todos os interiores)
+      levels/                 o script de cada fase: vilarejo, colonia, treino, poco, interior (único para todos os interiores)
     shaders/                  sangue, visao, silhueta, neblina_bancos, poca, menu_neblina
     models/characters/        protagonista, monster, enfermeira, bruxa, poceiro, carpideira, npc_<quem> (.glb gerados)
     models/levels/            vilarejo, armaria, venda, capela (.glb gerados)
@@ -81,7 +81,12 @@ Uma fase sobrescreve três métodos:
 | **uma tarefa** | Uma entrada em `QuestData` (título, descrição; o Caderno a lista sozinho, em andamento ou cumprida) e as falas que a dão (`{"tarefa": [id, "ativa"]}`) e a encerram (`{"tarefa": [id, "feita"]}`). O HUD avisa "Nova tarefa" e "Tarefa cumprida"; as opções leem o estado com `{"tarefa": [id, "nova"/"ativa"/"feita"]}`. |
 | **um item** | Uma entrada em `ItemCatalog` com nome, descrição e `tipo`. Os tipos de hoje são `"cura"` (usado com F), `"municao"` (o virote, gasto pela besta) e `"ferramenta"` (ver a linha abaixo). Um tipo novo de efeito é um caso a mais em `Inventory.use()`. |
 | **uma chave** | Uma entrada `"chave_<fechadura>"` em `ItemCatalog` com `tipo: "chave"` e `"modelo": "chave"`, e a fechadura (porta, baú, qualquer `Interactable`) com `requires = "chave_<fechadura>"`. Cada chave abre só a sua fechadura: no primeiro E ela é gasta e a fechadura fica aberta para sempre (`Story` "destrancado:<id>", vai no save). |
-| **um obstáculo de ferramenta** (porta pregada, entulho, poço) | O `Interactable` do obstáculo com `requires = "pe_de_cabra"`, `"picareta"` ou `"corda"` e um `refusal` que diga o que se vê ("Está pregada com tábuas."). A ferramenta não se gasta. |
+| **uma porta com cadeado** | `BlockedDoor.make(fase, pé, giro, "cadeado", id, "chave_<x>")` no `_build()`: E com a chave e o cadeado some, a chave é gasta e a porta abre. |
+| **uma porta pregada** | `BlockedDoor.make(fase, pé, giro, "tabuas", id)`: E com o pé de cabra, ele arranca as tábuas, "Porta aberta" e a porta abre. |
+| **um entulho de pedra** | `Breakable.make(fase, pé da frente, giro, id)`: E põe a picareta na mão (ou a tecla 4); cada golpe dela derruba pedras até abrir. Outro golpe só tine. |
+| **um poço para descer** | `Well.make(fase, centro, giro, id, cena do fundo)`: E com a corda amarra na trave; E de novo desce. A cena do fundo (como `poco.gd`) volta com `SceneRouter.go_to(..., Story "poco:volta")`, e a fase põe o jogador ao lado do poço (`Well.arrival`). |
+| **uma ferramenta segurada na mão** (como a picareta) | `player.equip(Mode.COMBAT, "<id>")`: o facão some do osso e a forma do item (itens.glb) fica no lugar dele (`ToolInHand`); os golpes chegam a `take_hit(n, "<id>")`. |
+| **um obstáculo de ferramenta** (outro) | O `Interactable` do obstáculo com `requires = "pe_de_cabra"`, `"picareta"` ou `"corda"` e um `refusal` que diga o que se vê. A ferramenta não se gasta; os quatro acima são os modelos. |
 | **um item que desbloqueia algo** (chave, arma, ferramenta) | 1. Uma entrada em `ItemCatalog` com `tipo: "ferramenta"`: não se gasta, e ter o item é o que desbloqueia. 2. Um jeito de pegar: oferta em `ShopCatalog`, `Pickup.make(fase, posição, id)` no chão (o visual é o que a fase pendurar nele; some se você já tem) ou `Inventory.add(id)` numa recompensa. 3. O que ele abre pergunta `Inventory.has(id)`: em qualquer `Interactable` (portas incluídas), `requires = id` e `refusal = "por que não"`; numa oferta de loja, `"requires": id`; num inimigo, `weak_to = [id]` (só esses itens o ferem; o resto diz `Enemy.SHRUG`); numa arma da roda, `Player.WEAPON_ITEM`. **Sem código novo.** Um jogo novo começa só com a lamparina (`Inventory.START_ITEMS`). |
 | **um baú** | Uma entrada em `ChestData`: id (único no jogo), cena, posição, direção, item e quantidade; opcionalmente `requires` e `refusal` para um baú trancado. O `Level` põe o baú no chão, e um baú já aberto volta aberto e vazio. **Sem código.** Se o item ainda não tem modelo, aparece na mão como um embrulho de pano; para dar forma a ele, uma função com o id dele em `tools/cenarios/bau_build.py`. |
 | **um enigma de empurrar, escalar ou pular** | No `_build()` da fase, junto com a geometria: `Pushable.make(fase, posição, giro)` para um bloco de 1 m (anda 1 m por empurrão, só ao longo dos próprios lados, nunca para dentro de algo nem para fora do chão; sinal `pushed`). `Climbable.make(fase, centro_da_base, giro, altura, Vector2(largura, profundidade))` marca algo para subir, por qualquer lado (ou só pelos lados passados em `sides`, como o muro, que tem apoios só na frente): até 1,6 m é uma borda, que ele sobe de uma vez; mais alto é um muro, que ele escala com W e S. No alto, perto da borda de um lado subível, E o faz descer pendurado. `Jumpable.make(fase, ponta_a, ponta_b)` é um vão de até 3,5 m, que ele pula com Espaço. O percurso a leste da sala de treino tem um de cada. |
