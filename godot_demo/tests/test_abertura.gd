@@ -19,6 +19,10 @@ func run() -> void:
 	check(Intro.NOTES.all(func(n): return n in NotesReader.read), "the letter, the notice, the photo, the cutting: in the notebook")
 	check(Intro.pending and not Intro.skip_next, "the arrival waits in the village")
 	check(not get_tree().paused, "nothing left paused")
+	var want := ["ambiente_hospital", "tela_arame", "sineta", "chuva", "cidade_madrugada", "chave_fechadura", "porta",
+		"passo_madeira", "papel_desdobrar", "lata_abrir", "coracao", "impacto_grave", "sopro", "onibus"]
+	var missing := want.filter(func(n): return n not in Audio.heard)
+	check(missing.is_empty(), "its sounds all play (missing: %s)" % [missing])
 
 
 func skip_tests() -> void:

@@ -61,3 +61,28 @@ static func fade(p: AudioStreamPlayer, amp: float, db: float) -> void:
 static func _keep(p: Node, loop: bool) -> void:
 	if loop:
 		p.process_mode = Node.PROCESS_MODE_ALWAYS
+
+
+# --- music: one track at a time, on the root, so it plays on across a change of scene (the opening's runs from
+# Abertura into the village's Intro). No file yet: silence.
+static var music: AudioStreamPlayer
+
+
+static func music_play(from: Node, n: String, db := -8.0, fade_in := 2.0) -> void:
+	if not ResourceLoader.exists(Paths.MUSIC % n):
+		return
+	music_stop(0.0)
+	music = AudioStreamPlayer.new(); music.stream = load(Paths.MUSIC % n); music.process_mode = Node.PROCESS_MODE_ALWAYS
+	from.get_tree().root.add_child(music); music.volume_db = -60.0; music.play()
+	music.create_tween().tween_property(music, "volume_db", db, fade_in)
+	music.finished.connect(music_stop.bind(0.0))
+
+
+static func music_stop(fade_out := 3.0) -> void:
+	if music == null or not is_instance_valid(music):
+		return
+	var m := music; music = null
+	if fade_out <= 0.0:
+		m.queue_free()
+		return
+	var t := m.create_tween(); t.tween_property(m, "volume_db", -60.0, fade_out); t.tween_callback(m.queue_free)

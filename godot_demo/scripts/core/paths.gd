@@ -12,6 +12,7 @@ const CHARACTER := "res://models/characters/%s.glb"  # % protagonista, monster, 
 const LEVEL_MODEL := "res://models/levels/%s.glb"    # % vilarejo, armaria, venda, capela
 const PROP := "res://models/props/%s.glb"            # % bau, itens (../tools/cenarios/bau_build.py)
 const SOUND := "res://sounds/%s.wav"
+const MUSIC := "res://music/%s.mp3"                 # % abertura (ElevenLabs Music, as generated: Audio.music)
 const TEXTURE := "res://textures/%s.png"
 const SHADER := "res://shaders/%s.gdshader"
 const UI := "res://ui/%s"

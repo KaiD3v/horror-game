@@ -31,6 +31,7 @@ var lid: Node3D
 var photo: Node3D
 var passing: OmniLight3D      # the road's lights, going past the bus window
 var sounds: Array[AudioStreamPlayer] = []
+var hall: AudioStreamPlayer   # the parlatório's room tone
 
 
 func _ready() -> void:
@@ -51,6 +52,8 @@ func _ready() -> void:
 # --- act 1: the parlatório, 1955 ----------------------------------------------------------------------------------
 func _year() -> void:  # 1
 	cs.cam.environment = sepia
+	Audio.music_play(self, "abertura")  # (../docs/INTRODUCAO.md "Música"; on to the village, faded out by Intro)
+	hall = Audio.play2d(self, "ambiente_hospital", -14.0, true)
 	cs.say("Colônia Santa Clara, 1955")
 	await cs.wait(3.0)
 	cs.say("")
@@ -72,7 +75,9 @@ func _hands() -> void:  # 3. their hands meet on the wire; what she says
 	var t := cs.tw().set_parallel().set_trans(Tween.TRANS_SINE)
 	t.tween_property(his_hand, "position:z", 0.035, 1.6)
 	t.tween_property(her_hand, "position:z", -0.035, 2.0)
-	await cs.wait(2.2)
+	await cs.wait(1.6)
+	Audio.play2d(self, "tela_arame", -8.0)  # the wire gives under their hands
+	await cs.wait(0.6)
 	cs.say("— Eu vou te buscar.")
 	await cs.wait(3.0)
 	cs.say("")
@@ -87,13 +92,15 @@ func _bell() -> void:  # 4. the nurse's bell: visiting time is over, he is pulle
 	cs.tw().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT).tween_property(child, "position:z", child.position.z + 1.6, 0.6)
 	await cs.wait(2.2)
 	cs.black.color.a = 1.0
+	hall.stop()
 	await cs.wait(1.2)
 
 
 # --- act 2: São Paulo, 1974 ---------------------------------------------------------------------------------------
 func _city() -> void:  # 5
 	cs.cam.environment = null
-	sounds.append(Audio.play2d(self, "chuva", -10.0, true))
+	sounds.append(Audio.play2d(self, "chuva", -13.0, true))
+	sounds.append(Audio.play2d(self, "cidade_madrugada", -12.0, true))
 	sounds.append(Audio.play2d(self, "relogio", -16.0, true))
 	cs.say("São Paulo, março de 1974")
 	await cs.wait(3.0)
@@ -103,6 +110,8 @@ func _city() -> void:  # 5
 func _home() -> void:  # 6. back from the night shift, lantern in hand; the envelope under the door
 	var p := PENSAO
 	cs.look(p + Vector3(-1.6, 1.7, -2.0), p + Vector3(1.4, 0.9, 1.4))
+	Audio.play2d(self, "chave_fechadura", -6.0)  # his key in the lock, then the door
+	await cs.wait(1.4)
 	Audio.play2d(self, "porta", -6.0)
 	cs.tw().set_trans(Tween.TRANS_SINE).tween_property(door, "rotation:y", -1.6, 0.9)
 	cs.fade(0.0, 1.0)
@@ -137,9 +146,13 @@ func _photo() -> void:  # 9. her photo; turned over, the same hand as the letter
 	var at := photo.global_position
 	photo.visible = true
 	cs.look(at + Vector3(0.0, 0.05, 0.32), at)
+	var heart := Audio.play2d(self, "coracao", -10.0, true)
 	await cs.wait(2.6)
 	cs.tw().set_trans(Tween.TRANS_SINE).tween_property(photo, "rotation:y", photo.rotation.y + PI, 0.8)
-	await cs.wait(3.8)
+	await cs.wait(0.6)
+	Audio.play2d(self, "impacto_grave", -8.0)  # the same hand
+	await cs.wait(3.2)
+	heart.stop()
 
 
 func _cutting() -> void:  # 10. the cutting pinned over the table, years old: the law ended it in 1962
@@ -364,8 +377,12 @@ func _walk(to: Vector3, clip: String) -> void:
 	if d.length() < 0.05:
 		return
 	_face(d); _clip(clip)
-	var t := cs.tw(); t.tween_property(him, "position", Vector3(to.x, him.position.y, to.z), d.length() / Player.WALK_SPEED)
-	await cs.wait(d.length() / Player.WALK_SPEED)
+	var s := d.length() / Player.WALK_SPEED
+	var t := cs.tw(); t.tween_property(him, "position", Vector3(to.x, him.position.y, to.z), s)
+	var steps := cs.tw().set_loops(maxi(1, int(s / 0.55)))  # his steps on the boards
+	steps.tween_callback(func(): Audio.play2d(self, "passo_madeira", -14.0)); steps.tween_interval(0.55)
+	await cs.wait(s)
+	steps.kill()
 	_clip("Idle_Lantern")
 
 

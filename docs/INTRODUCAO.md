@@ -173,3 +173,22 @@ do tempo com ele e com a mãe. São cerca de 2 minutos no total, e dá para pula
   - `test_vilarejo.gd` `intro_tests`: a chegada inteira e pulada;
   - `test_colonia.gd` `parlatorio_tests`;
   - `test_menu.gd`.
+
+## Música e ambiente
+
+- **A música** (ElevenLabs Music, gerada pelo autor) é uma faixa só, de 1:55, com seções que acompanham os atos:
+  - caixinha de música e piano na lembrança;
+  - violão sobre violoncelos na pensão;
+  - um pulso grave no ônibus;
+  - drones e um golpe grave na chegada, terminando num tom de sino.
+- **Onde fica:** `godot_demo/music/abertura.mp3`. `Audio.music_play` toca a faixa na raiz da árvore, então ela segue da
+  `Abertura` para o vilarejo. A `Intro` a apaga aos poucos quando a luz da Colônia pisca. Sem o arquivo, a cena roda em
+  silêncio de música.
+- **Sons de ambiente e de pontuação** (ElevenLabs, 65 créditos):
+  - `ambiente_hospital`: o eco do salão, no parlatório;
+  - `tela_arame`: a tela cedendo sob as mãos;
+  - `cidade_madrugada`: a cidade molhada pela janela da pensão;
+  - `chave_fechadura`: a chave dele na porta;
+  - `impacto_grave`: um golpe grave, quando a foto vira, no toco serrado e quando a luz da Colônia pisca.
+- **Sons que já existiam e entraram na cena:** `passo_madeira` (os passos dele na pensão) e `coracao` (o coração
+  batendo enquanto ele segura a foto).

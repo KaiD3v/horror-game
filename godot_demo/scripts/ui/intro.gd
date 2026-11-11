@@ -80,6 +80,7 @@ func _sawn() -> void:  # 3. to the brink: the bridge is down, its beams sawn thr
 	var spill := OmniLight3D.new(); L.add_child(spill); spill.global_position = stub + Vector3(0.1, 0.5, -0.4)  # (the lantern's, helped)
 	spill.light_color = Color(1.0, 0.7, 0.4); spill.light_energy = 1.2; spill.omni_range = 2.0
 	look(stub + Vector3(0.6, 0.25, -1.0), stub)
+	Audio.play2d(self, "impacto_grave", -9.0)  # sawn, not broken
 	await wait(3.0)
 	spill.queue_free()
 
@@ -129,6 +130,8 @@ func _village() -> void:  # 6. up behind him: the roofs in the fog; the bell; th
 	tw().tween_property(title, "modulate:a", 1.0, 1.5)
 	await wait(3.0)
 	_flicker()  # someone up there
+	Audio.play2d(self, "impacto_grave", -10.0)
+	Audio.music_stop(5.0)
 	await wait(1.5)
 	tw().tween_property(title, "modulate:a", 0.0, 1.2)
 	await wait(1.3)
@@ -153,6 +156,7 @@ func _handover() -> void:  # 7. down to where the game's camera sits
 
 # --- the end, played or skipped -----------------------------------------------------------------------------------
 func _finish() -> void:
+	Audio.music_stop(1.5)  # (already fading, played through; skipped, it goes now)
 	if is_instance_valid(lights):
 		lights.queue_free()
 	for m in lit:  # (a skip mid-flicker: lit again)
