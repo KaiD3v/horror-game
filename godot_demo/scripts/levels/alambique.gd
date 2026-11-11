@@ -1,6 +1,6 @@
 # O alambique do Juca (../docs/TUTORIAL_VILAREJO.md "Dungeon 1"; ../tools/cenarios/alambique_build.py): the first
 # dungeon, an interior like the others (interior.gd) with the route of moves laid over its markers:
-#   the block (Pushable "pedra") pushed under the loft's edge, the only way up onto it (Climbable from the block's top);
+#   the block (Pushable "pedra") pushed under the loft's or the walkway's edge, the only way up (Climbable from its top);
 #   the bats (Morcegos) over the walkway of barrels: the lantern in hand wakes them;
 #   the jump over the vinhoto tank to the platform (Jumpable); the wall with holds up the tower (puzzle.glb "muro");
 #   Juca's trunk with the machete on top (ChestData), his diary (NotesData), a bandage on the platform;
@@ -33,7 +33,9 @@ func _build() -> void:
 		cs.shape = box; body.add_child(cs)
 	var at := func(n: String) -> Node3D: return room.get_node(n)
 	block = Pushable.make(self, at.call("pedra").position)
-	Climbable.make(self, Vector3(-5.75, LOFT / 2, -2.0), 0.0, LOFT / 2, Vector2(2.5, 6.0), [Vector3.RIGHT])  # from the block's top
+	# from the block's top (both edges are chalked: wherever the block is pushed against them, up)
+	Climbable.make(self, Vector3(-5.75, LOFT / 2, -2.0), 0.0, LOFT / 2, Vector2(2.5, 6.0), [Vector3.RIGHT])   # the loft
+	Climbable.make(self, Vector3(-1.75, LOFT / 2, -4.0), 0.0, LOFT / 2, Vector2(5.5, 2.0), [Vector3.BACK])    # the walkway
 	gap = Jumpable.make(self, Vector3(0.6, LOFT, -4.0), Vector3(3.9, LOFT, -4.0))
 	var mark: Node3D = at.call("muro")
 	var all: Node = load(Paths.PROP % "puzzle").instantiate()

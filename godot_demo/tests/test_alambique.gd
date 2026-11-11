@@ -23,6 +23,14 @@ func tour() -> void:
 	await tap("interact"); await until(func(): return not player.busy, 4.0); await wait(0.3)
 	check(absf(player.global_position.y - L.LOFT) < 0.1 and player.global_position.x < -4.5,
 		"E: from the block up onto the loft (%.2f up)" % player.global_position.y)
+	# or pushed against the walkway's edge instead (its chalk says it too): up from the block onto it
+	b.global_position = Vector3(-2.0, 0.0, -2.5); await wait(0.3)  # (as if pushed north, against its face)
+	put(player, b.global_position + Vector3(0, 0, 0.8), 0.0); await wait(0.3)
+	await tap("interact"); await until(func(): return not player.busy, 4.0); await wait(0.3)
+	check(L.hud.prompt.text != "E · descer", "on the block by the walkway's edge: \"%s\"" % L.hud.prompt.text)
+	await tap("interact"); await until(func(): return not player.busy, 4.0); await wait(0.3)
+	check(absf(player.global_position.y - L.LOFT) < 0.1 and player.global_position.z < -3.0,
+		"E: from the block up onto the walkway (%.2f up)" % player.global_position.y)
 	# the bats over the walkway: the lantern in hand wakes them, on the belt they go back up, the machete knocks them down
 	var bats: Morcegos = L.bats
 	put(player, Vector3(-2.0, L.LOFT, -3.4), PI / 2); await wait(0.3)

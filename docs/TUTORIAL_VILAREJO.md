@@ -285,7 +285,8 @@ principal fica: facão, besta, chave, Colônia. Outra opção: a chave no fundo 
   - a da frente está escorada por dentro com cana ("Trancada por dentro. Tem coisa pesada escorada do outro lado.").
 - **Por dentro** (`alambique_build.py`, `alambique.tscn`, `scripts/levels/alambique.gd`), sala de 14 x 10 m e 8 m de pé-direito:
   1. **O chão:** uma pedra de granito (`Pushable`) a empurrar duas vezes para oeste, até a borda do jirau, que tem 2 m e
-     não se sobe do chão. Da pedra, E sobe no jirau.
+     não se sobe do chão. Da pedra, E sobe no jirau. Encostada na borda da passarela dos barris (também marcada com cal),
+     a pedra serve do mesmo jeito.
   2. **O jirau e a passarela dos barris:** morcegos sob o telhado (`Morcegos`, 7). Com a lamparina na mão, quando ele está lá
      em cima perto deles, eles descem e voam em volta da luz, mordendo 0,5 a cada 1,8 s; aparece "3 · pendurar a
      lamparina". Com ela no gancho, em 2 s eles voltam ao teto. Com o facão, cada golpe na frente dele derruba os que
