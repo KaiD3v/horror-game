@@ -631,4 +631,18 @@ func course_tests() -> void:
 	await wait(0.3); await shot("54_topo")
 	check(topped and player.global_position.y > 3.4 and player.global_position.z < -8.3 and player.mode == Player.Mode.EXPLORE,
 		"W to the top: over it and standing up there (y %.2f)" % player.global_position.y)
+	# up there he is out of a mutant's reach: it comes to the foot of the wall but never strikes
+	var hp := player.health
+	var m: Mutante = L.add_enemy(Mutante.new(), Vector3(6, 0, -6.5), PI)
+	m.target = player; m.active = true; m.go(Enemy.State.CHASE, "Walk")
+	await put(player, Vector3(6, 3.51, -8.6), PI); player.velocity = Vector3.ZERO
+	var below := await until(func(): return Vector2(m.global_position.x - 6, m.global_position.z + 8.6).length() < 1.3, 6.0)
+	var struck := false
+	for k in 40:
+		await wait(0.1)
+		struck = struck or m.state == Enemy.State.ATTACK
+	await shot("55_fora_de_alcance")
+	check(below and not struck and player.health == hp, "on the wall top, the mutant right below (%.1f m flat) never strikes: hp %.2f -> %.2f"
+		% [Vector2(m.global_position.x - 6, m.global_position.z + 8.6).length(), hp, player.health])
+	m.active = false; m.queue_free()
 	put(player, Vector3(0, 0, 4), 0.0); await wait(0.5)

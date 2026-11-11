@@ -21,6 +21,7 @@ var stride := 1.28              # its Walk clip's speed at 1x: the clip is sped 
 var turn_speed := 4.0
 var attack_range := 1.3         # starts a blow when this close
 var attack_reach := 1.9         # the blow connects up to here, if the player is in front
+var attack_height := 1.0        # ...and no more than this above / below it: up on a wall or a ledge he is out of reach
 var attack_hit := 18.0 / 30.0   # when in the Attack clip it connects
 var attack_cooldown := 0.6
 var attack_track := 0.5         # how much it can still turn to follow you during the wind-up
@@ -134,13 +135,14 @@ func _think(delta: float) -> void:
 			go(State.IDLE, "Idle", 0.5)
 		return
 	var to := target.global_position - global_position; to.y = 0
+	var level := absf(target.global_position.y - global_position.y) < attack_height  # within reach up / down
 	match state:
 		State.ATTACK:
-			_attack(to, delta)
+			_attack(to, level, delta)
 		State.HIT:
 			_stagger()
 		_:
-			_decide(to, to.length(), delta)
+			_decide(to, to.length() if level else maxf(to.length(), attack_range + 0.01), delta)  # out of reach: no blow tried
 
 
 ## What it does when not striking or staggering: IDLE, ALERT, CHASE. Each creature its own.
@@ -148,12 +150,12 @@ func _decide(_to: Vector3, _dist: float, _delta: float) -> void:
 	pass
 
 
-func _attack(to: Vector3, delta: float) -> void:
+func _attack(to: Vector3, level: bool, delta: float) -> void:
 	if t < attack_hit:
 		_face(to, delta * attack_track)
 	elif not hit_done:
 		hit_done = true
-		if to.length() < attack_reach and (-global_basis.z).dot(to.normalized()) > 0.5:
+		if level and to.length() < attack_reach and (-global_basis.z).dot(to.normalized()) > 0.5:
 			target.take_damage(attack_damage, self)
 	if t >= ap.get_animation("Attack").length:
 		cooldown = attack_cooldown
