@@ -75,7 +75,7 @@ func _observed() -> bool:
 	var p := global_position + Vector3(0, 1.2, 0)
 	if cam == null or not cam.is_position_in_frustum(p):
 		return false
-	var lantern_in_hand: bool = target.lantern_out and target.mode in [Player.Mode.EXPLORE, Player.Mode.CROUCH]
+	var lantern_in_hand: bool = target.holds_lantern()
 	if cam.global_position.distance_to(p) > (LIT if lantern_in_hand else DIM):
 		return false
 	var q := PhysicsRayQueryParameters3D.create(cam.global_position, p, 1, [get_rid(), target.get_rid()])

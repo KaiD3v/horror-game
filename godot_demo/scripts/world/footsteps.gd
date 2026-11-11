@@ -30,5 +30,5 @@ func _process(delta: float) -> void:
 		_stride = 0.0; steps += 1
 		_sound.stream = Audio.sfx("passo_%s_%d" % [kind, randi_range(1, 4)])
 		_sound.pitch_scale = randf_range(0.9, 1.1)
-		_sound.volume_db = -16.0 if player.mode == Player.Mode.CROUCH else (-5.0 if v > 1.5 else -8.0)
+		_sound.volume_db = -16.0 if player.crouched else (-5.0 if v > 1.5 else -8.0)
 		_sound.play()

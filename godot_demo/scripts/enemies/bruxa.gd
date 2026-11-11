@@ -61,7 +61,7 @@ func _physics_process(delta: float) -> void:
 	var moving := not flight.is_empty() or (state == State.CHASE and Vector2(velocity.x, velocity.z).length() > 0.3)
 	wings.volume_db = move_toward(wings.volume_db, -6.0 if moving and state != State.DEAD else -80.0, 120.0 * delta)
 	if target and shine:
-		var lit: bool = target.lantern_out and global_position.distance_to(target.global_position) < LURE
+		var lit: bool = target.holds_lantern() and global_position.distance_to(target.global_position) < LURE
 		shine.emission_energy_multiplier = move_toward(shine.emission_energy_multiplier, 4.0 if lit else 0.6, 6.0 * delta)
 	super(delta)
 
@@ -109,7 +109,7 @@ func _decide(to: Vector3, dist: float, delta: float) -> void:
 ## The light that calls her from where she is: the lantern in hand, or else a candle in plain view.
 func _lure(dist: float) -> Node3D:
 	var eye := global_position + Vector3(0, 1.2, 0)
-	if target.lantern_out and dist < LURE and _clear_line(eye):
+	if target.holds_lantern() and dist < LURE and _clear_line(eye):
 		return target
 	for v: Node3D in get_tree().get_nodes_in_group("vela"):
 		if eye.distance_to(v.global_position) < LURE:
@@ -150,11 +150,11 @@ func _hunt(to: Vector3, dist: float, delta: float) -> void:
 	if lamp != target:  # round a candle, a moth at a flame: no darts; your lantern (or you, close) takes her off it
 		if not is_instance_valid(lamp) or not lamp.is_in_group("vela"):
 			lamp = target; _go_roost(); return
-		if (target.lantern_out and dist < LURE) or dist < DIM:
+		if (target.holds_lantern() and dist < LURE) or dist < DIM:
 			lamp = target
 		else:
 			_circle(lamp.global_position, delta); return
-	var lit: bool = (target.lantern_out and dist < LURE * 1.3) or dist < DIM
+	var lit: bool = (target.holds_lantern() and dist < LURE * 1.3) or dist < DIM
 	if lit:
 		last_light = target.global_position; searching = 0.0
 	elif searching == 0.0:

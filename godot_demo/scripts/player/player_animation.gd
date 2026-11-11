@@ -4,12 +4,17 @@
 #   walk/jog/sprint (x2: lantern in hand l_, on the hook f_) -- l_/f_explore -- hands (Blend2)       walk legs -----+-- combat (Blend2, legs only)
 #   machete / crossbow carried low (c_/cf_/x_explore: their own idle/walk/jog/sprint; c_hands picks the machete set
 #   with the lantern in hand c_ or on the hook cf_) <-> raised: combat_ready, xbow_ready
-#   explore / combat_ready / death / crouch / xbow_ready -- mode (Transition) -- action (OneShot <- shot) -- output
+#   explore / combat_ready / death / crouch / xbow_ready -- mode (Transition) -- crouch_legs -- arm -- upper -- action
+#   crouch_legs: crouched with a weapon out, the legs kneel / sneak (k_crouch) under it (Blend2, legs only)
+#   the one-shots, by how much of him they move (Player.LAYER): arm (OneShot <- shot_arm: the right arm and the
+#   lantern, Stow_Lantern with the machete in the other hand), upper (<- shot_up: all but the legs, so he walks on:
+#   draw, sheathe, reload, shoot), action (<- shot: the whole body, he stops: attacks, dodges, crouching down)
 # Player drives it by the parameters: <l|f>_explore, _jog_mix, _run_mix, _walk_ts... (see player.gd).
 class_name PlayerAnimation
 
 const MODE_INPUTS := ["explore", "combat", "dead", "crouch", "xbow", "climb"]  # = Player.Mode
 const LEG_BONES := ["hips", "thigh.L", "thigh.R", "shin.L", "shin.R", "foot.L", "foot.R"]
+const ARM_BONES := ["upper_arm.R", "forearm.R", "hand.R", "grip.R", "lantern"]  # the lantern's arm (the arm one-shot)
 
 
 static func build(model: Node3D, ap: AnimationPlayer) -> AnimationTree:
@@ -63,10 +68,28 @@ static func build(model: Node3D, ap: AnimationPlayer) -> AnimationTree:
 	for i in MODE_INPUTS.size():
 		bt.connect_node("mode", i, ["hands", "combat_ready", "death", "crouch_hands", "xbow_ready", "climb"][i])
 
-	bt.add_node("shot", anim.call("Draw_Machete"))
-	var one := AnimationNodeOneShot.new(); one.fadein_time = 0.06; one.fadeout_time = 0.12
-	bt.add_node("action", one)
-	bt.connect_node("action", 0, "mode"); bt.connect_node("action", 1, "shot")
+	bt.add_node("k_kneel", anim.call("Crouch_Idle_Free")); bt.add_node("k_sneak", anim.call("Crouch_Walk_Free"))
+	bt.add_node("k_crouch", AnimationNodeBlend2.new())   # (legs only below) kneeling still <-> sneaking, by speed
+	bt.connect_node("k_crouch", 0, "k_kneel"); bt.connect_node("k_crouch", 1, "k_sneak")
+	bt.add_node("crouch_legs", _legs_only(ap))
+	bt.connect_node("crouch_legs", 0, "mode"); bt.connect_node("crouch_legs", 1, "k_crouch")
+
+	var skel := _skeleton_path(ap)
+	var sk: Skeleton3D = Nodes.find_first(model, "Skeleton3D")
+	var under := "crouch_legs"
+	for l in [["arm", "shot_arm"], ["upper", "shot_up"], ["action", "shot"]]:
+		var one := AnimationNodeOneShot.new(); one.fadein_time = 0.06; one.fadeout_time = 0.12
+		if l[0] != "action":
+			one.filter_enabled = true
+			for b in sk.get_bone_count():
+				var bone := sk.get_bone_name(b)
+				var front_back := bone.begins_with("skirt.") and not bone.begins_with("skirt.S.")  # pushed by the legs
+				if (bone in ARM_BONES) if l[0] == "arm" else not (bone in LEG_BONES or front_back):
+					one.set_filter_path(NodePath("%s:%s" % [skel, bone]), true)
+		bt.add_node(l[1], anim.call("Draw_Machete"))
+		bt.add_node(l[0], one)
+		bt.connect_node(l[0], 0, under); bt.connect_node(l[0], 1, l[1])
+		under = l[0]
 	bt.connect_node("output", 0, "action")
 
 	var tree := AnimationTree.new(); tree.tree_root = bt

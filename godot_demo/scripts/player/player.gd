@@ -1,6 +1,8 @@
 # The protagonist (models/characters/protagonista.glb), third person, for every level.
 # Modes: EXPLORE (lantern, Idle/Walk) -> COMBAT (machete) / XBOW (crossbow) / CROUCH -> DEAD. One-shot actions
-# (draw, sheathe, attacks, dodge, hit) play over the mode (PlayerAnimation). Camera over the right shoulder; drawing
+# (draw, sheathe, attacks, dodge, hit) play over the mode (PlayerAnimation), each over as much of him as it needs
+# (LAYER): drawing, sheathing, reloading, shooting and the lantern leave the legs walking. Crouching (`crouched`) goes
+# with any weapon: exploring it is the CROUCH mode, armed only the legs kneel. Camera over the right shoulder; drawing
 # the machete eases it closer/lower, crouching drops it with his head. The coat flaps have spring physics
 # (CoatPhysics); bolts fly on their own (Bolt); how hurt and tired he is shows on his body (PlayerCondition).
 # Controls (GameInput): WASD jog (Ctrl walks, Shift sprints), mouse look, C crouch, 1 machete, 2 crossbow (each again:
@@ -49,6 +51,11 @@ const FALL_PER := 1.5         # ...beyond it, a wound for every this much more (
 const STEP_EASE := 12.0       # 1/s: how fast the body catches up with the root after a step (Steps): quick at first
 const WEAPON_ITEM := {Mode.COMBAT: "facao", Mode.XBOW: "besta"}  # what you need to have (Inventory) to hold it
 const COMBO_FROM := 12.0 / 30.0   # LMB after this point of a slash queues the overhead chop
+# which one-shot of PlayerAnimation plays an action: "upper" leaves him walking, "arm" only moves the lantern's arm;
+# the rest ("action": attacks, dodges, flinches, crouching down) is the whole body and stops him
+const LAYER := {"Draw_Machete": "upper", "Draw_Crossbow": "upper", "Reload_Crossbow": "upper",
+	"Shoot_Crossbow": "upper", "Block_Hit": "upper", "Stow_Lantern": "arm"}
+const SHOTS := {"arm": "shot_arm", "upper": "shot_up", "action": "shot"}
 # Over-the-shoulder camera (right shoulder). Combat pulls in closer and further aside, so the target stays clear.
 const CAM_EXPLORE := {"height": 1.55, "side": 0.45, "length": 1.7, "fov": 62.0}
 const CAM_COMBAT := {"height": 1.5, "side": 0.6, "length": 1.35, "fov": 54.0}
@@ -68,6 +75,8 @@ var stamina_max := STAMINA_MAX  # an upgrade raises it (the HUD's rosary gets mo
 var winded := false
 var rest := 0.0           # time since the last sprint
 var mode := Mode.EXPLORE
+var crouched := false     # down on his heels: the CROUCH mode exploring, or kneeling with a weapon out
+var crouch_amt := 0.0     # the kneeling legs' blend under a weapon, eased
 var action := ""          # one-shot playing, "" = none
 var action_t := 0.0
 var action_len := 0.0
@@ -95,7 +104,6 @@ var coat: SpringBoneSimulator3D
 var loaded := false                # a bolt on the rail (single shot: reload after every shot)
 var aim_anim: AnimationNodeAnimation
 var tree: AnimationTree
-var shot: AnimationNodeAnimation
 var pivot: Node3D
 var pitch: Node3D
 var cam: Camera3D
@@ -123,7 +131,7 @@ func _ready() -> void:
 	model.rotation.y = PI  # glTF faces +Z, the body's forward is -Z
 	skeleton = Nodes.find_first(model, "Skeleton3D")
 	tree = PlayerAnimation.build(model, Nodes.find_first(model, "AnimationPlayer"))
-	shot = tree.tree_root.get_node("shot"); aim_anim = tree.tree_root.get_node("aim")
+	aim_anim = tree.tree_root.get_node("aim")
 	carry_anim = tree.tree_root.get_node("x_carry")
 	tree.set("parameters/x_low/blend_amount", 1.0)  # the carried crossbow's bolt / string: always from x_carry
 	coat = CoatPhysics.setup(skeleton)
@@ -172,9 +180,9 @@ func _unhandled_input(e: InputEvent) -> void:
 			crouch()
 		elif e.is_action_pressed("reload"):
 			reload()
-		elif e.is_action_pressed("lantern"):  # 3: armed, the weapon away; exploring, the lantern on / off the hook
-			if mode == Mode.COMBAT or mode == Mode.XBOW:
-				equip(Mode.EXPLORE)
+		elif e.is_action_pressed("lantern"):  # 3: the lantern on / off its hook (the crossbow needs both hands: away)
+			if mode == Mode.XBOW:
+				_set_lantern(true); equip(Mode.EXPLORE)
 			else:
 				toggle_lantern()
 		elif e.is_action_pressed("heal"):
@@ -183,15 +191,35 @@ func _unhandled_input(e: InputEvent) -> void:
 
 # --- actions ---------------------------------------------------------------------------------------
 func play(n: String, backward := false) -> void:
+	var layer: String = LAYER.get(n, "action")
+	var shot: AnimationNodeAnimation = tree.tree_root.get_node(SHOTS[layer])
 	shot.animation = n
 	shot.play_mode = AnimationNodeAnimation.PLAY_MODE_BACKWARD if backward else AnimationNodeAnimation.PLAY_MODE_FORWARD
-	tree.set("parameters/action/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE)
+	for l in SHOTS:  # one action at a time: the one before it stops
+		tree.set("parameters/%s/request" % l, AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE if l == layer else AnimationNodeOneShot.ONE_SHOT_REQUEST_ABORT)
 	action = n; action_t = 0.0; hit_done = false; swung = false; queued = ""
 	action_len = tree.get_animation(n).length
 
 
+## Whether he can walk: nothing playing, or an action that leaves the legs alone (LAYER).
+func legs_free() -> bool:
+	return action == "" or LAYER.has(action)
+
+
+## The mode with no weapon out: exploring, or crouched.
+func unarmed() -> bool:
+	return mode == Mode.EXPLORE or mode == Mode.CROUCH
+
+
+## The lantern in his hand (not on its hook): it is never in hand with the crossbow out, both hands are on it.
+func holds_lantern() -> bool:
+	return lantern_out and mode != Mode.XBOW and mode != Mode.CLIMB
+
+
 func set_mode(m: Mode) -> void:
 	mode = m
+	if m == Mode.DEAD or m == Mode.CLIMB:
+		crouched = false
 	tree.set("parameters/mode/transition_request", PlayerAnimation.MODE_INPUTS[m])
 
 
@@ -208,14 +236,12 @@ func equip(m: Mode) -> void:
 func _equip_next() -> void:
 	if wanted < 0 or action != "" or mode == Mode.DEAD:
 		return
-	if mode == wanted:
+	if mode == wanted or (wanted == Mode.EXPLORE and unarmed()):  # crouched: he stays down
 		wanted = -1
-	elif mode == Mode.COMBAT or (mode == Mode.EXPLORE and wanted == Mode.COMBAT):
+	elif mode == Mode.COMBAT or (unarmed() and wanted == Mode.COMBAT):
 		toggle_weapon()
-	elif mode == Mode.XBOW or (mode == Mode.EXPLORE and wanted == Mode.XBOW):
+	elif mode == Mode.XBOW or (unarmed() and wanted == Mode.XBOW):
 		toggle_crossbow()
-	elif mode == Mode.CROUCH:
-		crouch()
 
 
 ## Puts away whatever is in his hands and stands up; returns when he has (a scripted moment starts with them free).
@@ -224,6 +250,8 @@ func free_hands() -> void:
 		equip(Mode.EXPLORE)
 	var t0 := Time.get_ticks_msec()
 	while (mode != Mode.EXPLORE or action != "") and Time.get_ticks_msec() - t0 < 4000:
+		if mode == Mode.CROUCH and action == "" and wanted < 0:
+			crouch()  # ...and up on his feet
 		await get_tree().process_frame
 
 
@@ -233,14 +261,18 @@ func owns(m: Mode) -> bool:
 
 
 func toggle_weapon() -> void:
-	if action != "" or mode == Mode.CROUCH or mode == Mode.XBOW or (mode == Mode.EXPLORE and not owns(Mode.COMBAT)):
+	if action != "" or mode == Mode.XBOW or (unarmed() and not owns(Mode.COMBAT)):
 		return
-	if mode == Mode.EXPLORE:
+	if unarmed():
 		play("Draw_Machete"); set_mode(Mode.COMBAT)   # the one-shot hides the switch underneath
 		sfx("facao_sacar", -4.0)
 	else:
-		play("Draw_Machete", true); set_mode(Mode.EXPLORE)  # sheathing = the draw backwards
+		play("Draw_Machete", true); set_mode(_unarmed_mode())  # sheathing = the draw backwards
 		sfx("facao_guardar", -4.0)
+
+
+func _unarmed_mode() -> Mode:
+	return Mode.CROUCH if crouched else Mode.EXPLORE
 
 
 func attack(n: String) -> void:
@@ -257,6 +289,7 @@ func attack(n: String) -> void:
 		toggle_weapon()
 	elif action == "" or action == "Block_Hit":
 		if spend(COST[n]):
+			crouched = false  # a swing stands him up
 			play(n)
 	elif action == "Attack_Slash" and action_t >= COMBO_FROM and queued == "":
 		if spend(COST.Attack_Overhead):
@@ -266,6 +299,7 @@ func attack(n: String) -> void:
 func dodge() -> void:
 	if mode == Mode.COMBAT and (action == "" or action == "Block_Hit" or action.begins_with("Attack")) and spend(COST.Dodge):
 		var side := Input.get_axis("left", "right")
+		crouched = false
 		play("Dodge_Left" if side < -0.5 else "Dodge_Right" if side > 0.5 else "Dodge_Back")
 
 
@@ -327,17 +361,17 @@ func _track_lock(delta: float) -> void:
 	pitch.rotation.x = lerpf(pitch.rotation.x, clampf(atan2(to.y, Vector2(to.x, to.z).length()), -1.1, 0.35), k)
 
 
-func toggle_crossbow() -> void:  # exploring only; holstering = the draw backwards (the lantern back in hand)
-	if action != "" or (mode == Mode.EXPLORE and not owns(Mode.XBOW)):
+func toggle_crossbow() -> void:  # unarmed only; holstering = the draw backwards (the lantern back in hand)
+	if action != "" or mode == Mode.COMBAT or (unarmed() and not owns(Mode.XBOW)):
 		return
 	if loaded:  # it travels uncocked in the holster; a loaded bolt goes back in the quiver
 		Inventory.add("virote")
 	_set_loaded(false)
-	if mode == Mode.EXPLORE:
+	if unarmed():
 		play("Draw_Crossbow"); set_mode(Mode.XBOW)
 		sfx("besta_sacar", -5.0)
 	elif mode == Mode.XBOW:
-		play("Draw_Crossbow", true); set_mode(Mode.EXPLORE)
+		play("Draw_Crossbow", true); set_mode(_unarmed_mode())
 		sfx("besta_sacar", -5.0, 0.88)  # back into the holster: the same leather, a touch lower
 
 
@@ -356,22 +390,32 @@ func _set_loaded(v: bool) -> void:
 	carry_anim.animation = "Carry_Crossbow" if v else "Carry_Crossbow_Empty"
 
 
-func crouch() -> void:  # exploring only; standing up = Crouch_Down backwards
+func crouch() -> void:  # exploring: Crouch_Down (standing up = backwards); armed: the legs alone kneel / rise
+	if mode == Mode.COMBAT or mode == Mode.XBOW:
+		if legs_free():
+			crouched = not crouched
+		return
 	if action != "":
 		return
 	var clip := "Crouch_Down" if lantern_out else "Crouch_Down_Free"
 	if mode == Mode.EXPLORE:
-		play(clip); set_mode(Mode.CROUCH)
+		play(clip); set_mode(Mode.CROUCH); crouched = true
 	elif mode == Mode.CROUCH:
-		play(clip, true); set_mode(Mode.EXPLORE)
+		play(clip, true); set_mode(Mode.EXPLORE); crouched = false
 
 
-func toggle_lantern() -> void:  # exploring: hang it on the belt hook (hands free) or take it back (the hang backwards)
-	if action != "" or mode != Mode.EXPLORE:
+## Hang it on the belt hook (the right hand free) or take it back (the hang backwards): exploring, crouched or with
+## the machete in the other hand; only the right arm moves.
+func toggle_lantern() -> void:
+	if action != "" or not (unarmed() or mode == Mode.COMBAT):
 		return
 	play("Stow_Lantern", not lantern_out)
-	lantern_out = not lantern_out
+	_set_lantern(not lantern_out)
 	sfx("lamparina", -6.0)
+
+
+func _set_lantern(out: bool) -> void:
+	lantern_out = out
 	for n in ["hands", "crouch_hands", "c_hands"]:
 		tree.set("parameters/%s/blend_amount" % n, 0.0 if lantern_out else 1.0)
 
@@ -408,7 +452,8 @@ func take_damage(n: float, from: Node3D = null) -> void:
 		shake = 0.25; flicker = 0.4
 		sfx("dano", -2.0)
 	if health <= 0.0:
-		tree.set("parameters/action/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_ABORT)
+		for l in SHOTS:
+			tree.set("parameters/%s/request" % l, AnimationNodeOneShot.ONE_SHOT_REQUEST_ABORT)
 		action = ""
 		set_mode(Mode.DEAD)
 		died.emit()
@@ -448,25 +493,30 @@ func _physics_process(delta: float) -> void:
 	blocking = mode == Mode.COMBAT and Input.is_action_pressed("block") and (action == "" or action == "Block_Hit")
 	block_amt = move_toward(block_amt, 1.0 if blocking else 0.0, BLOCK_RAISE * delta)
 	aiming = mode == Mode.XBOW and (Input.is_action_pressed("block") or lock != null)
-	raised = aiming or (mode == Mode.XBOW and action == "Shoot_Crossbow") or (mode == Mode.COMBAT and (blocking or lock != null or action != ""))
+	raised = aiming or (mode == Mode.XBOW and action == "Shoot_Crossbow") \
+		or (mode == Mode.COMBAT and (blocking or lock != null or (action != "" and not LAYER.has(action))))  # mid-swing
 	raise_amt = move_toward(raise_amt, 1.0 if raised else 0.0, BLOCK_RAISE * delta)
 	for n in ["combat_ready", "xbow_ready"]:
 		tree.set("parameters/%s/blend_amount" % n, raise_amt)
 	tree.set("parameters/block/blend_amount", block_amt)
-	if action == "" and mode != Mode.DEAD and not busy:
+	crouch_amt = move_toward(crouch_amt, 1.0 if crouched else 0.0, BLOCK_RAISE * delta)
+	tree.set("parameters/crouch_legs/blend_amount", crouch_amt)
+	if legs_free() and mode != Mode.DEAD and not busy:
 		var input := Input.get_vector("left", "right", "forward", "back")
 		move = pivot.global_basis * Vector3(input.x, 0, input.y)
 		move.y = 0
 		move = move.normalized() * min(input.length(), 1.0)
-		if mode == Mode.CROUCH:
-			speed = CROUCH_SPEED
-		elif raised:
+		if raised:
 			speed = BLOCK_SPEED if blocking else COMBAT_SPEED
+			if crouched:
+				speed = minf(speed, CROUCH_SPEED)
+		elif crouched:
+			speed = CROUCH_SPEED
 		else:
 			speed = RUN_SPEED if _sprinting(input) else (WALK_SPEED if Input.is_action_pressed("walk") else JOG_SPEED)
 	_tick_stamina(delta, speed == RUN_SPEED)
-	var hv := Vector3.ZERO  # actions stop you dead, as before
-	if action == "":
+	var hv := Vector3.ZERO  # whole-body actions stop you dead
+	if legs_free():
 		hv = Vector3(velocity.x, 0, velocity.z).move_toward(move * speed, ACCEL * delta)
 	if DODGE_DIR.has(action) and action_t >= DODGE_FROM and action_t < DODGE_TO:
 		hv = global_basis * DODGE_DIR[action] * DODGE_DIST / (DODGE_TO - DODGE_FROM)
@@ -505,13 +555,13 @@ func _physics_process(delta: float) -> void:
 		tree.set("parameters/%s_walk_ts/scale" % p, clamp(moving / WALK_SPEED, 1.0, JOG_SPEED / WALK_SPEED))
 		tree.set("parameters/%s_jog_ts/scale" % p, clamp(moving / JOG_SPEED, WALK_SPEED / JOG_SPEED, RUN_SPEED / JOG_SPEED))
 		tree.set("parameters/%s_run_ts/scale" % p, RUN_SPEED / RUN_STRIDE)
-		if p == "l" or p == "f":
-			tree.set("parameters/%s_crouch/blend_amount" % p, clamp(moving / CROUCH_SPEED, 0.0, 1.0))
+		if p == "l" or p == "f" or p == "c":  # (c: the k_ legs under a weapon)
+			tree.set("parameters/%s_crouch/blend_amount" % ("k" if p == "c" else p), clamp(moving / CROUCH_SPEED, 0.0, 1.0))
 	# hung but the clip has it in hand (machete, crossbow, death): keep it on the hook
-	var own_clip := (action == "" or action == "Stow_Lantern" or action == "Crouch_Down_Free") 		and (mode == Mode.EXPLORE or mode == Mode.CROUCH)
+	var own_clip := action == "Stow_Lantern" or ((action == "" or action == "Crouch_Down_Free") and unarmed())
 	hook.active = not lantern_out and not own_clip
-	tree.set("parameters/xbow/blend_amount", clamp(moving / COMBAT_SPEED, 0.0, 1.0) if action == "" else 0.0)
-	tree.set("parameters/combat/blend_amount", clamp(moving / COMBAT_SPEED, 0.0, 1.0) if action == "" else 0.0)
+	tree.set("parameters/xbow/blend_amount", clamp(moving / COMBAT_SPEED, 0.0, 1.0) if legs_free() else 0.0)
+	tree.set("parameters/combat/blend_amount", clamp(moving / COMBAT_SPEED, 0.0, 1.0) if legs_free() else 0.0)
 
 
 func _sprinting(input: Vector2) -> bool:
@@ -565,6 +615,8 @@ func _process(delta: float) -> void:
 	_track_lock(delta)
 	var goal: Dictionary = cam_override if not cam_override.is_empty() else CAM_COMBAT if mode == Mode.COMBAT and raised else CAM_AIM if mode == Mode.XBOW and raised \
 		else CAM_CROUCH if mode == Mode.CROUCH else CAM_EXPLORE
+	if crouched and mode != Mode.CROUCH and cam_override.is_empty():  # kneeling with a weapon: the camera drops with him
+		goal = goal.duplicate(); goal.height -= 0.4
 	for k in goal:
 		cam_now[k] = lerp(float(cam_now[k]), float(goal[k]), min(1.0, CAM_BLEND * delta))
 	_apply_cam()

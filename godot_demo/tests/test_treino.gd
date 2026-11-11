@@ -43,7 +43,8 @@ func run() -> void:
 	Input.action_release("sprint"); Input.action_release("back")
 	check(player.winded and absf(v - Player.JOG_SPEED) < 0.05, "out of stamina: winded, back to the jog (%.2f m/s)" % v)
 	check(player.condition.tired > 0.5 and player.condition.pant.playing and L.hud.vision.visible and not stamina_hud(),
-		"winded: he pants and the screen's edges darken, no bar (tired %.2f)" % player.condition.tired)
+		"winded: he pants and the screen's edges darken, no bar (tired %.2f pant %s edges %s bar %s)"
+		% [player.condition.tired, player.condition.pant.playing, L.hud.vision.visible, stamina_hud()])
 	await wait(1.6)
 	check(player.stamina > 0.2, "stamina recovers after resting (%.2f)" % player.stamina)
 	player.stamina = Player.STAMINA_MAX; player.winded = false
@@ -193,6 +194,7 @@ func run() -> void:
 	await steps_tests()
 	await descend_tests()
 	await hud_tests()
+	await equip_tests()
 	player.health = 2
 
 	player.take_damage(2); await wait(1.8); await shot("9_dead")
@@ -380,9 +382,13 @@ func wheel_tests() -> void:
 	await tap("draw"); await wait(2.8)
 	check(player.mode == Player.Mode.COMBAT and player.machete_in_hand() and not player.crossbow_in_hand(),
 		"crossbow out, 1: holstered and the machete drawn")
-	await tap("lantern"); await wait(1.3)
+	await tap("lantern"); await wait(1.0)
+	check(player.mode == Player.Mode.COMBAT and player.machete_in_hand() and not player.lantern_out,
+		"3 with the machete out: the lantern onto its hook, the machete stays")
+	await tap("lantern"); await wait(1.0)
+	await tap("draw"); await wait(1.3)
 	check(player.mode == Player.Mode.EXPLORE and not player.machete_in_hand() and not player.lantern_hung(),
-		"3 with the machete out: sheathed, the lantern in hand")
+		"3 again and 1: the lantern back in hand, the machete sheathed")
 	await tap("crossbow"); await wait(1.4)
 	await tap("weapons"); await wait(1.4)
 	check(player.mode == Player.Mode.EXPLORE and not player.crossbow_in_hand() and not L.wheel.open,
@@ -727,6 +733,7 @@ func descend_tests() -> void:
 		"walking off the 3.5 m top: a hard landing, one wound (hp %.1f)" % player.health)
 	put(player, Vector3(0, 5.0, 6), 0.0); await until(func(): return player.global_position.y < 0.1 and player.is_on_floor(), 3.0); await wait(0.2)
 	check(player.health == 0.0 and player.mode == Player.Mode.DEAD, "5 m more with two wounds left: dead (hp %.1f)" % player.health)
+	player.health = player.max_health; player.set_mode(Player.Mode.EXPLORE)  # up again for the tests after
 
 
 ## The corners (HudStatus): empty while nothing changes; a blow shows the hearts, spent breath the beads, a count that
@@ -763,3 +770,89 @@ func hud_tests() -> void:
 	check(st.rows.is_empty(), "the crossbow away: its bolts fade too")
 	player.max_health = 3; player.stamina_max = Player.STAMINA_MAX
 	player.health = player.max_health; player.stamina = player.stamina_max
+
+
+func _hips_y() -> float:
+	return player.skeleton.get_bone_global_pose(player.skeleton.find_bone("hips")).origin.y
+
+
+func _speed() -> float:
+	return Vector2(player.velocity.x, player.velocity.z).length()
+
+
+## What goes with what: reloading, drawing and sheathing on the move; the lantern hung / taken with the machete in
+## the other hand; crouching with either weapon (and staying down through draw, sheathe, aim, shot); 3 with the
+## crossbow out puts it away for the lantern.
+func equip_tests() -> void:
+	Inventory.give_tools(); Inventory.items["virote"] = 5
+	player.health = player.max_health; player.stamina = player.stamina_max; player.winded = false
+	if player.mode != Player.Mode.EXPLORE:
+		await player.free_hands()
+	if not player.lantern_out:
+		await tap("lantern"); await wait(0.8)
+	var p0 := player.global_position
+	# the crossbow, reloaded while jogging, then while sprinting
+	await tap("crossbow"); await wait(1.4)
+	Input.action_press("back"); await wait(0.6)
+	await tap("reload"); await wait(0.5)
+	var rv := _speed()
+	check(player.action == "Reload_Crossbow" and rv > Player.JOG_SPEED - 0.1, "reloading while jogging: he keeps going (%.2f m/s)" % rv)
+	await until(func(): return player.action == "", 3.0)
+	check(player.loaded, "...and the bolt is on the rail")
+	player.global_position = p0
+	Input.action_press("block"); await wait(0.3); await tap("attack"); await wait(0.5); Input.action_release("block")
+	Input.action_press("sprint"); await wait(0.4)
+	await tap("reload"); await wait(0.5)
+	rv = _speed()
+	Input.action_release("sprint"); Input.action_release("back")
+	check(player.action == "Reload_Crossbow" and rv > Player.RUN_SPEED - 0.2, "...and while sprinting (%.2f m/s)" % rv)
+	await until(func(): return player.action == "", 3.0)
+	player.global_position = p0; player.velocity = Vector3.ZERO; await wait(0.3)
+	# crouched with the crossbow: aim and shoot down there
+	var stand_y := _hips_y()
+	await tap("crouch"); await wait(0.5)
+	check(player.crouched and player.mode == Player.Mode.XBOW and _hips_y() < stand_y - 0.2,
+		"C with the crossbow out: he kneels, the crossbow stays (hips %.2f -> %.2f m)" % [stand_y, _hips_y()])
+	Input.action_press("block"); await wait(0.4)
+	check(player.aiming and player.crouched and player.cam_now.height < Player.CAM_AIM.height - 0.25, "...aims kneeling, the camera low")
+	await shot("equip_xbow_crouch")
+	await tap("attack"); await wait(0.6)
+	Input.action_release("block")
+	check(not player.loaded and player.crouched, "...and shoots without getting up")
+	Input.action_press("back"); await wait(0.6)
+	var cv := _speed(); Input.action_release("back")
+	check(absf(cv - Player.CROUCH_SPEED) < 0.05, "...sneaks with it (%.2f m/s)" % cv)
+	# 3 with the crossbow out: it goes away, the lantern comes to hand; he stays down
+	await tap("lantern"); await until(func(): return player.mode != Player.Mode.XBOW and player.action == "", 3.0)
+	check(player.mode == Player.Mode.CROUCH and player.lantern_out and player.crouched, "3 with the crossbow: holstered, the lantern back, still crouched")
+	# the machete drawn crouched: still down; sheathed: still down
+	await tap("draw"); await until(func(): return player.action == "", 2.0)
+	check(player.mode == Player.Mode.COMBAT and player.crouched and _hips_y() < stand_y - 0.2, "1 crouched: the machete out, he stays down")
+	await shot("equip_machete_crouch")
+	await tap("crouch"); await wait(0.4)
+	check(not player.crouched and _hips_y() > stand_y - 0.1, "C again: up, the machete still out")
+	# the lantern with the machete in the other hand
+	await tap("lantern"); await wait(0.8)
+	var hung := [false]
+	player.skeleton.skeleton_updated.connect(func(): hung[0] = player.lantern_hung(), CONNECT_ONE_SHOT)
+	await player.skeleton.skeleton_updated
+	check(player.mode == Player.Mode.COMBAT and player.machete_in_hand() and not player.lantern_out and hung[0],
+		"3 with the machete out: the lantern onto its hook, the machete stays in hand")
+	await tap("lantern"); await wait(0.8)
+	check(player.mode == Player.Mode.COMBAT and player.lantern_out and not player.lantern_hung(), "3 again: back in hand, machete still out")
+	# sheathing on the move
+	player.global_position = p0
+	Input.action_press("back"); await wait(0.6)
+	await tap("draw"); await wait(0.3)
+	var dv := _speed(); Input.action_release("back")
+	check(player.action == "Draw_Machete" and dv > Player.JOG_SPEED - 0.1, "sheathing while jogging (%.2f m/s)" % dv)
+	await until(func(): return player.action == "", 2.0)
+	# a swing stands him up
+	await tap("draw"); await until(func(): return player.action == "", 2.0)
+	await tap("crouch"); await wait(0.4)
+	await tap("attack"); await wait(0.2)
+	check(not player.crouched and player.action == "Attack_Slash", "a swing from crouched stands him up")
+	await until(func(): return player.action == "", 2.0)
+	await player.free_hands()
+	check(player.mode == Player.Mode.EXPLORE and not player.crouched, "free_hands: everything away, on his feet")
+	player.global_position = p0; player.velocity = Vector3.ZERO

@@ -57,7 +57,7 @@ func _process(delta: float) -> void:
 	if flying:
 		_fly(delta)
 		return
-	var near := SCARE_CROUCH if player.get("mode") == Player.Mode.CROUCH else SCARE
+	var near := SCARE_CROUCH if player.get("crouched") == true else SCARE
 	if player.global_position.distance_to(global_position) < near:
 		scare()
 		return

@@ -94,7 +94,7 @@ func noise() -> float:
 	var v := Vector2(p.velocity.x, p.velocity.z).length()
 	if v > Player.JOG_SPEED + 0.2:
 		return HEAR.sprint
-	if p.mode == Player.Mode.CROUCH:
+	if p.crouched:
 		return HEAR.sneak if v > 0.1 else HEAR.still
 	if v > Player.WALK_SPEED + 0.15:
 		return HEAR.jog

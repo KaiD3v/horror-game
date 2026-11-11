@@ -83,7 +83,7 @@ func sees(to: Vector3, dist: float) -> bool:
 	var p: Player = target
 	if p.mode == Player.Mode.DEAD:
 		return false
-	var reach: float = SEE.lantern if p.lantern_out else (SEE.crouch if p.mode == Player.Mode.CROUCH else SEE.dark)
+	var reach: float = SEE.lantern if p.holds_lantern() else (SEE.crouch if p.crouched else SEE.dark)
 	if dist > reach or (-global_basis.z).dot(to.normalized()) < CONE:
 		return false
 	return _clear_line(global_position + Vector3(0, 1.6, 0))

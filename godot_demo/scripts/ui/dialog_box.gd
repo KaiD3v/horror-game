@@ -31,7 +31,7 @@ var choosing := false
 func _ready() -> void:
 	add_to_group("dialog_box")
 	layer = 6; process_mode = Node.PROCESS_MODE_ALWAYS  # talking pauses the game, not the talk
-	var dim := ColorRect.new(); add_child(dim); dim.color = Color(0, 0, 0, 0.3); dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var dim := ColorRect.new(); dim.color = Color(0, 0, 0, 0.3); dim.set_anchors_preset(Control.PRESET_FULL_RECT); add_child(dim)
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box = PanelContainer.new(); add_child(box)
 	box.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
