@@ -52,7 +52,11 @@ func _ready() -> void:
 	var box := VBoxContainer.new(); add_child(box); box.alignment = BoxContainer.ALIGNMENT_END
 	box.size = Vector2(240, 110); box.position = Vector2(960 - 240 - 42, 600 - 110 - 26)
 	box.add_theme_constant_override("separation", 2)
-	for item in [["Novo jogo", _start], ["Controles", _show_controls.bind(true)], ["Sair", get_tree().quit]]:
+	var items := [["Novo jogo", _start], ["Controles", _show_controls.bind(true)], ["Sair", get_tree().quit]]
+	if SaveGame.exists():  # a saved game: carry on from it, first
+		items.push_front(["Continuar", _continue])
+	box.size.y += 36 * (items.size() - 3); box.position.y -= 36 * (items.size() - 3)
+	for item in items:
 		var b := Button.new(); box.add_child(b); b.text = item[0]; b.flat = true
 		b.alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		b.add_theme_font_size_override("font_size", 24)  # the game font (tema.tres), at 2x
@@ -106,7 +110,7 @@ func _show_controls(on: bool) -> void:
 	for b in buttons:
 		b.focus_mode = FOCUS_NONE if on else FOCUS_ALL
 	if not on:
-		buttons[1].grab_focus()
+		buttons[buttons.size() - 2].grab_focus()  # (Controles)
 
 
 func _unhandled_input(e: InputEvent) -> void:
@@ -114,10 +118,22 @@ func _unhandled_input(e: InputEvent) -> void:
 		_show_controls(false); get_viewport().set_input_as_handled()
 
 
+func _continue() -> void:  # the bell, and the saved game where it was saved
+	if started:
+		return
+	started = true
+	for b in buttons:
+		b.disabled = true
+	if not SceneRouter.testing():
+		Audio.play2d(self, "sino", -6.0)
+	SaveGame.load_saved(self)
+
+
 func _start() -> void:  # the bell, a slow fade, and the village opens from black (no door creak)
 	if started:
 		return
 	started = true
+	SaveGame.pending = {}; SaveGame.checkpoint = {}
 	WorldTime.reset(); Weather.reset()  # a new game: 06:30, the morning fog
 	Inventory.reset(); Shop.reset(); Chest.reset(); Story.reset()  # ...the lantern, Cr$ 40, six bolts, a bandage; the shops full
 	for b in buttons:

@@ -196,6 +196,7 @@ func run() -> void:
 	await hud_tests()
 	await equip_tests()
 	await pause_tests()
+	await save_tests()
 	player.health = 2
 
 	player.take_damage(2); await wait(1.8); await shot("9_dead")
@@ -897,3 +898,47 @@ func death_tests() -> void:
 	check(not m.paused, "no pause menu over death")
 	await tap("ui_accept"); await wait(0.1)
 	check(SceneRouter.requested == L.scene_file_path, "Tentar de novo: this scene again")
+
+
+## The oratório saves (SaveGame): E, a prayer, the candle lit for good, "Jogo salvo."; what the save holds comes back
+## on loading it; dying, "Tentar de novo" puts back how the scene was when he came in; a restored game places him.
+func save_tests() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(SaveGame.path()))
+	check(not SaveGame.exists(), "no save yet (the tests' own file)")
+	if player.mode != Player.Mode.EXPLORE:
+		await player.free_hands()
+	var o: Oratorio = L.find_children("*", "Oratorio", true, false)[0]
+	put(player, o.global_position + o.global_basis.z * 1.0, o.rotation.y); player.pivot.rotation.y = o.rotation.y
+	await wait(0.4)
+	check(L.hud.prompt.text == "E · rezar no oratório", "at the oratório: \"%s\"" % L.hud.prompt.text)
+	Inventory.money = 77; Inventory.items["virote"] = 4; player.health = 2.0
+	await tap("interact")
+	await until(func(): return not player.busy, 4.0)
+	await shot("oratorio")
+	check(SaveGame.exists() and L.hud.message.text == "Jogo salvo." and Story.has("oratorio:" + o.id) and o.flame.light_energy > 0.5,
+		"E: he prays, the candle lit, \"%s\"" % L.hud.message.text)
+	var saved := SaveGame.read()
+	check(saved.cena == L.scene_file_path and saved.dinheiro == 77 and saved.itens.virote == 4 and saved.vida == 2.0,
+		"the save holds the scene, the money, the bolts, his health")
+	# what happened since is undone by loading it
+	Inventory.money = 5; Inventory.items["virote"] = 0; Chest.opened.append("x"); WorldTime.minutes += 300.0
+	SaveGame.load_saved(L)
+	check(Inventory.money == 77 and Inventory.count("virote") == 4 and "x" not in Chest.opened
+		and SceneRouter.requested == L.scene_file_path and SaveGame.pending.cena == L.scene_file_path,
+		"Carregar: the money, the bolts, the trunks as saved; its scene next")
+	# ...and the next level places him as saved
+	player.health = 3.0; player.global_position += Vector3(2, 0, 0)
+	var at := SaveGame.start(L.scene_file_path, Transform3D.IDENTITY)
+	SaveGame.pending.lamparina = false
+	SaveGame.settle(player, L.scene_file_path)
+	check(at.origin.distance_to(saved.pos) < 0.01 and player.health == 2.0 and not player.lantern_out and SaveGame.pending.is_empty(),
+		"a restored game: where he saved, his health, the lantern on its hook")
+	player._set_lantern(true); player.health = player.max_health
+	# the return point: the scene as it was when he came in (settle took it just now)
+	var money := Inventory.money
+	Inventory.money = 0; Inventory.items["atadura"] = 0; Story.mark("algo")
+	SaveGame.retry(L)
+	check(Inventory.money == money and not Story.has("algo") and SceneRouter.requested == L.scene_file_path,
+		"Tentar de novo: the money and what happened as when he came in")
+	SaveGame.pending = {}
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(SaveGame.path()))

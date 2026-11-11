@@ -5,17 +5,19 @@ extends AutoTest
 func run() -> void:
 	await wait(0.6)
 	check(L.bg.texture != null and L.bg.texture.get_width() == 1024, "background art loaded")
-	check(L.buttons.size() == 3 and get_viewport().gui_get_focus_owner() == L.buttons[0], "3 options, Novo jogo focused")
+	var first := 1 if SaveGame.exists() else 0  # a saved game: Continuar on top
+	check(L.buttons.size() == 3 + first and get_viewport().gui_get_focus_owner() == L.buttons[0], "%d options, the first focused" % L.buttons.size())
 	check(L.buttons[0].text.begins_with("•"), "focused option is marked")
 	await shot("menu")
-	await tap("ui_down")
-	check(get_viewport().gui_get_focus_owner() == L.buttons[1], "down arrow moves to Controles")
+	for i in first + 1:
+		await tap("ui_down")
+	check(get_viewport().gui_get_focus_owner() == L.buttons[first + 1], "down arrow moves to Controles")
 	await tap("ui_accept")
 	check(L.controls.visible, "Controles opens")
 	await wait(0.2)
 	await shot("menu_controles")
 	await tap("ui_cancel")
-	check(not L.controls.visible and get_viewport().gui_get_focus_owner() == L.buttons[1], "Esc closes Controles")
+	check(not L.controls.visible and get_viewport().gui_get_focus_owner() == L.buttons[first + 1], "Esc closes Controles")
 	await tap("ui_up")
 	await tap("ui_accept")
 	check(SceneRouter.requested == Paths.VILAREJO, "Novo jogo goes to the village")

@@ -572,3 +572,14 @@ func dialog_tests() -> void:
 	check(box.text.text.begins_with("Não é hora"), "at night she would rather not talk (\"%s\")" % box.text.text.substr(0, 20))
 	box.close()
 	WorldTime.reset(10 * 60); L.day._step(0.0)
+
+
+## The oratório by the road in: standing, clear of the road and the ruin, its prompt.
+func oratorio_tests() -> void:
+	var o: Oratorio = L.find_children("*", "Oratorio", true, false)[0]
+	put(player, o.global_position + o.global_basis.z * 2.2, o.rotation.y); player.pivot.rotation.y = o.rotation.y
+	await wait(0.6); await shot("oratorio_estrada")
+	var front := o.global_position + o.global_basis.z * 0.8
+	check(absf(o.global_position.y - L.ground(front.x, front.z).y) < 0.3, "on the ground")
+	put(player, o.global_position + o.global_basis.z * 1.0, o.rotation.y); await wait(0.4)
+	check(L.hud.prompt.text == "E · rezar no oratório", "its prompt: \"%s\"" % L.hud.prompt.text)

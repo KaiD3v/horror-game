@@ -60,7 +60,8 @@ Regras:
 - os NPCs nos marcadores;
 - as portas;
 - o navmesh e as consultas de chão (`ground`, `ray`, `reachable`);
-- os menus de pausa (Esc) e de morte (`GameMenu`): Continuar / Controles / Voltar ao menu / Sair; Tentar de novo recarrega a cena desde o início;
+- os menus de pausa (Esc) e de morte (`GameMenu`): Continuar / Controles / Carregar o jogo salvo / Voltar ao menu / Sair;
+- o ponto de retorno (`SaveGame.checkpoint`): ao abrir, a cena guarda o estado do jogo e onde ele entrou; morrer e "Tentar de novo" volta exatamente a isso;
 - o gancho de teste.
 
 Uma fase sobrescreve três métodos:
@@ -89,6 +90,8 @@ Uma fase sobrescreve três métodos:
 | **um evento ambiente aleatório** | `RandomEvents.add(nome, primeira, intervalo, função)`. |
 | **mais vida ou fôlego (upgrade)** | Aumentar `player.max_health` (um coração a mais, que acende no HUD) ou `player.stamina_max` (uma conta a mais no terço a cada 0,5). O `HudStatus` desenha quantos houver. |
 | **a munição de uma arma nova no HUD** | Uma entrada em `HudStatus.AMMO` (modo da arma → id do item): a contagem fica no canto enquanto a arma está em mãos. Um item novo de `tipo` "municao" ou "cura" já ganha o desenho do tipo; outro tipo mostra o nome. |
+| **um oratório (ponto de salvar)** | Uma entrada em `Oratorio.SPOTS`: id, cena, posição e giro. E reza, acende a vela (fica acesa) e grava o jogo (`SaveGame`). |
+| **um estado novo que precisa ir no save** | Uma chave a mais em `SaveGame.capture()` e a volta dela em `SaveGame.restore()`. Sem isso, o estado se perde ao carregar e ao tentar de novo. |
 | **uma ação nova do jogador** | O clipe no `protagonista_rig.py` e `play("<clipe>")`. Por padrão ela move o corpo todo e o para; para ele seguir andando, uma entrada em `Player.LAYER` (`"upper"`: tronco e braços; `"arm"`: só o braço direito e a lamparina). |
 | **uma arma na roda (Q)** | Uma entrada em `WHEEL` de `weapon_wheel.gd` (modo, nome, nota, arte, tecla) e a plaquinha dela em `tools/texturas/roda_armas.py` (uma função que desenha a figura pirografada e um ângulo em `SLOTS`). Com uma tecla própria, mais uma linha em `GameInput.KEYS` e em `Player._unhandled_input`. A arma em si é um `Player.Mode` com as animações de sacar e guardar; `Player.equip()` guarda o que estiver na mão antes de sacar a nova. O item que libera a arma vai em `Player.WEAPON_ITEM`. |
 | **o dia e o clima numa fase** | Usar `day = DayCycle.outdoors(self, env, sol, materiais_de_silhueta, clima)` ao ar livre, ou `DayCycle.indoors(self, luzes_de_janela, vidros)` num interior. O relógio (`WorldTime`) e o clima (`Weather`) continuam entre as cenas. Horários, cores e chances ficam em `DayData`. |

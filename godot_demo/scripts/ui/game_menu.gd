@@ -1,8 +1,9 @@
 # The menus over a level, in the title menu's look (its font, the warm / dim lines, the flame mark):
 #   pause  Esc (when nothing else has the game paused: notes, shop, a talk): the game stops under a dark veil.
-#          Continuar (or Esc again), Controles, Voltar ao menu, Sair do jogo.
+#          Continuar (or Esc again), Controles, Carregar o jogo salvo (if there is one), Voltar ao menu, Sair do jogo.
 #   death  a while after he falls (DEATH_DELAY), the screen bleeds to near black; "Morreu." and the hour, then
-#          Tentar de novo (this scene again, from its start), Voltar ao menu, Sair do jogo. The world goes on under it.
+#          Tentar de novo (the return point: this scene as it was when he came in, SaveGame), Carregar o jogo salvo,
+#          Voltar ao menu, Sair do jogo. The world goes on under it.
 class_name GameMenu
 extends CanvasLayer
 
@@ -54,8 +55,8 @@ func pause(on: bool) -> void:
 	veil.visible = on
 	if on:
 		veil.color = Color(0, 0, 0, 0.62)
-		_fill("Pausa", BONE, "", [["Continuar", pause.bind(false)], ["Controles", _show_controls.bind(true)],
-			["Voltar ao menu", _to_menu], ["Sair do jogo", get_tree().quit]])
+		_fill("Pausa", BONE, "", [["Continuar", pause.bind(false)], ["Controles", _show_controls.bind(true)]]
+			+ _saved() + [["Voltar ao menu", _to_menu], ["Sair do jogo", get_tree().quit]])
 
 
 func _on_died() -> void:
@@ -65,8 +66,8 @@ func _on_died() -> void:
 	dead = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	veil.visible = true; veil.color = Color(0.08, 0.0, 0.0, 0.0); veil.modulate.a = 0.0
-	_fill("Morreu.", BLOOD, "às %s, %s" % [WorldTime.clock(), _where()], [["Tentar de novo", _retry],
-		["Voltar ao menu", _to_menu], ["Sair do jogo", get_tree().quit]])
+	_fill("Morreu.", BLOOD, "às %s, %s" % [WorldTime.clock(), _where()], [["Tentar de novo", _retry]] + _saved()
+		+ [["Voltar ao menu", _to_menu], ["Sair do jogo", get_tree().quit]])
 	var tw := create_tween().set_parallel()
 	tw.tween_property(veil, "color:a", 0.86, FADE); tw.tween_property(veil, "modulate:a", 1.0, FADE)
 
@@ -102,9 +103,18 @@ func _mark(b: Button) -> void:  # the flame mark before the chosen line, as on t
 	b.text = "•  " + b.text
 
 
+func _saved() -> Array:  # the option to load the saved game, when there is one
+	return [["Carregar o jogo salvo", _load_saved]] if SaveGame.exists() else []
+
+
 func _retry() -> void:
 	get_tree().paused = false
-	SceneRouter.go_to(self, get_tree().current_scene.scene_file_path, "", 0.6, "")
+	SaveGame.retry(self)
+
+
+func _load_saved() -> void:
+	get_tree().paused = false
+	SaveGame.load_saved(self)
 
 
 func _to_menu() -> void:

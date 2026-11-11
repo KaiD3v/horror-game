@@ -30,7 +30,9 @@ func _ready() -> void:
 	add_to_group("level")  # navmesh source: every StaticBody3D below, on collision layer 1
 	GameInput.setup()
 	_build()
-	player = Player.new(); player.transform = _player_start(); add_child(player)  # placed before it enters the tree
+	player = Player.new(); player.transform = SaveGame.start(scene_file_path, _player_start())  # before it enters the tree
+	add_child(player)
+	SaveGame.settle(player, scene_file_path)  # a restored game: his health, his lantern; and this scene's return point
 	hud = Hud.new(player, title, controls_extra); add_child(hud)
 	interactor = Interactor.new(player, hud); add_child(interactor)
 	footsteps = Footsteps.new(player, floor_kind); add_child(footsteps)
@@ -69,6 +71,8 @@ func _place_notes() -> void:
 			NotePaper.make(self, n)
 	for c in ChestData.in_scene(scene_id):  # the trunks: opened ones stay, open and empty
 		Chest.make(self, c)
+	for o in Oratorio.in_scene(scene_id):  # where to save
+		Oratorio.make(self, o)
 
 
 # --- shared building blocks ---------------------------------------------------------------------------------
