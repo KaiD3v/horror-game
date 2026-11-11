@@ -24,6 +24,7 @@ const WALL_FACE := 0.30     # rig: his feet from a wall's face
 const RUNG := 0.5           # rig: how far one Climb_Step takes him
 const NEAR := 1.0           # how far from a face he can be to start
 const BRINK := 0.9          # ...or, up on top, how far in from its edge
+const DOWN_BIAS := 0.25     # a way down counts this much farther (a block pushed against a ledge: climb on, not off)
 
 var top := LEDGE
 var size := Vector2.ONE
@@ -87,8 +88,8 @@ func reach(p: Vector3) -> float:
 		return to_local(p).dot(n) - (size.x if n.x != 0.0 else size.y) / 2
 	n = edge_at(p)
 	if n != Vector3.ZERO and _facing(n):
-		prompt = "E · descer"
-		return (size.x if n.x != 0.0 else size.y) / 2 - to_local(p).dot(n)
+		prompt = "E · descer"  # (a little farther than it is: where a face to climb starts at the same edge, up wins)
+		return (size.x if n.x != 0.0 else size.y) / 2 - to_local(p).dot(n) + DOWN_BIAS
 	return INF
 
 

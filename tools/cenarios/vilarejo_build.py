@@ -50,10 +50,15 @@ for name, (x, y, yaw) in NPCS.items():  # markers for vilarejo.gd: npc_vendeiro,
     e = bpy.data.objects.new("npc_" + name, None); bpy.context.collection.objects.link(e)
     e.location = (x, y, H(x, y)); e.rotation_euler.z = math.radians(yaw)
 for i, (hx, hy, face, w, d, kind, ex) in enumerate(HOUSES):  # doors you can go through: porta_<interior>
-    if ex.get("sign"):
+    door = ex.get("sign") or ex.get("porta")
+    if door:
         x, y, yaw = at_house(i, *DOORS["casa_%02d" % (i + 1)])
-        e = bpy.data.objects.new("porta_" + ex["sign"], None); bpy.context.collection.objects.link(e)
+        e = bpy.data.objects.new("porta_" + door, None); bpy.context.collection.objects.link(e)
         e.location = (x, y, H(x, y)); e.rotation_euler.z = math.radians(yaw)  # facing like the house
+    if ex.get("lado") is not None:  # its side door: the marker faces out of the left wall
+        x, y, yaw = at_house(i, *DOORS["casa_%02d_lado" % (i + 1)])
+        e = bpy.data.objects.new("porta_%s_lado" % door, None); bpy.context.collection.objects.link(e)
+        e.location = (x, y, H(x, y)); e.rotation_euler.z = math.radians(yaw - 90)
 for name, (x, y) in {"spawn_jogador": (0.0, -44.5), "spawn_mutante": (4.5, 1.5)}.items():  # read by vilarejo.gd
     e = bpy.data.objects.new(name, None); bpy.context.collection.objects.link(e); e.location = (x, y, H(x, y))
 

@@ -41,6 +41,11 @@ def house(name, hx, hy, face, w, d, kind, ex):
         if ex.get("chained"):
             chained_door(b, w, d, door_x, plinth, rng)
     bx(b, (door_x, -d / 2 - 0.35, plinth / 2 - 0.1), (dw + 0.4, 0.6, plinth + 0.2), "stone")  # step
+    side_u = ex.get("lado")  # a second door, in the left wall (u along it); DOORS[name + "_lado"]: where you stand
+    if side_u is not None:
+        opening(b, wall_frame("left", w, d, 0.05), side_u - 0.475, side_u + 0.475, plinth, plinth + 2.05, "door")
+        bx(b, (-w / 2 - 0.35, -side_u, plinth / 2 - 0.1), (0.6, dw + 0.4, plinth + 0.2), "stone")
+        DOORS[name + "_lado"] = (-w / 2 - 1.0, -side_u)
     for side, length in (("front", w), ("back", w), ("left", d), ("right", d)):
         fr = wall_frame(side, w, d, 0.05 if kind != "wood" else 0.03)
         k = max(1, int(length / 2.6))
@@ -48,6 +53,8 @@ def house(name, hx, hy, face, w, d, kind, ex):
             for i in range(k):
                 u = -length / 2 + length * (i + 0.5) / k
                 if side == "front" and fl == 0 and abs(u - door_x) < dw / 2 + 0.8:
+                    continue
+                if side == "left" and fl == 0 and side_u is not None and abs(u - side_u) < dw / 2 + 0.8:
                     continue
                 z0 = plinth + 2.7 * fl + 0.95
                 opening(b, fr, u - 0.4, u + 0.4, z0, z0 + 1.05, "pit" if burnt else "window" if rng.random() < 0.45 else shutter, sill=True)

@@ -9,8 +9,8 @@ var qtd := 1
 var id := ""      # one of a kind in the game: once taken, gone for good
 
 
-static func make(parent: Node, at: Vector3, what: String, n := 1) -> Pickup:
-	var p := Pickup.new(); p.item = what; p.qtd = n; p.position = at
+static func make(parent: Node, at: Vector3, what: String, n := 1, once := "") -> Pickup:
+	var p := Pickup.new(); p.item = what; p.qtd = n; p.position = at; p.id = once
 	p.prompt = "E · pegar %s" % ItemCatalog.item(what).nome.to_lower()
 	parent.add_child(p)
 	return p

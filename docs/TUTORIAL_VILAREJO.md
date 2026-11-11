@@ -1,6 +1,6 @@
 # O vilarejo como tutorial (plano)
 
-*Data: 2026-11-11. Plano. Feito: fases 1 e 2 (ver "Fase 1, feita" e "Fase 2, feita"). Coordenadas em Godot (x, z); no Blender é (x, -z).*
+*Data: 2026-11-11. Plano. Feito: fases 1 a 3 (ver "Fase 1, feita", "Fase 2, feita" e "Fase 3, feita"). Coordenadas em Godot (x, z); no Blender é (x, -z).*
 
 ## O problema
 
@@ -276,3 +276,34 @@ principal fica: facão, besta, chave, Colônia. Outra opção: a chave no fundo 
   Sem o alambique, tirar o facão agora deixaria o jogo sem facão.
 - Testes: `test_vilarejo.gd` `classroom_tests` e a entrega da garrafada em `dialog_tests`; `test_treino.gd` `unlock_tests`
   (a besta fora da loja).
+
+## Fase 3, feita: o alambique do Juca
+
+- **Por fora** (`casa_16`, perto de (43,5; 11), a leste da vila, entre o pasto e a casa 9; chaminé de tijolo):
+  - a porta do lado (norte) está pregada (`BlockedDoor` "tabuas", agora também na parede da própria casa, `in_wall`).
+    Com o pé de cabra do Bento, as tábuas saem e a porta vira entrada;
+  - a da frente está escorada por dentro com cana ("Trancada por dentro. Tem coisa pesada escorada do outro lado.").
+- **Por dentro** (`alambique_build.py`, `alambique.tscn`, `scripts/levels/alambique.gd`), sala de 14 x 10 m e 8 m de pé-direito:
+  1. **O chão:** uma pedra de granito (`Pushable`) a empurrar duas vezes para oeste, até a borda do jirau, que tem 2 m e
+     não se sobe do chão. Da pedra, E sobe no jirau.
+  2. **O jirau e a passarela dos barris:** morcegos sob o telhado (`Morcegos`, 7). Com a lamparina na mão, quando ele está lá
+     em cima perto deles, eles descem e voam em volta da luz, mordendo 0,5 a cada 1,8 s; aparece "3 · pendurar a
+     lamparina". Com ela no gancho, em 2 s eles voltam ao teto. Com o facão, cada golpe na frente dele derruba os que
+     estiverem ali.
+  3. **O vão sobre o tanque de vinhoto:** "Espaço · pular" para a plataforma da torre. Quem cai, cai de 2 m no tanque
+     (sem dano) e volta pela pedra.
+  4. **A torre:** uma atadura na plataforma (achada uma vez). Depois o muro com apoios (`puzzle.glb` "muro") sobe 3,5 m até o
+     canto do Juca: a cama, a lamparina ainda acesa, o baú com o facão (`ChestData` "facao_juca") e o diário dele (nota
+     `juca`: quem serrou a ponte, a porta pregada, os morcegos, as três batidas).
+  5. **A saída:** de volta embaixo, os feixes de cana na porta da frente (`Breakable` "cana", agora genérico: entulho
+     pede a picareta, cana pede o facão). "E · sacar o facão" e cada golpe derruba um feixe. A porta da frente abre e
+     passa a ser a entrada (atalho).
+- **O facão saiu da ruína.** O baú dele agora está só no alambique.
+- **Tarefa do Seu Bento** (`QuestData` "alambique"): "Perguntar se precisa de alguma coisa" dá a tarefa e o pé de cabra;
+  de volta com o facão, "Contar do alambique" paga Cr$ 15. O pé de cabra fica com o jogador.
+- **Por que as caixas invisíveis:** a colisão das peças grandes do GLB é uma malha oca, e a pedra empurrada para dentro
+  delas não achava nada. O `alambique.gd` põe caixas sólidas nos mesmos lugares (`SOLIDS`).
+- `Climbable`: onde subir e descer começam na mesma borda (a pedra encostada no jirau), subir ganha (`DOWN_BIAS`).
+- Sons novos (ElevenLabs, 32 créditos): `morcegos` (loop), `morcegos_guincho`, `cana_cortar`.
+- Testes: `test_alambique.gd` (o percurso inteiro, mais o de todo interior) e `test_vilarejo.gd` `alambique_tests`
+  (tarefa do Bento, porta pregada, porta escorada, a volta com o facão).

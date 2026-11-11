@@ -35,6 +35,8 @@ HOUSES = [
     (9.5, 31, -92, 6.0, 5.0, "wood", {"siding": "brown", "shutter": "green", "porch": True}),
     (-9, 43, 85, 7.0, 5.5, "taipa", {"barra": "oxblood", "shutter": "blue", "chained": True}),
     (9, 46, -90, 6.0, 5.0, "ruin", {}),
+    (43.5, -11, -90, 7.0, 6.0, "taipa", {"barra": "ochre", "shutter": "green", "chimney": True,  # Juca's still: the first
+                                        "porta": "alambique", "lado": 0.8}),  # dungeon (TUTORIAL_VILAREJO.md); a side door
 ]
 CHAPEL = (-15.5, 9.0, 90)          # facing the square
 # the NPCs (npcs_build.py, placed by vilarejo.gd on these markers): x, y, facing; their stalls stand on flat pads

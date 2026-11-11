@@ -4,9 +4,12 @@
 #   "tabuas"   boarded up, three planks nailed across: E with the crowbar (pe_de_cabra) and he forces them off one by
 #              one with it in his hand, then "Porta aberta" (FoundBanner) and the door swings open.
 # Once open it stays open (Story "aberta:<id>"). Its origin: the foot of the doorway, the front (where you come from)
-# towards +z. make(level, at, yaw, kind, id, key) for one in a level's _build.
+# towards +z. make(level, at, yaw, kind, id, key) for one in a level's _build. `bare`: the building has its own wall
+# and door (the village's houses, their door painted on): only the padlock / the planks go on it. `opened` when it gives.
 class_name BlockedDoor
 extends Interactable
+
+signal opened
 
 const WIDTH := 1.0
 const HIGH := 2.1
@@ -18,10 +21,11 @@ var leaf: Node3D          # the door itself, on its hinge
 var lock_shape: Node3D    # the padlock / the planks
 var planks: Array[Node3D] = []
 var opening := false
+var bare := false
 
 
-static func make(level: Node, at: Vector3, yaw: float, k: String, door_id: String, key := "") -> BlockedDoor:
-	var d := BlockedDoor.new(); d.id = door_id; d.kind = k; d.position = at; d.rotation.y = yaw
+static func make(level: Node, at: Vector3, yaw: float, k: String, door_id: String, key := "", in_wall := false) -> BlockedDoor:
+	var d := BlockedDoor.new(); d.id = door_id; d.kind = k; d.position = at; d.rotation.y = yaw; d.bare = in_wall
 	d.radius = 1.3; d.height = 2.0
 	if k == "cadeado":
 		d.requires = key; d.prompt = "E · abrir o cadeado"; d.refusal = "Trancada com cadeado. Precisa da chave."
@@ -33,6 +37,14 @@ static func make(level: Node, at: Vector3, yaw: float, k: String, door_id: Strin
 
 func _ready() -> void:
 	super()
+	if bare:
+		leaf = Node3D.new(); add_child(leaf)  # (the painted door stays as it is)
+	else:
+		_wall_and_leaf()
+	_lock()
+
+
+func _wall_and_leaf() -> void:
 	var wall := Looks.triplanar("plaster", 0.5, Color(0.72, 0.68, 0.6))
 	var side := (WALL.x - WIDTH) / 2
 	for s in [-1, 1]:  # the wall either side of the doorway, and over it
@@ -42,6 +54,9 @@ func _ready() -> void:
 	Looks.box(hinge, Vector3(WIDTH / 2, HIGH / 2, 0), Vector3(WIDTH - 0.04, HIGH - 0.02, 0.06),
 		Looks.triplanar("planks", 1.5, Color(0.55, 0.42, 0.32)))
 	leaf = hinge
+
+
+func _lock() -> void:
 	if kind == "cadeado":
 		lock_shape = Node3D.new(); add_child(lock_shape); lock_shape.position = Vector3(WIDTH / 2 - 0.12, 1.0, 0.14)
 		_part(lock_shape, Vector3(0.0, 0.0, 0), Vector3(0.07, 0.08, 0.03), Color(0.62, 0.48, 0.2))  # the brass body
@@ -104,6 +119,7 @@ func _force(p: Player) -> void:
 
 func _opened(now: bool) -> void:
 	Story.mark("aberta:" + id)
+	opened.emit()
 	enabled = false
 	if lock_shape:
 		lock_shape.queue_free(); lock_shape = null

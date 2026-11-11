@@ -34,6 +34,12 @@ De noite, quando o sino toca, ele fecha a janela e reza.
 	{"id": "portao", "scene": "vilarejo", "at": Vector2(-1.7, -58.4), "yaw": 10.0, "paper": "oficio",
 		"title": "Ofício da Colônia",
 		"text": "COLÔNIA SANTA CLARA\nServiço de Profilaxia\nOfício nº 117/74\n\nAos moradores da Vila:\nOs internos remanescentes estão sob tratamento e não oferecem risco.\nFica PROIBIDA a subida ao portão depois das 18 horas.\nQuem tem parente internado aguarde comunicação. Não insistam.\n\nDr. Euclides Moura\nDiretor Clínico"},
+	{"id": "juca", "scene": "alambique", "from": 7.5, "at": Vector2(6.3, 2.5), "yaw": 25.0, "paper": "caderno",  # on his cot
+		"title": "Diário do Juca",
+		"text": "9 de março. Serraram a ponte de noite. Eu vi do morro: eram de branco, com serrote de carpinteiro, e subiram pra Colônia.
+12. Preguei a porta do lado e escorei a da frente com a cana.
+14. Tem coisa no telhado. Os morcegos não param quietos.
+15. Bateram três vezes. Não vou abrir."},
 	{"id": "fiado", "scene": "venda", "from": 2.2, "at": Vector2(-3.0, 1.6), "yaw": 15.0, "paper": "caderno",
 		"title": "Caderno de fiado",
 		"text": "Fiado · março\nFirmina: querosene, vela, fumo. (levaram o filho)\nTonho: arroz, sal, 2 lt. querosene. Foi embora?\nZé da Rita: não volta.\nColônia: 20 lt. querosene, 3 cx. vela, algodão. Pago em dinheiro, de noite.\nA moça de branco que veio buscar não abriu a boca. Tinha a boca costurada, juro por Deus."},

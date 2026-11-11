@@ -1,5 +1,6 @@
 # Seu Bento, behind the counter of the venda (Dialog explains the format). Round, nervous, talks to keep the silence
-# out; jokes that do not quite land. Keeps the fiado notebook, though nobody is left to pay.
+# out; jokes that do not quite land. Keeps the fiado notebook, though nobody is left to pay. Gives the task of the
+# alambique (QuestData, ../docs/TUTORIAL_VILAREJO.md "Dungeon 1") and lends the crowbar for it.
 extends RefCounted
 
 const ENTRADA := [
@@ -13,6 +14,9 @@ const MENU := [
 	{"texto": "Perguntar o que se fala por aí", "vai": "rumores"},
 	{"texto": "Perguntar sobre ele", "vai": "ele"},
 	{"texto": "Perguntar sobre o caderno de fiado", "vai": "fiado", "se": {"marca": "bento_conheceu"}},
+	{"texto": "Perguntar se precisa de alguma coisa", "vai": "pedido", "se": {"tarefa": ["alambique", "nova"]}},
+	{"texto": "Falar do Juca", "vai": "lembrete", "se": {"tarefa": ["alambique", "ativa"], "nao_tem": "facao"}},
+	{"texto": "Contar do alambique", "vai": "noticia", "se": {"tarefa": ["alambique", "ativa"], "tem": "facao"}},
 	{"texto": "Ir embora", "vai": "fim"},
 ]
 
@@ -35,6 +39,17 @@ const NOS := {
 		"Nasci atrás desse balcão, praticamente. Meu pai vendia pra Colônia: pão, lenha, gente pra trabalhar.",
 		"Depois que fecharam lá em cima, o vilarejo foi esvaziando. Eu fiquei. Alguém tem que vender vela.",
 		"E pra onde eu ia? Com essa barriga eu não desço a ravina nem rolando.",
+	]},
+	"pedido": {"faz": [{"tarefa": ["alambique", "ativa"]}, {"da": "pe_de_cabra"}], "fala": [
+		"Preciso. Preciso de notícia do Juca, do alambique. Ele descia todo sábado com a cachaça. Faz uma semana que não desce.",
+		"Foi ele que ouviu serrarem a ponte. Depois disso se trancou lá e pregou a porta do lado. Juca é teimoso.",
+		"Leva o pé de cabra. Fica a leste, depois do pasto, a chaminé de tijolo. Se ele estiver bem, diz que eu mandei lembrança.",
+	]},
+	"lembrete": {"fala": ["O Juca, freguês. A leste, depois do pasto. A porta do lado, a pregada: o pé de cabra resolve."]},
+	"noticia": {"faz": [{"dinheiro": 15}, {"tarefa": ["alambique", "feita"]}], "fala": [
+		"Não estava? Só a cama e o caderno dele... Nossa Senhora.",
+		"Ele dizia que eram de branco. Eu ri dele. Eu ri, freguês.",
+		"Toma. É pouco, mas é o que tem. Fica com o pé de cabra também, que aqui ninguém mais vai precisar.",
 	]},
 	"fiado": {"fala": [
 		"O caderno? Está tudo anotado. O Zé me deve um quilo de sal. A Dita, querosene. O padre, vinho de missa.",

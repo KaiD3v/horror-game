@@ -72,12 +72,15 @@ func _build() -> void:
 	bake_navmesh({"cell": 0.25, "cell_h": 0.1, "climb": 0.4, "slope": 40.0, "aabb": PLAY})  # after the NPCs: they stand in it
 	for d in DOORS:
 		Door.make(marker("porta_" + d), DOORS[d], Paths.interior(d), d)
+	_alambique()
 
 
 func _player_start() -> Transform3D:
-	# back out of a door: in front of it, back to the door; otherwise at the road's end, facing north up it
-	var at := marker("porta_" + SceneRouter.arriving) if SceneRouter.arriving in DOORS else marker("spawn_jogador")
-	var yaw := at.rotation.y + PI if SceneRouter.arriving in DOORS else 0.0
+	# back out of a door (any porta_<arriving>): in front of it, back to the door; otherwise at the road's end, facing
+	# north up it
+	var out := SceneRouter.arriving != "" and village.has_node("porta_" + SceneRouter.arriving)
+	var at := marker("porta_" + SceneRouter.arriving) if out else marker("spawn_jogador")
+	var yaw := at.rotation.y + PI if out else 0.0
 	SceneRouter.arriving = ""
 	return Transform3D(Basis(Vector3.UP, yaw), at.position + Vector3(0, 0.3, 0))
 
@@ -199,6 +202,22 @@ func _finish(root: Node) -> void:
 			mi.set_surface_override_material(i, h); haze.append(h)
 		elif m is BaseMaterial3D:
 			m.vertex_color_use_as_albedo = true)  # the baked AO (meshes without colours read white)
+
+
+## Juca's still (../docs/TUTORIAL_VILAREJO.md "Dungeon 1"; casa_16): its side door nailed up (the crowbar, from Seu
+## Bento), in by it once open; its front door shored up from inside, until the machete cuts the cane in there.
+func _alambique() -> void:
+	var side := marker("porta_alambique_lado")
+	var nailed := BlockedDoor.make(self, side.position - side.basis.z * 0.95, side.rotation.y, "tabuas", "alambique_lado", "", true)
+	var into := Door.make(side, "E · entrar no alambique", Paths.interior("alambique"), "alambique_lado", 1.6)
+	into.enabled = Story.has("aberta:alambique_lado")
+	nailed.opened.connect(func(): into.enabled = true)
+	var front := marker("porta_alambique")
+	if Story.has("quebrado:alambique_cana"):
+		Door.make(front, "E · entrar no alambique", Paths.interior("alambique"), "alambique", 1.6)
+	else:
+		var shut := Interactable.new(); shut.prompt = "E · abrir a porta"; shut.radius = 1.4; front.add_child(shut)
+		shut.used.connect(func(by): by.notice.emit("Trancada por dentro. Tem coisa pesada escorada do outro lado."))
 
 
 ## The classroom ruin's moves: up out of the hole either side, the jump across it, up onto the store and down off its

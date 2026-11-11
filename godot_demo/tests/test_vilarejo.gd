@@ -679,6 +679,48 @@ func intro_tests() -> void:
 	await shot("intro_fim")
 
 
+# Juca's still from outside (../docs/TUTORIAL_VILAREJO.md "Dungeon 1"): Seu Bento's task lends the crowbar; the side
+# door nailed (no crowbar: why not), forced, then the way in; the front shored up from inside. And the task told back.
+func alambique_tests() -> void:
+	WorldTime.reset(10 * 60); L.day._step(0.0); Story.reset(); Inventory.reset()
+	player.health = 99
+	var bento := Dialog.new("vendeiro", player); Story.mark("bento_conheceu"); bento.enter("oi")
+	var ask: Array = bento.options().filter(func(o): return o.texto == "Perguntar se precisa de alguma coisa")
+	check(ask.size() == 1, "Seu Bento: \"Perguntar se precisa de alguma coisa\"")
+	if ask:
+		bento.pick(ask[0])
+	check(Story.task("alambique") == "ativa" and Inventory.has("pe_de_cabra"), "...the task of the alambique, and the crowbar")
+	Inventory.items.erase("pe_de_cabra")
+	var side: Node3D = L.marker("porta_alambique_lado")
+	put(player, L.ground(side.position.x, side.position.z), side.rotation.y + PI); await wait(0.4)
+	check(L.hud.prompt.text == "E · arrombar a porta", "at the side door: \"%s\"" % L.hud.prompt.text)
+	await tap("interact"); await wait(0.2)
+	check(L.hud.message.text.begins_with("Pregada com tábuas"), "no crowbar: \"%s\"" % L.hud.message.text)
+	Inventory.add("pe_de_cabra")
+	await tap("interact")
+	var banner: bool = await until(func(): return get_tree().get_first_node_in_group("found_banner") != null, 12.0)
+	await shot("v70_alambique_lado")
+	await wait(0.9); await tap("interact"); await wait(1.2)
+	check(banner and Story.has("aberta:alambique_lado") and L.hud.prompt.text == "E · entrar no alambique",
+		"the crowbar: the planks off, the way in (\"%s\")" % L.hud.prompt.text)
+	await tap("interact")
+	check(SceneRouter.requested == Paths.interior("alambique") and SceneRouter.arriving == "alambique_lado", "E: into the alambique")
+	SceneRouter.requested = ""; SceneRouter.arriving = ""
+	var front: Node3D = L.marker("porta_alambique")
+	put(player, L.ground(front.position.x, front.position.z), front.rotation.y + PI); await wait(0.4)
+	await tap("interact"); await wait(0.2)
+	check(L.hud.message.text.begins_with("Trancada por dentro"), "the front door: \"%s\"" % L.hud.message.text)
+	await shot("v71_alambique_frente")
+	Inventory.add("facao"); bento.enter("oi")
+	var money := Inventory.money
+	var tell: Array = bento.options().filter(func(o): return o.texto == "Contar do alambique")
+	if tell:
+		bento.pick(tell[0])
+	check(tell.size() == 1 and Story.task("alambique") == "feita" and Inventory.money == money + 15,
+		"back with the machete: \"Contar do alambique\", the task done, Cr$ 15")
+	Story.reset(); Inventory.reset(); Inventory.give_tools()
+
+
 # The ruin by the way in as a classroom (../docs/TUTORIAL_VILAREJO.md "A ruína"): up the steps, under the fallen
 # slab crouched (standing he cannot pass, nor stand up under it), across the hole, up onto the store, the tin, down
 # off its back; and out of the hole if he falls in.

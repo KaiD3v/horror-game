@@ -1119,14 +1119,14 @@ func progression_tests() -> void:
 	player.pivot.rotation.y = player.rotation.y - 2.0; await wait(0.6)
 	await shot("prog_picareta")
 	player.pivot.rotation.y = look; await wait(0.3)
-	var stones: int = L.rubble.stones.size()
+	var stones: int = L.rubble.pieces.size()
 	player.stamina = player.stamina_max; player.attack("Attack_Slash"); await wait(0.9)
-	check(L.rubble.stones.size() == stones - 1, "a blow knocks a stone off (%d left)" % L.rubble.stones.size())
+	check(L.rubble.pieces.size() == stones - 1, "a blow knocks a stone off (%d left)" % L.rubble.pieces.size())
 	for k in 6:
-		if not is_instance_valid(L.rubble) or L.rubble.stones.is_empty():
+		if not is_instance_valid(L.rubble) or L.rubble.pieces.is_empty():
 			break
 		player.stamina = player.stamina_max; player.attack("Attack_Overhead"); await wait(1.1)
-	check(Story.has("quebrado:treino_entulho") and L.rubble.stones.is_empty() and not is_instance_valid(L.rubble.body),
+	check(Story.has("quebrado:treino_entulho") and L.rubble.pieces.is_empty() and not is_instance_valid(L.rubble.body),
 		"...until the heap is gone and the way open")
 	await shot("prog_entulho")
 	await tap("draw"); await until(func(): return player.held == "facao" and player.action == "" and player.mode == Player.Mode.COMBAT, 4.0)

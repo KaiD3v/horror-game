@@ -132,8 +132,8 @@ Gancho da missão (a definir): o filho de Dona Firmina foi levado para a Colôni
   atirar. Uma ferramenta que você já tem aparece como "já tem".
 
 - **O inventário** (`Inventory`) continua entre as cenas e volta ao início num jogo novo. O estoque das lojas também.
-  - Um jogo novo começa com a lamparina, Cr$ 40, 6 virotes e 1 atadura. O facão está num baú junto à casa em
-    ruínas da entrada (até a fase 3 do tutorial o levar para o alambique); a besta ainda não está em lugar nenhum.
+  - Um jogo novo começa com a lamparina, Cr$ 40, 6 virotes e 1 atadura. O facão está no baú do Juca, no alambique
+    (a primeira dungeon, ver [TUTORIAL_VILAREJO.md](TUTORIAL_VILAREJO.md)); a besta ainda não está em lugar nenhum.
   - **Itens que desbloqueiam** (`tipo: "ferramenta"`, ver `docs/ARQUITETURA.md`): sem o facão ou a besta, a placa
     da roda fica escura ("ainda não tem") e as teclas 1 e 2 só dizem "Sem facão." / "Sem besta.".
   - A sala de treino e a Colônia dão todas as ferramentas ao abrir (são cenas de teste, sem entrada pelo vilarejo).
@@ -147,7 +147,7 @@ Gancho da missão (a definir): o filho de Dona Firmina foi levado para a Colôni
   - O mundo prende a respiração: os inimigos param e ele não se move. Na faixa de baixo aparecem "Você encontrou",
     o nome e a descrição, com o acorde de viola (`bau_achado`). O item entra no inventário nessa hora.
   - Com E de novo, ele guarda o item no casaco e se levanta (`Stow_Item`). O baú fica aberto e vazio até um jogo novo.
-  - Hoje há dois: o facão (junto à casa em ruínas da entrada da vila) e uma garrafada (ao lado do altar da capela).
+  - Hoje há dois: o facão (no alto da torre do alambique) e uma garrafada (ao lado do altar da capela).
 - **Degraus e escadas** (`Steps`): o personagem e os inimigos sobem andando qualquer borda de até 55 cm (soleiras,
   degraus das casas e das varandas, escadas), sem animação própria: as pernas seguem no passo e o corpo acompanha suave a subida de cada
   degrau. Ao descer, ele fica no chão de degrau em degrau, sem pular. O corpo do personagem passou a ser um cilindro
