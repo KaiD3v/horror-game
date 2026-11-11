@@ -1,6 +1,6 @@
 # O vilarejo como tutorial (plano)
 
-*Data: 2026-11-11. Plano. Feito: fase 1 (ver "Fase 1, feita"). Coordenadas em Godot (x, z); no Blender é (x, -z).*
+*Data: 2026-11-11. Plano. Feito: fases 1 e 2 (ver "Fase 1, feita" e "Fase 2, feita"). Coordenadas em Godot (x, z); no Blender é (x, -z).*
 
 ## O problema
 
@@ -260,3 +260,19 @@ principal fica: facão, besta, chave, Colônia. Outra opção: a chave no fundo 
 - **Noites por progresso** (`vilarejo.gd` `roster()`): sem o facão, 1 Bruxa; com o facão, 2 Bruxas e o Poceiro; com a
   besta, também a Carpideira.
 - Testes: `test_treino.gd` `hints_tests` (e a linha de teste em `pause_tests`), `test_vilarejo.gd` `roster_tests`.
+
+## Fase 2, feita
+
+- **A ruína é a sala de aula** (detalhes em [VILAREJO.md](VILAREJO.md), "A ruína da entrada"). Mudou do plano:
+  - o buraco tem 0,9 m (o assoalho fica alto, sobre a fundação) em vez de 1 m;
+  - a borda para subir é a tulha de pedra do fundo, de 0,7 m sobre o assoalho, e a descida é pela parede caída do fundo;
+  - a recompensa é uma lata com Cr$ 5 e o caderno escolar de uma menina da vila, não um recorte de jornal.
+- **Agachar de verdade:** agachado, o corpo dele baixa para 1,2 m e passa sob o que é mais baixo que um homem; sob o forro
+  ele não se levanta. Um golpe ou uma esquiva ainda o põem de pé mesmo ali (anotado no código).
+- **A besta saiu da loja.** O Tenório tem "Perguntar por uma besta" ("Ficou lá embaixo... Arruma uma lâmina primeiro") e um
+  rumor novo que ensina o bloqueio.
+- **Dona Firmina:** a garrafada entregue rende também a chave da sacristia, e de noite ela ensina a pendurar a lamparina.
+- **Fica para a fase 3:** o baú do facão continua junto à ruína, e a tarefa do Bento e o pé de cabra entram com o alambique.
+  Sem o alambique, tirar o facão agora deixaria o jogo sem facão.
+- Testes: `test_vilarejo.gd` `classroom_tests` e a entrega da garrafada em `dialog_tests`; `test_treino.gd` `unlock_tests`
+  (a besta fora da loja).

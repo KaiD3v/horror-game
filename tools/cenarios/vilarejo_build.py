@@ -29,7 +29,7 @@ from vilarejo.horizonte import *
 narrativa.TERR = terrain()
 for i, (hx, hy, face, w, d, kind, ex) in enumerate(HOUSES):
     name = "casa_%02d" % (i + 1)
-    hb = ruin(name, w, d) if kind == "ruin" else house(name, hx, hy, face, w, d, kind, ex)
+    hb = ruin(name, w, d, ex.get("aula", False)) if kind == "ruin" else house(name, hx, hy, face, w, d, kind, ex)
     obj(hb, name + "-col", (hx, hy, h_road(hx, hy)), math.radians(face))
 obj(chapel(), "capela-col", (CHAPEL[0], CHAPEL[1], h_road(CHAPEL[0], CHAPEL[1])), math.radians(CHAPEL[2]))
 # the chapel's door is in the tower's face, 8.25 m out from the nave's centre: porta_capela at the foot of its step

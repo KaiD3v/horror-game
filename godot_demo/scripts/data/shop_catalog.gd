@@ -10,8 +10,7 @@ const SHOPS := {
 			{"item": "garrafada", "qtd": 1, "preco": 18, "estoque": 2}]},
 	"armaria": {"titulo": "Armas e Munição", "fala": "Chumbo não adianta com eles. Ponta de ferro, no peito.",
 		"itens": [{"item": "virote", "qtd": 3, "preco": 9, "estoque": -1, "requires": "besta"},
-			{"item": "virote", "qtd": 8, "preco": 20, "estoque": 3, "requires": "besta"},
-			{"item": "besta", "qtd": 1, "preco": 20, "estoque": 1}]},
+			{"item": "virote", "qtd": 8, "preco": 20, "estoque": 3, "requires": "besta"}]},  # (the crossbow is not for sale: ../docs/TUTORIAL_VILAREJO.md)
 }
 
 

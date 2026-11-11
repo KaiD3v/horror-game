@@ -1,6 +1,7 @@
 # Dona Firmina, the benzedeira, praying at the cruzeiro before the chapel (Dialog explains the format). Old, bent,
 # the rosary never still. Her son Joaquim went up to work at the Colônia in 1972 and never came down; she stays where
-# she can see its wall, and keeps the candles lit. She gives the task of the garrafada (QuestData).
+# she can see its wall, and keeps the candles lit. She gives the task of the garrafada (QuestData), and with it done
+# the key of the sacristy (the way down to the ossuary, ../docs/TUTORIAL_VILAREJO.md).
 extends RefCounted
 
 const ENTRADA := [
@@ -28,6 +29,7 @@ const NOS := {
 	"oi": {"fala": ["Ainda de pé, menino? Deus seja louvado. Diz o que quer, que a vela não espera."]},
 	"noite": {"fala": [
 		"Não é hora de prosa. De noite eles descem do morro.",
+		"Lá em cima a luz chama. Quando ouvir asas, pendura essa lamparina na cinta.",
 		"Fica perto das velas e fala baixo. O que é?",
 	]},
 	"rumores": {"falas": [
@@ -54,9 +56,11 @@ const NOS := {
 		"Me traz a garrafada. Com ela eu fecho o teu corpo antes da noite. Vai precisar.",
 	]},
 	"lembrete": {"fala": ["A garrafada, menino. No baú do lado do altar. A capela é ali, a porta da torre."]},
-	"entrega": {"faz": [{"toma": "garrafada"}, {"cura": true}, {"dinheiro": 20}, {"tarefa": ["garrafada", "feita"]}], "fala": [
+	"entrega": {"faz": [{"toma": "garrafada"}, {"cura": true}, {"dinheiro": 20}, {"da": "chave_sacristia"},
+			{"tarefa": ["garrafada", "feita"]}], "fala": [
 		"Deus te pague. Fica quieto aí... São Bento, água benta, Jesus Cristo no altar...",
 		"Pronto. Corpo fechado. Tuas feridas vão parar de doer um pouco.",
 		"E leva essas moedas do dízimo. O padre não vai mais precisar delas.",
+		"Leva a chave da sacristia também. O padre deixava comigo, que eu limpava a igreja. Eu não desço lá mais.",
 	]},
 }

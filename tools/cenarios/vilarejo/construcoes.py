@@ -115,11 +115,24 @@ def stains(b, name, kind, w, d, plinth, floors, door_x, dw):
                        plinth + rng.uniform(1.6, 2.3), 0.7, 0.9, "rachadura", rot=rng.uniform(-0.3, 0.3))
 
 
-def ruin(name, w, d):
-    """Walls fallen to ragged stubs, no roof, a gap for the door, beams and rubble inside: the one you can enter."""
+# The ruin by the way in, a classroom of the moves (../docs/TUTORIAL_VILAREJO.md "A ruína"), in its local frame
+# (front = -Y, w = 6 along x, d = 5 along y). vilarejo.gd places the climbs, the jump and the hint on these numbers.
+AULA = {"floor": 0.9,                     # the raised plank floor (three steps up to the door)
+        "pit": (-1.05, 0.45),             # y: where the floor fell into the crawl space, down to the ground
+        "slab": (-2.2, -1.6, 1.4),        # y0, y1, how high above the floor: a piece of ceiling down across the doorway
+        "loft": (1.4, 0.7),               # y: the stone grain store's face, its height over the floor
+        "breach": (0.4, 2.0)}             # x: the back wall down to the store, a way out over its back
+
+
+def ruin(name, w, d, aula=False):
+    """Walls fallen to ragged stubs, no roof, a gap for the door, beams and rubble inside: the one you can enter.
+    aula: the classroom one (AULA), raised floor fallen in the middle, a slab to crouch under, a store to climb."""
     b = B(); rng = random.Random(name); t = 0.3; plinth = 0.05  # flush with the ground: you walk straight in
-    bx(b, (0, 0, (plinth - 1.2) / 2), (w + 0.12, d + 0.12, plinth + 1.2), "stone")
-    bx(b, (0, 0, plinth + 0.02), (w - 2 * t, d - 2 * t, 0.04), "planks")  # what is left of the floor
+    if aula:
+        plinth = _classroom(b, w, d, t)
+    else:
+        bx(b, (0, 0, (plinth - 1.2) / 2), (w + 0.12, d + 0.12, plinth + 1.2), "stone")
+        bx(b, (0, 0, plinth + 0.02), (w - 2 * t, d - 2 * t, 0.04), "planks")  # what is left of the floor
     for side, length in (("front", w), ("back", w), ("left", d), ("right", d)):
         o, u, n = wall_frame(side, w, d, -t / 2)
         k = int(length / 0.6)
@@ -130,9 +143,16 @@ def ruin(name, w, d):
             hgt = 0.9 + 1.9 * abs(noise.noise(Vector((a * 0.6, len(side), 0.3)))) + rng.uniform(0, 0.5)
             if side == "back":
                 hgt += 0.8  # the back still stands to the eaves in places
-            c = o + u * a + Z * (plinth + hgt / 2)
+            base = plinth
+            if aula and side == "back":
+                if AULA["breach"][0] < -a < AULA["breach"][1]:
+                    continue  # fallen down to the store: the way out
+                base = plinth + AULA["loft"][1]  # standing on the store
+            c = o + u * a + Z * (base + hgt / 2)
             size = (length / k + 0.01, t, hgt) if abs(u.x) > 0.5 else (t, length / k + 0.01, hgt)
             bx(b, c, size, "whitewash" if hgt > 1.2 else "barra_ochre")
+    if aula:
+        return b
     for _ in range(3):  # fallen roof beams
         bx(b, (rng.uniform(-w / 4, w / 4), rng.uniform(-d / 4, d / 4), plinth + 0.5),
            (0.16, d * 0.8, 0.16), "planks", rot=(rng.uniform(0.15, 0.35), 0, rng.uniform(-0.6, 0.6)))
@@ -143,6 +163,41 @@ def ruin(name, w, d):
         bx(b, (x, y, plinth + s / 4),
            (s, s * 0.8, s * 0.5), rng.choice(("whitewash", "roof", "stone")), rot=(0, 0, rng.uniform(0, 3)))
     return b
+
+
+def _classroom(b, w, d, t):
+    """The classroom ruin's floor (AULA): stone footings, planks at `floor`, the hole down to the ground with broken
+    boards in it, the ceiling slab on two brick stubs over the doorway, the store at the back, steps up to the door.
+    The edges to climb are chalked white (the village's sign for it). Returns the floor's height."""
+    F = AULA["floor"]; p0, p1 = AULA["pit"]; s0, s1, sh = AULA["slab"]; ly, lh = AULA["loft"]
+    W, D = w / 2 + 0.06, d / 2 + 0.06
+    def block(x0, x1, y0, y1, z0, z1, m):
+        bx(b, ((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2), (x1 - x0, y1 - y0, z1 - z0), m)
+    block(-W, W, -D, p0, -1.2, F - 0.02, "stone")               # footing under the front floor
+    block(-W, W, p1, D, -1.2, F - 0.02, "stone")                # ...under the back one and the store
+    for x0, x1 in ((-W, -w / 2 + t), (w / 2 - t, W)):           # the hole's sides
+        block(x0, x1, p0, p1, -1.2, F, "stone")
+    block(-w / 2 + t, w / 2 - t, p0, p1, -1.2, 0.05, "mud")     # its bottom: the ground
+    # the boards left, out over the threshold: one level from the top step in (crouched under the slab there is no
+    # headroom to step up even a lip: Steps)
+    block(-w / 2 + t, w / 2 - t, -D + 0.3, p0, F - 0.02, F, "planks"); block(-0.8, 0.8, -D, -D + 0.3, F - 0.02, F, "planks")
+    block(-w / 2 + t, w / 2 - t, p1, ly, F - 0.02, F, "planks")
+    rng = random.Random("ruina/aula")
+    for _ in range(5):  # boards that fell in
+        bx(b, (rng.uniform(-2.2, 2.2), rng.uniform(p0 + 0.3, p1 - 0.3), 0.1), (0.22, 1.3, 0.04), "planks",
+           rot=(rng.uniform(-0.15, 0.15), 0, rng.uniform(0, 3)))
+    block(-w / 2 + t, w / 2 - t, ly, D, F - 0.02, F + lh, "stone")  # the store, out to the back wall's face
+    for x0, x1 in ((-1.35, -1.05), (1.05, 1.35)):              # the slab's brick stubs and the slab
+        block(x0, x1, s0, s1, F, F + sh, "barra_ochre")
+    bx(b, (0, (s0 + s1) / 2, F + sh + 0.06), (2.8, s1 - s0, 0.12), "planks", rot=(0, 0.03, 0.02))
+    for i in range(3):  # steps up to the door, 30 cm each
+        y1 = -D - 0.3 * i
+        block(-0.8, 0.8, y1 - 0.3, y1, -0.6, F - 0.3 * i, "stone")
+    for y in (p0 - 0.005, p1 + 0.005):                          # chalk along the edges to climb
+        block(-w / 2 + t, w / 2 - t, y - 0.01, y + 0.01, F - 0.12, F, "whitewash")
+    block(-w / 2 + t, w / 2 - t, ly - 0.015, ly - 0.005, F + lh - 0.12, F + lh, "whitewash")
+    block(AULA["breach"][0], AULA["breach"][1], D + 0.005, D + 0.015, F + lh - 0.12, F + lh, "whitewash")
+    return F
 
 
 def chapel():

@@ -4,7 +4,7 @@
 #   up to LEDGE_MAX  a ledge: he hangs the lantern on its hook, both hands on the edge and hauls himself up (Climb_Ledge)
 #   higher           a wall (holds; puzzle_build.py "muro" looks it): flat against it (mode CLIMB), W climbs a hold up
 #                    (Climb_Step), S one down; at the top he goes over as onto a ledge, at the foot S lets go.
-# Up on top, near the edge over a climbable side, E brings him down it the way he came up, backwards: his back to the
+# Up on top, near the edge over a climbable side and facing it, E brings him down it the way he came up, backwards: his back to the
 # drop, over the edge, hanging by his hands (Climb_Ledge played backwards); off a ledge he ends on the ground, off a
 # wall on its holds (then S climbs on down, W back up). Or he can just step off (and maybe get hurt: Player.FALL_SAFE).
 # A Pushable carries one (it can be climbed too).
@@ -86,10 +86,17 @@ func reach(p: Vector3) -> float:
 		prompt = _up_prompt()
 		return to_local(p).dot(n) - (size.x if n.x != 0.0 else size.y) / 2
 	n = edge_at(p)
-	if n != Vector3.ZERO:
+	if n != Vector3.ZERO and _facing(n):
 		prompt = "E · descer"
 		return (size.x if n.x != 0.0 else size.y) / 2 - to_local(p).dot(n)
 	return INF
+
+
+## He faces that side (a local normal): up on top, "descer" only when he looks over the edge, so that what lies up
+## there (a note, a tin) is not lost to it.
+func _facing(n: Vector3) -> bool:
+	var pl: Node3D = get_tree().get_first_node_in_group("player")
+	return pl == null or (-pl.global_basis.z).dot(global_basis * n) > 0.3
 
 
 func _use(by: Node3D) -> void:

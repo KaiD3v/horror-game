@@ -157,7 +157,7 @@ func notes_suite() -> void:
 			if down.is_empty():
 				continue
 			player.global_position = down.position + Vector3.UP * 0.05; player.velocity = Vector3.ZERO
-			player.pivot.rotation.y = atan2(dir.x, dir.z)  # the camera behind him, looking at the paper
+			player.pivot.rotation.y = atan2(dir.x, dir.z); player.rotation.y = player.pivot.rotation.y  # he and the camera look at the paper
 			player.pivot.global_position = player.global_position + Vector3(0, 1.55, 0)
 			await wait(0.5)
 			if L.interactor.current == paper:

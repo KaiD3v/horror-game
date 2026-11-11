@@ -52,10 +52,13 @@ func run() -> void:
 	check(player.global_position.x < 6.75, "the house's wall stops you (x=%.2f)" % player.global_position.x)
 	await shot("v3_casa")
 
-	# the ruin (casa_01) has a doorway on its east side at x = -7.5: you can walk in
-	put(player, L.ground(-5.0, 36.0), PI / 2); await wait(0.3)
+	# the ruin (casa_01) has a doorway on its east side at x = -7.5, up three steps; standing, the fallen slab inside
+	# stops you (crouched you go under: classroom_tests)
+	var g0: Vector3 = L.ground(-5.0, 36.0)
+	put(player, g0, PI / 2); await wait(0.3)
 	await walk(4.0)
-	check(player.global_position.x < -8.0, "you walk into the ruin through its doorway (x=%.2f)" % player.global_position.x)
+	check(player.global_position.x < -7.0 and player.global_position.x > -8.2 and player.global_position.y > g0.y + 0.8,
+		"up the ruin's steps into its doorway, where the slab stops him standing (x=%.2f)" % player.global_position.x)
 	await shot("v4_ruina")
 
 	put(player, L.ground(1.5, 8.0), 0.6); await wait(0.6); await shot("v5_largo")       # the square, chapel to the left
@@ -557,7 +560,8 @@ func dialog_tests() -> void:
 	var give: int = opts.find("Entregar a garrafada")
 	box.pick(give)
 	check(Story.task("garrafada") == "feita" and not Inventory.has("garrafada") and Inventory.money == money + 20
-		and player.health == player.max_health, "the garrafada handed over: task done, healed, Cr$ 20 more")
+		and player.health == player.max_health and Inventory.has("chave_sacristia"),
+		"the garrafada handed over: task done, healed, Cr$ 20 more, the sacristy's key")
 	box._choose()
 	opts = box.rows.map(func(b): return b.text.substr(4))
 	check(opts.all(func(o): return "garrafada" not in o and "precisa" not in o), "...and no more talk of it: %s" % [opts])
@@ -673,6 +677,67 @@ func intro_tests() -> void:
 		await walk(1.0)
 		check(player.global_position.z < spawn.origin.z - 0.3, "%s: he walks again" % how)
 	await shot("intro_fim")
+
+
+# The ruin by the way in as a classroom (../docs/TUTORIAL_VILAREJO.md "A ruína"): up the steps, under the fallen
+# slab crouched (standing he cannot pass, nor stand up under it), across the hole, up onto the store, the tin, down
+# off its back; and out of the hole if he falls in.
+func classroom_tests() -> void:
+	WorldTime.reset(10 * 60); L.day._step(0.0); Story.reset(); Inventory.reset()
+	player.health = 99
+	var r: Transform3D = L.marker(L.AULA).transform
+	var at := func(x: float, y: float, z: float) -> Vector3: return r * Vector3(x, z, -y)
+	var ly := func() -> float: return -(r.affine_inverse() * player.global_position).z  # how far in from its centre
+	var lz := func() -> float: return player.global_position.y - r.origin.y
+	var f: float = L.AULA_FLOOR
+	var inward := r.basis * Vector3(0, 0, -1)
+	var yaw_in := atan2(-inward.x, -inward.z)
+	var g: Vector3 = at.call(0.0, -3.9, 0.0)
+	put(player, L.ground(g.x, g.z), yaw_in); await wait(0.4)
+	Input.action_press("forward")
+	var hinted := await until(func(): return L.hud.prompt.visible and L.hud.prompt.text == Hints.TEXT.agachar, 3.0)
+	await wait(2.0); Input.action_release("forward"); await wait(0.3)
+	check(hinted and absf(lz.call() - f) < 0.1, "up the three steps to the door: \"%s\"" % L.hud.prompt.text)
+	check(ly.call() < -2.2, "standing, the fallen slab stops him at the door (%.2f)" % ly.call())
+	await shot("v60_aula_porta")
+	await tap("crouch"); await wait(0.8)
+	check(player.crouched and is_equal_approx(player.body.height, Player.BODY_LOW) and L.hud.prompt.text != Hints.TEXT.agachar,
+		"C: down, his body as low as he is (%.2f); the line gone while crouched (\"%s\")" % [player.body.height, L.hud.prompt.text])
+	Input.action_press("forward")
+	await until(func(): return ly.call() > -1.9, 4.0)
+	Input.action_release("forward"); await wait(0.2)
+	await tap("crouch"); await wait(0.4)
+	check(player.crouched and L.hud.message.text == "Baixo demais para levantar.", "under the slab he cannot stand (\"%s\")" % L.hud.message.text)
+	Input.action_press("forward")
+	var through := await until(func(): return ly.call() > -1.3, 4.0)
+	Input.action_release("forward"); await wait(0.2)
+	await tap("crouch"); await wait(0.8)
+	check(through and not player.crouched and is_equal_approx(player.body.height, Player.BODY_H), "crouched under it, and up on his feet past it")
+	put(player, at.call(0.0, -1.3, f), yaw_in); await wait(0.3)
+	check(L.interactor.current is Jumpable and L.hud.prompt.text == "Espaço · pular", "at the hole's brink: \"%s\"" % L.hud.prompt.text)
+	await tap("dodge"); await until(func(): return not player.busy, 3.0); await wait(0.3)
+	check(ly.call() > L.AULA_PIT.y and ly.call() < L.AULA_LOFT.x and absf(lz.call() - f) < 0.1, "across the hole (%.2f in, %.2f up)" % [ly.call(), lz.call()])
+	put(player, at.call(0.0, L.AULA_LOFT.x - 0.25, f), yaw_in); await wait(0.3)
+	var climb: Interactable = L.interactor.current
+	await tap("interact"); await until(func(): return not player.busy, 4.0); await wait(0.3)
+	check(climb is Climbable and absf(lz.call() - (f + L.AULA_LOFT.y)) < 0.1, "E: up onto the store (%.2f up)" % lz.call())
+	put(player, at.call(1.0, 2.0, f + L.AULA_LOFT.y), yaw_in); await wait(0.3)
+	var money := Inventory.money
+	check(L.interactor.current is Pickup and L.hud.prompt.text == "E · pegar a lata", "the tin up there: \"%s\"" % L.hud.prompt.text)
+	await tap("interact"); await wait(0.2)
+	check(Inventory.money == money + 5 and Story.has("pego:aula_lata") and L.hud.message.text == "Achou: Cr$ 5", "five cruzeiros in it, found once")
+	await shot("v61_aula_tulha")
+	put(player, at.call(1.2, 2.25, f + L.AULA_LOFT.y), yaw_in + PI / 2); await wait(0.3)  # (yaw_in: from the door to the back)
+	check(L.hud.prompt.text != "E · descer", "looking along the wall, no \"descer\": \"%s\"" % L.hud.prompt.text)
+	put(player, at.call(1.2, 2.25, f + L.AULA_LOFT.y), yaw_in); await wait(0.3)
+	check(L.hud.prompt.text == "E · descer", "at the breach in the back wall, looking out: \"%s\"" % L.hud.prompt.text)
+	await tap("interact"); await until(func(): return not player.busy, 4.0); await wait(0.3)
+	check(ly.call() > 2.56 and absf(lz.call()) < 0.25, "down off its back, outside (%.2f out, %.2f up)" % [ly.call(), lz.call()])
+	put(player, at.call(0.0, -0.3, 0.05), PI + yaw_in); await wait(0.3)
+	check(L.interactor.current is Climbable and L.hud.prompt.text.begins_with("E ·"), "fallen in the hole: \"%s\"" % L.hud.prompt.text)
+	await tap("interact"); await until(func(): return not player.busy, 4.0); await wait(0.3)
+	check(absf(lz.call() - f) < 0.1 and player.health == 99, "E: up out of it, unhurt (%.2f up)" % lz.call())
+	Story.reset(); Inventory.reset(); Inventory.give_tools()
 
 
 # Who comes at night grows with what he has (../docs/TUTORIAL_VILAREJO.md "As noites"): nothing, one Bruxa; the

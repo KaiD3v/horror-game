@@ -21,6 +21,13 @@ const NOTES := [
 	{"id": "mala", "scene": "vilarejo", "at": Vector2(2.5, 41.8), "yaw": 30.0, "paper": "caderno",
 		"title": "Bilhete na mala",
 		"text": "Lurdes,\na ponte caiu. Caiu de noite, sem chuva, sem nada. O Juca jura que ouviu serrarem as vigas.\nVou pela trilha do rio. Se eu não voltar até domingo, não vem atrás. Fica na venda com o Bento, de porta trancada.\nDeixei a boneca da menina. Pesa demais para carregar.\n— Tonho"},
+	{"id": "escola", "scene": "vilarejo", "at": Vector2(-11.95, 37.4), "yaw": -20.0, "paper": "caderno",  # on the ruin's store
+		"title": "Caderno escolar",
+		"text": "Rosinha · 3ª série · 1973
+Lição: escreva sobre o seu pai.
+Meu pai trabalha na Colônia, na lavanderia. Ele diz que lá em cima ninguém sobe sem ser chamado.
+De noite, quando o sino toca, ele fecha a janela e reza.
+(a professora riscou: \"Não escreva isso.\")"},
 	{"id": "casa_04", "scene": "vilarejo", "at": Vector2(6.0, 14.2), "yaw": -70.0, "paper": "caderno",
 		"title": "Folha de diário",
 		"text": "14 de março\nBateram na porta de novo. Três batidas, depois arrastam alguma coisa. O Zé jura que é a mãe dele, que morreu na Colônia em 69.\nPregamos as janelas. Ele chora e pede para abrir.\n\n15 de março\nO Zé abriu."},

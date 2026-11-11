@@ -485,9 +485,10 @@ func unlock_tests() -> void:
 	# the shop: the bolts wait for the crossbow, a tool sells once
 	Inventory.money = 100
 	check(Shop.buy("armaria", 0) == Shop.Result.LOCKED and Inventory.count("virote") == 6, "no bolts for sale without the crossbow")
-	check(Shop.buy("armaria", 2) == Shop.Result.OK and Inventory.has("besta") and Shop.buy("armaria", 0) == Shop.Result.OK,
-		"the crossbow bought, then the bolts")
-	check(Shop.left("armaria", 2) == 0 and Shop.buy("armaria", 2) == Shop.Result.SOLD_OUT, "a crossbow is bought once")
+	check(Shop.offers("armaria").all(func(o): return o.item != "besta"), "the crossbow is not for sale (it is found)")
+	Inventory.add("besta")
+	check(Shop.buy("armaria", 0) == Shop.Result.OK and Inventory.count("virote") == 9, "with the crossbow, the bolts")
+	Inventory.items.erase("besta")
 	Shop.reset()
 	# found lying about
 	var knife := Pickup.make(L, player.global_position, "facao")

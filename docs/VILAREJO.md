@@ -126,14 +126,14 @@ Gancho da missão (a definir): o filho de Dona Firmina foi levado para a Colôni
   | Seu Bento | garrafada de arnica (fecha 2) | Cr$ 18 | 2 |
   | Tenório (Armas e Munição) | 3 virotes | Cr$ 9 | sem limite |
   | Tenório | 8 virotes | Cr$ 20 | 3 |
-  | Tenório | besta | Cr$ 20 | 1 |
 
-  Os virotes só se compram depois da besta (`requires` na oferta). Sem ela, o Tenório pergunta com que você vai
+  A besta não se vende mais: ela se acha (ver [TUTORIAL_VILAREJO.md](TUTORIAL_VILAREJO.md)); perguntado, o Tenório diz
+  que ficou "lá embaixo". Os virotes só se compram depois da besta (`requires` na oferta). Sem ela, o Tenório pergunta com que você vai
   atirar. Uma ferramenta que você já tem aparece como "já tem".
 
 - **O inventário** (`Inventory`) continua entre as cenas e volta ao início num jogo novo. O estoque das lojas também.
   - Um jogo novo começa com a lamparina, Cr$ 40, 6 virotes e 1 atadura. O facão está num baú junto à casa em
-    ruínas da entrada; a besta se compra na armaria.
+    ruínas da entrada (até a fase 3 do tutorial o levar para o alambique); a besta ainda não está em lugar nenhum.
   - **Itens que desbloqueiam** (`tipo: "ferramenta"`, ver `docs/ARQUITETURA.md`): sem o facão ou a besta, a placa
     da roda fica escura ("ainda não tem") e as teclas 1 e 2 só dizem "Sem facão." / "Sem besta.".
   - A sala de treino e a Colônia dão todas as ferramentas ao abrir (são cenas de teste, sem entrada pelo vilarejo).
@@ -359,6 +359,20 @@ volta para a frente dela. Por isso as casas por fora continuam fechadas; as port
   No corredor, um velório que ficou pela metade: caixão em cavaletes com a tampa fora do lugar e quatro castiçais
   altos acesos. Velário com dezenas de velas, tábua de ex-votos de cera (cabeças, mãos, pernas, coração, fotos, fitas),
   pia de água benta e a corda do sino. Ninguém lá dentro (o NPC dos interiores agora é opcional).
+
+### A ruína da entrada: a sala de aula
+
+A `casa_01` virou o primeiro lugar onde se aprende a se mexer, onde cair não machuca (ver
+[TUTORIAL_VILAREJO.md](TUTORIAL_VILAREJO.md) "A ruína"; `construcoes.py` `AULA`, `vilarejo.gd` `_classroom`):
+- três degraus até a porta e o assoalho a 0,9 m; um pedaço do forro caído atravessa a porta a 1,4 m do chão. Em pé
+  ele para ali; diante dela aparece "C · agachar". Agachado o corpo dele fica com 1,2 m (`Player.BODY_LOW`) e passa,
+  e debaixo do forro não dá para levantar ("Baixo demais para levantar.");
+- o assoalho caiu no meio até o chão (0,9 m): "Espaço · pular" de uma borda à outra, ou cair e subir de volta (E);
+- no fundo, a tulha de pedra (0,7 m acima do assoalho) para subir, e lá em cima uma lata com Cr$ 5 (achada uma vez,
+  Story `pego:aula_lata`) e o caderno escolar da Rosinha (nota `escola`);
+- a parede do fundo caiu até a tulha: por ali ele desce para fora, pendurado.
+- As bordas que se sobem têm uma faixa de cal: o sinal do lugar para "dá para subir".
+- "E · descer" só aparece com ele virado para a borda (`Climbable`), para não esconder o que está lá em cima.
 - Mais escura que as lojas (`AMBIENT`, `DIM` em `scripts/levels/interior.gd`); perto do jogador manda a lanterna dele.
 
 ## Sons

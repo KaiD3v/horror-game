@@ -76,6 +76,10 @@ var winded := false
 var rest := 0.0           # time since the last sprint
 var mode := Mode.EXPLORE
 var crouched := false     # down on his heels: the CROUCH mode exploring, or kneeling with a weapon out
+const BODY_H := 1.7       # his body's height standing...
+const BODY_LOW := 1.2     # ...and crouched: he goes under what is lower than a man (the ruin's fallen ceiling)
+var body: CylinderShape3D
+var body_col: CollisionShape3D
 var crouch_amt := 0.0     # the kneeling legs' blend under a weapon, eased
 var action := ""          # one-shot playing, "" = none
 var action_t := 0.0
@@ -126,9 +130,9 @@ func _ready() -> void:
 	add_to_group("player")
 	Steps.keep_down(self)
 	GameInput.setup()
-	var col := CollisionShape3D.new(); add_child(col)
-	var cap := CylinderShape3D.new(); cap.radius = 0.25; cap.height = 1.7  # flat-bottomed: it stands on a stair's edge instead of rolling off it (Steps)
-	col.shape = cap; col.position.y = 0.85
+	body_col = CollisionShape3D.new(); add_child(body_col)
+	body = CylinderShape3D.new(); body.radius = 0.25; body.height = BODY_H  # flat-bottomed: it stands on a stair's edge instead of rolling off it (Steps)
+	body_col.shape = body; body_col.position.y = BODY_H / 2
 
 	model = load(Paths.character("protagonista")).instantiate()
 	add_child(model)
@@ -409,6 +413,11 @@ func _set_loaded(v: bool) -> void:
 
 
 func crouch() -> void:  # exploring: Crouch_Down (standing up = backwards); armed: the legs alone kneel / rise
+	if crouched and not can_stand():
+		notice.emit("Baixo demais para levantar.")
+		return
+	if not crouched:
+		Hints.did("agachar")
 	if mode == Mode.COMBAT or mode == Mode.XBOW:
 		if legs_free():
 			crouched = not crouched
@@ -504,6 +513,23 @@ func sfx(n: String, db := 0.0, pitch := 1.0) -> void:
 
 
 # --- per frame -------------------------------------------------------------------------------------
+## Room over his head to stand up in (his standing body, clear of the floor, touches nothing).
+func can_stand() -> bool:
+	var q := PhysicsShapeQueryParameters3D.new()
+	var s := CylinderShape3D.new(); s.radius = body.radius; s.height = BODY_H - 0.15
+	q.shape = s; q.transform = Transform3D(Basis(), global_position + Vector3(0, 0.15 + s.height / 2, 0))
+	q.exclude = [get_rid()]; q.collision_mask = 1
+	return get_world_3d().direct_space_state.intersect_shape(q, 1).is_empty()
+
+
+## His body as tall as he is now. (ponytail: a swing or a dodge stands him up even under a low ceiling; the physics
+## then pushes him out of it. Guard those with can_stand() if a fight ever happens under one.)
+func _fit_body() -> void:
+	var h := BODY_LOW if crouched else BODY_H
+	if not is_equal_approx(body.height, h):
+		body.height = h; body_col.position.y = h / 2
+
+
 ## The situational lines (Hints) his own state asks for: the crossbow out and not aimed; and what he has just done.
 func _hints(was: Array) -> void:
 	if blocking and not was[0] and held == "facao":
@@ -516,6 +542,7 @@ func _hints(was: Array) -> void:
 
 func _physics_process(delta: float) -> void:
 	var led := busy and walk_to != Vector3.INF  # walked by a script: physics as usual, the input ignored
+	_fit_body()
 	if not is_on_floor() and (not busy or led):
 		velocity.y -= gravity * delta
 	var move := Vector3.ZERO

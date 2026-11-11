@@ -12,6 +12,7 @@ const MENU := [
 	{"texto": "Perguntar o que se fala por aí", "vai": "rumores"},
 	{"texto": "Perguntar sobre ele", "vai": "ele"},
 	{"texto": "Perguntar como se mata aquilo", "vai": "matar"},
+	{"texto": "Perguntar por uma besta", "vai": "besta"},
 	{"texto": "Ir embora", "vai": "fim"},
 ]
 
@@ -28,11 +29,18 @@ const NOS := {
 			"Eu fui no cemitério com a espingarda. Achei pegada descalça. Indo pro morro."],
 		["Tem algo andando em cima dos telhados. Leve. Bate as asas que nem mariposa.",
 			"Chumbo atravessa e ela nem sente. Ponta de ferro ela sente."],
+		["Quando ela armar o golpe, ergue o facão na frente da cara. Aço aguenta o tranco.",
+			"Pela frente. Pelas costas o facão não te salva de nada."],
 	]},
 	"ele": {"fala": [
 		"Cacei onça nessa serra trinta anos. Uma me deixou isso aqui no olho. Foi a última que eu matei.",
 		"Vendia cartucho pra gente da Colônia caçar no fim de semana. Os doutores. Atiravam mal.",
 		"Fiquei porque alguém tem que vender o que mata eles. E porque não tenho pra onde ir.",
+	]},
+	"besta": {"fala": [
+		"Besta? Tinha uma. Boa, de caçar veado. Não vendo mais.",
+		"Ficou lá embaixo, junto com o que eu não quero lembrar.",
+		"Arruma uma lâmina primeiro. Sem lâmina você não volta de onde ela está.",
 	]},
 	"matar": {"fala": [
 		"Chumbo não adianta. Eu gastei duas caixas num só. Ele levantou.",

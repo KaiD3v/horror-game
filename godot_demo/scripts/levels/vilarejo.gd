@@ -19,6 +19,13 @@ const THEME := "vilarejo"       # its music (music/vilarejo.mp3, ../docs/VILAREJ
 const THEME_DB := -12.0         # (the track itself is quiet: about half the opening's level)
 const GATE := "portao_colonia"  # the Colônia's gate: locked (chave_portao); open, E takes you up to the Colônia
 # Doors into interiors (porta_<name> markers at the foot of the steps): E takes you in; coming out puts you back here.
+# The ruin by the way in, a classroom of the moves (../docs/TUTORIAL_VILAREJO.md "A ruína"): its numbers are
+# ../tools/cenarios/vilarejo/construcoes.py AULA, in the ruin's own frame (Blender: x across, y back from the door, z up).
+const AULA := "casa_01"
+const AULA_FLOOR := 0.9                 # the plank floor (the hole in it goes down to the ground)
+const AULA_PIT := Vector2(-1.05, 0.45)  # y: the hole
+const AULA_LOFT := Vector2(1.4, 0.7)    # y of the stone store's face, its height over the floor
+const AULA_BREACH := Vector2(0.4, 2.0)  # x: the back wall fallen to the store
 const DOORS := {"armaria": "E · entrar na Armaria do Tenório", "venda": "E · entrar na Venda do Seu Bento",
 	"capela": "E · entrar na capela"}
 # Finish (../docs/VILAREJO.md "Acabamento"): the silhueta_* shapes get a fog-free haze so they show through the fog as
@@ -59,6 +66,7 @@ func _build() -> void:
 	_finish(village)
 	_bounds()
 	spawn_npcs(village)
+	_classroom()
 	var g := marker(GATE)
 	Gate.make(self, g.position, g.rotation.y, GATE, "chave_portao", Paths.COLONIA, "E · entrar na Colônia")  # before the navmesh: its leaves cut it
 	bake_navmesh({"cell": 0.25, "cell_h": 0.1, "climb": 0.4, "slope": 40.0, "aabb": PLAY})  # after the NPCs: they stand in it
@@ -191,6 +199,31 @@ func _finish(root: Node) -> void:
 			mi.set_surface_override_material(i, h); haze.append(h)
 		elif m is BaseMaterial3D:
 			m.vertex_color_use_as_albedo = true)  # the baked AO (meshes without colours read white)
+
+
+## The classroom ruin's moves: up out of the hole either side, the jump across it, up onto the store and down off its
+## back through the breach, "C · agachar" at the door (a ceiling slab down across it), and a tin with coins and a
+## schoolbook up on the store.
+func _classroom() -> void:
+	var r: Transform3D = marker(AULA).transform
+	var yaw := r.basis.get_euler().y
+	var at := func(x: float, y: float, z: float) -> Vector3: return r * Vector3(x, z, -y)
+	var inner := 5.4                    # between the side walls
+	var f := AULA_FLOOR; var p := AULA_PIT; var l := AULA_LOFT
+	Climbable.make(self, at.call(0.0, (-2.2 + p.x) / 2, 0.05), yaw, f - 0.05, Vector2(inner, p.x + 2.2), [Vector3.FORWARD])
+	Climbable.make(self, at.call(0.0, (p.y + l.x) / 2, 0.05), yaw, f - 0.05, Vector2(inner, l.x - p.y), [Vector3.BACK])
+	Climbable.make(self, at.call(0.0, (l.x + 2.56) / 2, f), yaw, l.y, Vector2(inner, 2.56 - l.x), [Vector3.BACK])
+	Climbable.make(self, at.call((AULA_BREACH.x + AULA_BREACH.y) / 2, (l.x + 2.56) / 2, 0.0), yaw, f + l.y,
+		Vector2(AULA_BREACH.y - AULA_BREACH.x, 2.56 - l.x), [Vector3.FORWARD])
+	Jumpable.make(self, at.call(0.0, p.x - 0.25, f), at.call(0.0, p.y + 0.3, f))  # (by the brinks: nearer the store, E climbs it)
+	HintSpot.make(self, at.call(0.0, -2.75, f), "agachar", 1.4,
+		func(pl: Player): return pl.mode == Player.Mode.EXPLORE and not pl.crouched)
+	var tin := Pickup.money(self, at.call(1.0, 1.9, f + l.y), 5, "aula_lata", "a lata")
+	var mi := MeshInstance3D.new(); tin.add_child(mi)
+	var cyl := CylinderMesh.new(); cyl.top_radius = 0.06; cyl.bottom_radius = 0.06; cyl.height = 0.12; mi.mesh = cyl
+	mi.position.y = 0.06
+	var rust := StandardMaterial3D.new(); rust.albedo_color = Color(0.42, 0.24, 0.14); rust.metallic = 0.4; rust.roughness = 0.7
+	mi.material_override = rust
 
 
 func _bounds() -> void:
