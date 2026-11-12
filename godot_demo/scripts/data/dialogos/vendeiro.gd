@@ -6,6 +6,8 @@ extends RefCounted
 const ENTRADA := [
 	{"se": {"sem_marca": "bento_conheceu"}, "vai": "primeira"},
 	{"se": {"noite": true}, "vai": "noite"},
+	{"se": {"lugar": "varrendo"}, "vai": "varrendo"},
+	{"se": {"lugar": "almoco"}, "vai": "almoco"},
 	{"vai": "oi"},
 ]
 
@@ -26,6 +28,14 @@ const NOS := {
 		"Bento, às ordens. Secos e molhados, pano, querosene, vela. Vela eu tenho muita. Ninguém compra mais nada.",
 	]},
 	"oi": {"fala": ["Voltou! Eu sabia. Quer dizer, eu rezei. Dá na mesma. O que vai levar?"]},
+	"varrendo": {"falas": [
+		["Bom dia, freguês! Varro a frente todo dia. A poeira não sabe que o vilarejo acabou, e eu não conto pra ela."],
+		["Varrer é bom. Quem varre a frente diz pro mundo: aqui ainda tem gente. Vai que o mundo escuta."],
+	]},
+	"almoco": {"falas": [
+		["Senta aí. Pão com mortadela. A mortadela é a última da venda, então você não viu nada."],
+		["Meio-dia eu como aqui fora, no banco. Lá dentro o relógio fica me olhando."],
+	]},
 	"noite": {"fala": ["Fala baixo, fala baixo. De noite eu fecho a janela e finjo que a venda é um armário."]},
 	"rumores": {"falas": [
 		["A ponte caiu numa noite sem chuva. O Juca jurou que ouviu serra. Serra, de madrugada!",

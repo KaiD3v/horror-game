@@ -126,6 +126,7 @@ var condition: PlayerCondition  # blood, breathing, panting
 
 
 func _ready() -> void:
+	set_collision_mask_value(Npc.LAYER, true)  # the villagers stop him (not the mutants: they walk where those stand)
 	max_health = Inventory.health_max(); stamina_max = Inventory.breath_max()  # (the upgrades carried)
 	health = max_health; stamina = stamina_max
 	add_to_group("player")

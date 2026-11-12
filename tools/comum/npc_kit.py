@@ -144,6 +144,7 @@ def finish(name, K, J, idle, extras=(), head_scale=1.0):
     P.action("Idle", 61, loop=True)
     for f, k in idle:
         P.pose(f, k)
+    day_actions(P)  # their routine (docs/CONTEUDO_VILAREJO.md "As rotinas")
     arm.animation_data.action = bpy.data.actions["Idle_Loop"]
     for o in extras:
         tris += sum(len(p.vertices) - 2 for p in o.data.polygons)
@@ -153,6 +154,44 @@ def finish(name, K, J, idle, extras=(), head_scale=1.0):
                               export_animations=True, export_skins=True)
     render(name)
     print("NPC %s tris=%d height=%.2f" % (name, tris, max((body.matrix_world @ v.co).z for v in body.data.vertices)))
+
+
+def _legs(front, kind):  # a step: the front leg reaching, the back one pushing off (porteiro_build.py's)
+    back = ".R" if front == ".L" else ".L"
+    if kind == "contact":
+        return [("thigh" + front, "X", -22), ("shin" + front, "X", 6), ("thigh" + back, "X", 16), ("shin" + back, "X", 14)]
+    return [("thigh" + front, "X", 3), ("thigh" + back, "X", -12), ("shin" + back, "X", 42)]
+
+
+def day_actions(P):
+    """What they do through the day (Npc, NpcCatalog "rotina"), the same for all: the arms stay as they were built
+    (folded on the belly, on the machete, joined in prayer), so no arm swing.
+      Walk    a slow village walk, 32 frames (the stride is printed: Godot's NpcCatalog "passo")
+      Sit     on a bench, hands where they were; Kneel  on both knees, bent forward a little
+      LookUp  standing, looking up at something high (Tenório at the gate); Sweep  the arms down in front, a broom
+              (Godot hangs it on hand.R) swept side to side"""
+    P.action("Walk", 33, loop=True)
+    for fr, fo, kind, sg in ((1, ".L", "contact", 1), (9, ".L", "pass", 1), (17, ".R", "contact", -1),
+                             (25, ".R", "pass", -1), (33, ".L", "contact", 1)):
+        P.pose(fr, _legs(fo, kind) + [("hips", "Z", 4 * sg), ("chest", "Z", -5 * sg), ("chest", "X", 3)])
+        if fr == 1:
+            print("NPC stride=%.3f" % abs(P.P["foot.L"].head.y - P.P["foot.R"].head.y))
+    P.action("Sit", 61, loop=True)
+    for f, b in ((1, 0), (31, 1), (61, 0)):
+        P.pose(f, [("thigh.L", "X", -84), ("thigh.R", "X", -86), ("shin.L", "X", 82), ("shin.R", "X", 86),
+                   ("chest", "X", 6 + 2 * b), ("head", "X", 4 + 3 * b)])
+    P.action("Kneel", 61, loop=True)
+    for f, b in ((1, 0), (31, 1), (61, 0)):
+        P.pose(f, [("thigh.L", "X", -6), ("thigh.R", "X", -4), ("shin.L", "X", 92), ("shin.R", "X", 90),
+                   ("chest", "X", 12 + 3 * b), ("head", "X", 10 + 5 * b)])
+    P.action("LookUp", 61, loop=True)
+    for f, b in ((1, 0), (31, 1), (61, 0)):
+        P.pose(f, [("chest", "X", -4 - 1.5 * b), ("neck", "X", -10), ("head", "X", -20 - 4 * b), ("head", "Z", 6 * b)])
+    P.action("Sweep", 31, loop=True)
+    ARMS = [("upper_arm.R", (0.15, -0.45, -0.88)), ("forearm.R", (-0.25, -0.75, -0.6)), ("hand.R", (-0.2, -0.6, -0.78)),
+            ("upper_arm.L", (-0.15, -0.45, -0.88)), ("forearm.L", (0.3, -0.75, -0.55)), ("hand.L", (0.25, -0.6, -0.75))]
+    for f, sg in ((1, 1), (16, -1), (31, 1)):
+        P.pose(f, [("hips", "Z", 6 * sg), ("chest", "Z", 16 * sg), ("chest", "X", 14), ("head", "X", 10)], aims=ARMS)
 
 
 def render(name):

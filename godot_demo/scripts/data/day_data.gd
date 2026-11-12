@@ -16,6 +16,7 @@ const CHANCES := {
 const RAIN_SPELL := Vector2(40, 180)   # game minutes a rain lasts
 const RAIN_EASE := 12.0                # game minutes for a rain to set in or stop
 const FOG_EASE := 45.0                 # ...and for the fog to roll in or lift
+const VOZ_DO_BRASIL := Vector2(19, 20)  # the hour every radio had to carry the government's programme: Bento's too
 const DRY := 240.0                     # game minutes for the puddles to dry after the rain (they soak in 20)
 
 # hour: fog/sky colour, ambient colour and energy, sun colour and energy, moon energy (the moon is cold and dim)
@@ -48,3 +49,8 @@ static func sample(hour: float) -> Dictionary:
 		out[k] = lerp(a[1][k], b[1][k], t)
 	out["day"] = clampf(out.sun_e / FULL_SUN, 0.0, 1.0)
 	return out
+
+
+## What Bento's radio plays at `hour`: the Voz do Brasil in its hour, music otherwise.
+static func radio(hour: float) -> String:
+	return "voz_do_brasil" if hour >= VOZ_DO_BRASIL.x and hour < VOZ_DO_BRASIL.y else "musica_venda"

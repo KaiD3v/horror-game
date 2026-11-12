@@ -51,6 +51,8 @@ const WELL := Vector2(3.0, -3.0)  # the well's centre (x, z); he climbs out besi
 var carpideira: Carpideira
 var alleys: Array[Vector3] = []   # where she walks: the navmesh beside each house
 var night := false
+var doors := {}                # the doors into the interiors (DOORS), by name
+var radio: AudioStreamPlayer3D  # Bento's radio through his shut door, in the hour of the Voz do Brasil (DayData.radio)
 var night_watch := true       # the autotest holds the night back until it tests it
 
 
@@ -69,9 +71,12 @@ func _build() -> void:
 	_classroom()
 	var g := marker(GATE)
 	Gate.make(self, g.position, g.rotation.y, GATE, "chave_portao", Paths.COLONIA, "E · entrar na Colônia")  # before the navmesh: its leaves cut it
-	bake_navmesh({"cell": 0.25, "cell_h": 0.1, "climb": 0.4, "slope": 40.0, "aabb": PLAY})  # after the NPCs: they stand in it
+	bake_navmesh({"cell": 0.25, "cell_h": 0.1, "climb": 0.4, "slope": 40.0, "aabb": PLAY})  # (the villagers walk: not in it)
 	for d in DOORS:
-		Door.make(marker("porta_" + d), DOORS[d], Paths.interior(d), d)
+		doors[d] = Door.make(marker("porta_" + d), DOORS[d], Paths.interior(d), d)
+	# shut at night (their routines, ../docs/CONTEUDO_VILAREJO.md): Bento opens to a knock, Tenório does not
+	doors.venda.hours(18, 6, "Seu Bento, lá de dentro: — Quem é? ...Ah, é você. Entra, entra, rápido!", true)
+	doors.armaria.hours(21, 6, "Tenório, lá de dentro: — De noite eu não abro. Volta de manhã, se ainda tiver manhã.")
 	_alambique()
 	var ze := marker("parede_casa_ze")  # Zé's house, nailed up after they took him
 	_nailed(ze.position, ze.rotation.y, marker("porta_casa_ze"), "casa_ze", "E · entrar na casa do Zé", Paths.interior("casa_ze"))
@@ -105,6 +110,7 @@ func _started() -> void:
 
 
 func _process(_delta: float) -> void:
+	_radio()
 	# (not before the navigation map has synced: the night's places come from it. Arriving at night, up the well's rope
 	# or out of a door, the first frames have none yet)
 	if night_watch and WorldTime.is_night() != night and NavigationServer3D.map_get_iteration_id(get_world_3d().navigation_map) > 0:
@@ -441,3 +447,13 @@ func _bell() -> AudioStreamPlayer3D:  # three tolls, four seconds apart; O Pocei
 	for i in [1, 2]:
 		get_tree().create_timer(4.0 * i).timeout.connect(func(): Audio.play3d(self, "sino", bell_at, 8.0, false, 25.0, 220.0))
 	return Audio.play3d(self, "sino", bell_at, 8.0, false, 25.0, 220.0)
+
+
+## At 19h the Voz do Brasil through the venda's door, muffled by the boards; gone at 20h.
+func _radio() -> void:
+	var on := DayData.radio(WorldTime.hour()) == "voz_do_brasil"
+	if on and radio == null:
+		radio = Audio.play3d(self, "voz_do_brasil", marker("porta_venda").position + Vector3(0, 1.5, 0), -6.0, true, 2.0, 16.0)
+		radio.attenuation_filter_cutoff_hz = 1200.0
+	elif not on and radio:
+		radio.queue_free(); radio = null

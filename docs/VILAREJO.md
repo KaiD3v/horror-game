@@ -100,6 +100,10 @@ o `scripts/levels/vilarejo.gd` os coloca nos marcadores `npc_<nome>` do GLB do v
 
 Gancho da missão (a definir): o filho de Dona Firmina foi levado para a Colônia.
 
+**O dia deles:** cada um tem uma rotina por hora (varrer a frente, almoçar no banco, olhar o portão, o túmulo do marido,
+a varanda à noite), anda de um lugar ao outro e fala do lugar onde está. A venda e a armaria fecham à noite. Ver
+[CONTEUDO_VILAREJO.md](CONTEUDO_VILAREJO.md) "Fase 1".
+
 ### Lojas (`scripts/shop/`, dados em `ItemCatalog` e `ShopCatalog`)
 
 - **Conversas** (`Talk`, `DialogBox`, `Dialog`, falas em `scripts/data/dialogos/`): perto de qualquer NPC aparece

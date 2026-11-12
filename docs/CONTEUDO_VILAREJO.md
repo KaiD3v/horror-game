@@ -1,7 +1,7 @@
 # O vilarejo vivo: conteúdo secundário (plano)
 
 *Data: 2026-11-11. Continua [TUTORIAL_VILAREJO.md](TUTORIAL_VILAREJO.md) e [CHAVE_DO_PORTAO.md](CHAVE_DO_PORTAO.md).
-Nada disto está feito. Coordenadas em Godot (x, z).*
+Fase 1 feita (ver "Fase 1, feita" no fim); o resto é plano. Coordenadas em Godot (x, z).*
 
 ## O problema
 
@@ -248,3 +248,52 @@ São o motivo para voltar ao vilarejo com as ferramentas do capítulo seguinte, 
 - **Sons (ElevenLabs, sem voz):** sino ao longe, rádio AM com a Voz do Brasil, chiado e estações, palitos na mesa,
   garrafa estourando (já existe?), a mula, o tronco caindo, a voz que imita (um sussurro sem palavras). Cerca de 10
   gerações.
+
+---
+
+## Fase 1, feita: as rotinas e o rádio
+
+**A tabela** (`NpcCatalog` "rotina": um horário por linha, com a cena, o lugar, a animação, o "lugar" das falas e o que
+ele leva na mão):
+
+| Hora | Seu Bento | Tenório | Dona Firmina |
+|---|---|---|---|
+| 0h | no balcão, a venda fechada | no balcão, a armaria fechada | ajoelhada no cruzeiro |
+| 6h | na frente da venda, varrendo (com a vassoura) | no portão da Colônia, olhando para cima | de pé no cruzeiro, rezando |
+| 8h a 9h | volta ao balcão às 9h | volta ao balcão às 8h | |
+| 12h | almoça sentado no banco do largo | | |
+| 13h | no balcão | | |
+| 14h | | | ajoelhada no túmulo do marido, o Antero, no cemitério |
+| 16h | | | de volta ao cruzeiro |
+| 18h | fecha a venda (fica no balcão) | na varanda da armaria, com a lamparina acesa no chão | ajoelhada no cruzeiro |
+| 21h | | entra e fecha a armaria | |
+
+- **Como andam** (`Npc.go`, `Level._routine`): quando a hora muda, cada um vai para o lugar novo. Se o jogador está
+  perto (30 m, o alcance da neblina), ele anda pelo navmesh com a animação de andar; quem muda de cena anda até a porta e some,
+  e quem chega sai pela porta e anda até o lugar. Longe da vista, ou num interior (sem navmesh), ele só aparece lá,
+  ou some, quando o jogador não está olhando.
+- **Corpo:** os moradores ficam numa camada de colisão própria (`Npc.LAYER`): o jogador esbarra neles; os mutantes, o
+  navmesh e a câmera não (eles mudam de lugar, então não deixam buraco no navmesh onde estavam).
+- **As velas da Firmina** ficam acesas no cruzeiro quando ela vai ao cemitério (`luz` "fica", `Npc.leave_behind`).
+- **O que falam** depende de onde estão (condição `lugar` do `Dialog`, duas falas alternadas para cada lugar):
+  - o Bento varrendo e almoçando no banco;
+  - o Tenório no portão ("Vim ver se o portão continua fechado. Continua.") e na varanda;
+  - a Firmina no túmulo do Antero.
+- **As portas fechadas pela hora** (`Door.hours`):
+  - a venda das 18h às 6h: "E · bater na porta", as batidas (`bater_porta`), o Bento responde lá de dentro e abre;
+  - a armaria das 21h às 6h: o Tenório responde e não abre.
+- **A Voz do Brasil** (`DayData.radio`), das 19h às 20h:
+  - o rádio da venda troca a música pelo programa;
+  - na rua, o som sai abafado pela porta da venda (`vilarejo.gd` `_radio`, filtro de 1,2 kHz).
+- **Animações novas dos NPCs** (`npc_kit.py` `day_actions`, as mesmas para os três): `Walk`, `Sit`, `Kneel`, `LookUp`,
+  `Sweep`. Os braços ficam como foram feitos (mãos na barriga, no facão, postas), então andam sem balançar os braços.
+- **Sons novos (ElevenLabs, 74 créditos):** `bater_porta` e `voz_do_brasil` (rádio AM, fanfarra e locutor sem
+  palavras claras, em loop).
+- **Mudou do plano:**
+  - o Tenório fica de pé na varanda, com a lamparina no chão ao lado (sem cadeira nem espingarda no colo);
+  - o Bento atende a batida e deixa entrar, em vez de vender pela fresta: a venda continua sendo o abrigo da noite.
+- **Testes:**
+  - `test_vilarejo.gd` `rotina_tests`: cada um no lugar e na animação de cada hora, as falas por lugar, o Bento
+    saindo pela porta e andando até o banco, as velas no cruzeiro, a varanda, o rádio e as duas portas, com seis capturas
+    `v50` a `v55`;
+  - `test_venda.gd` `rotina_tests`: o balcão vazio às 7h, ele de volta às 9h30 e o rádio às 19h.

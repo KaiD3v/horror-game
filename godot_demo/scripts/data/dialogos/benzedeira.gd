@@ -7,6 +7,7 @@ extends RefCounted
 const ENTRADA := [
 	{"se": {"sem_marca": "firmina_conheceu"}, "vai": "primeira"},
 	{"se": {"noite": true}, "vai": "noite"},
+	{"se": {"lugar": "cemiterio"}, "vai": "cemiterio"},
 	{"vai": "oi"},
 ]
 
@@ -29,6 +30,10 @@ const NOS := {
 		"Eu sou a Firmina. Benzo cobreiro, quebranto, espinhela caída. Hoje em dia benzo é o vilarejo inteiro.",
 	]},
 	"oi": {"fala": ["Ainda de pé, menino? Deus seja louvado. Diz o que quer, que a vela não espera."]},
+	"cemiterio": {"falas": [
+		["É o meu Antero. Eu limpo, a terra suja de novo. Trinta anos assim, a gente se entende."],
+		["De tarde eu venho aqui. De manhã e de noite é da Senhora, no cruzeiro. A tarde é dele."],
+	]},
 	"noite": {"fala": [
 		"Não é hora de prosa. De noite eles descem do morro.",
 		"Lá em cima a luz chama. Quando ouvir asas, pendura essa lamparina na cinta.",

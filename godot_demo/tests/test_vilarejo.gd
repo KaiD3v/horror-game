@@ -34,7 +34,9 @@ func run() -> void:
 	for who in L.npcs:
 		var ap: AnimationPlayer = L.npcs[who].anim
 		var at: Vector3 = L.npcs[who].global_position
-		check(ap.is_playing() and ap.current_animation == "Idle" and not L.reachable(well, at),
+		var q := _capsule_at(at + Vector3(0, 0.9, 0)); q.collision_mask = 1 << (Npc.LAYER - 1)
+		var solid: bool = not L.get_world_3d().direct_space_state.intersect_shape(q, 1).is_empty()
+		check(ap.is_playing() and ap.current_animation == "Idle" and solid,
 			"NPC %s stands on its marker, idling, solid (%.1f, %.1f)" % [who, at.x, at.z])
 	await map_shot("v0_mapa", Vector3(0, 80, -3), 120, 1.5)
 
@@ -993,3 +995,89 @@ func theme_tests() -> void:
 	WorldTime.minutes = 9 * 60; await wait(0.5)
 	check(Audio.music_name == L.THEME, "morning: it comes back")
 	L.night_watch = false
+
+
+# --- the routines (NpcCatalog "rotina", ../docs/CONTEUDO_VILAREJO.md "As rotinas"): where each one is by the hour, what
+# they do there and say; walking across (Bento from his door to the bench at noon); the doors shut at night; the radio
+func rotina_tests() -> void:
+	L.night_watch = false
+	Story.mark("bento_conheceu"); Story.mark("tenorio_conheceu"); Story.mark("firmina_conheceu")
+	var away := func():  # far down the road, looking south: nobody sees them move
+		put(player, Vector3(0, L.ground(0, 40).y, 40), PI); await wait(0.3)
+	await away.call()
+	_hour(6.5); await wait(0.5)
+	var bento: Npc = L.npcs.get("vendeiro"); var ten: Npc = L.npcs.get("armeiro")
+	var door: Node3D = L.marker("porta_venda"); var gate: Node3D = L.marker("portao_colonia")
+	check(bento != null and bento.global_position.distance_to(door.position) < 3.0 and bento.anim.current_animation == "Sweep"
+		and bento.prop != null, "6:30 Bento out at his door, sweeping, the broom in hand")
+	check(ten != null and absf(ten.global_position.z - gate.position.z - 6.0) < 1.0 and ten.anim.current_animation == "LookUp",
+		"...Tenório at the Colônia's gate, looking up")
+	check(Dialog.new("vendeiro", player).pick_start() == "varrendo" and Dialog.new("armeiro", player).pick_start() == "portao",
+		"...and what they say is about where they are")
+	await _see(bento, "v50_rotina_varrendo")
+	await _see(ten, "v51_rotina_portao")
+	await away.call()
+	_hour(9.5); await wait(0.5)
+	check(not L.npcs.has("vendeiro") and not L.npcs.has("armeiro"), "9:30 both back inside, behind their counters")
+	# noon: Bento comes out of his door and walks to the bench, in sight
+	var bench: Node3D = L.village.find_child("banco_01", true, false)
+	_hour(11.98)
+	var mid := (bench.global_position + door.position) / 2.0; var f := mid + Vector3(-1.0, 0, 8.0)
+	put(player, L.ground(f.x, f.z), atan2(-(mid - f).x, -(mid - f).z))
+	await wait(0.5)
+	await until(func(): return L.npcs.has("vendeiro"), 6.0)
+	bento = L.npcs.get("vendeiro")
+	check(bento != null and bento.going and not bento.unseen and bento.anim.current_animation == "Walk",
+		"12:00 out of the venda's door, walking to the square")
+	await wait(2.0); await shot("v52_rotina_andando")
+	await until(func(): return bento and not bento.going, 25.0)
+	check(bento.anim.current_animation == "Sit" and bento.global_position.distance_to(bench.global_position) < 0.6,
+		"...and sits on the bench for his lunch (%.2f m from it)" % bento.global_position.distance_to(bench.global_position))
+	await _see(bento, "v53_rotina_almoco")
+	# the afternoon: Dona Firmina at her husband's grave; her candles stay at the cross
+	await away.call()
+	_hour(14.5); await wait(0.5)
+	var fir: Npc = L.npcs.benzedeira
+	var cross: Node3D = L.marker("npc_benzedeira")
+	var stay: Node3D = L.get_node_or_null("benzedeira_fica")
+	check(fir.global_position.distance_to(Vector3(-27.0, fir.global_position.y, -5.8)) < 0.3 and fir.anim.current_animation == "Kneel"
+		and Dialog.new("benzedeira", player).pick_start() == "cemiterio", "14:30 Dona Firmina on her knees at her husband's grave")
+	check(stay != null and stay.global_position.distance_to(cross.global_position) < 0.1 and stay.get_child_count() >= 2,
+		"...her candles and their light left burning at the cross")
+	await _see(fir, "v54_rotina_cemiterio")
+	await away.call()
+	_hour(16.5); await wait(0.5)
+	check(fir.global_position.distance_to(cross.global_position) < 0.3 and fir.anim.current_animation == "Idle", "16:30 back at the cross")
+	# nightfall: Tenório on his porch with his lamp; the radio's hour; the doors
+	_hour(19.2); L.day._step(0.0); await wait(0.5)
+	ten = L.npcs.get("armeiro")
+	check(ten != null and ten.global_position.distance_to(L.marker("porta_armaria").position) < 3.0 and ten.prop != null
+		and Dialog.new("armeiro", player).pick_start() == "varanda", "19:00 Tenório on his porch, his lamp by him")
+	check(L.radio != null and L.radio.playing and "voz_do_brasil" in Audio.heard, "...the Voz do Brasil through Bento's door")
+	await _see(ten, "v55_rotina_varanda")
+	var vd: Door = L.doors.venda; var ad: Door = L.doors.armaria
+	put(player, door.position, door.rotation.y + PI); await wait(0.4)
+	check(vd.is_shut() and L.hud.prompt.text == Door.KNOCK, "the venda shut: \"%s\"" % L.hud.prompt.text)
+	SceneRouter.requested = ""
+	await tap("interact"); await wait(2.6)
+	check("bater_porta" in Audio.heard and SceneRouter.requested == Paths.interior("venda"), "a knock, and Bento lets you in")
+	SceneRouter.requested = ""; SceneRouter.arriving = ""
+	_hour(22.0); await wait(0.3)
+	await until(func(): return not L.npcs.has("armeiro"), 20.0)
+	check(L.radio == null and not L.npcs.has("armeiro"), "22:00 the radio off, Tenório gone in by his door")
+	var ap: Node3D = L.marker("porta_armaria")
+	put(player, ap.position, ap.rotation.y + PI); await wait(0.4)
+	await tap("interact"); await wait(2.6)
+	check(ad.is_shut() and SceneRouter.requested == "", "the armaria shut: Tenório does not open")
+	_hour(16.5)
+
+
+func _hour(h: float) -> void:
+	WorldTime.reset(int(h * 60.0))
+
+
+func _see(n: Npc, name: String) -> void:  # stand 4 m in front of them, looking at them
+	var f := n.global_position + n.global_basis.z * 3.5 + n.global_basis.x * 1.2
+	var d := n.global_position - f
+	put(player, Vector3(f.x, L.ground(f.x, f.z, n.global_position.y + 3.0).y, f.z), atan2(-d.x, -d.z))
+	await wait(0.8); await shot(name)

@@ -4,6 +4,8 @@ extends RefCounted
 
 const ENTRADA := [
 	{"se": {"sem_marca": "tenorio_conheceu"}, "vai": "primeira"},
+	{"se": {"lugar": "portao"}, "vai": "portao"},
+	{"se": {"lugar": "varanda"}, "vai": "varanda"},
 	{"vai": "oi"},
 ]
 
@@ -28,6 +30,14 @@ const NOS := {
 		"Tenório. Armas e munição. Fiado não, que aqui não tem amanhã.",
 	]},
 	"oi": {"fala": ["Hm. Vivo ainda. O que vai ser?"]},
+	"portao": {"falas": [
+		["...Hm? Nada. Vim ver se o portão continua fechado. Continua."],
+		["Todo dia de manhã. Não pergunta. Desce comigo, que daqui a pouco eu abro a armaria."],
+	]},
+	"varanda": {"falas": [
+		["Fico aqui até as nove. Se alguma coisa descer aquela estrada, quero ver ela antes que ela me veja."],
+		["Senta não. Quem senta na varanda de noite cochila, e quem cochila aqui não acorda."],
+	]},
 	"rumores": {"falas": [
 		["Bento acha que eu não durmo. Eu durmo. De olho aberto. O bom."],
 		["O padre achou o caixão vazio e a terra mexida por dentro. Foi embora no outro dia.",

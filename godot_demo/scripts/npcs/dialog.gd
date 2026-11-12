@@ -7,7 +7,8 @@
 # An option: {"texto": "...", "vai": node | "fim" (closes) | "" (stays), "se": condition, "faz": [actions],
 #             "uma_vez": true (gone once picked)}.
 # A condition (every key must hold): "tem" / "nao_tem": an item; "marca" / "sem_marca": a Story mark;
-#   "tarefa": [id, "nova" | "ativa" | "feita"]; "noite": true / false (WorldTime).
+#   "tarefa": [id, "nova" | "ativa" | "feita"]; "noite": true / false (WorldTime); "lugar": where their routine has
+#   them now (NpcCatalog "rotina": "varrendo", "almoco", "portao", "varanda", "cemiterio", "cruzeiro").
 # An action: "marca": name; "loja": shop id (the shop opens over the talk); "da" / "toma": item (+ "qtd");
 #   "dinheiro": n; "cura": true (his wounds closed); "tarefa": [id, state] (the HUD tells it).
 # A villager with no file still talks: a greeting, their shop if they have one, and goodbye.
@@ -43,10 +44,14 @@ func _init(who_: String, p: Player) -> void:
 
 ## Where the talk starts (ENTRADA).
 func begin() -> void:
+	enter(pick_start())
+
+
+func pick_start() -> String:
 	for e: Dictionary in entry:
 		if holds(e.get("se", {})):
-			enter(e.vai)
-			return
+			return e.vai
+	return ""
 
 
 func enter(id: String) -> void:
@@ -109,6 +114,7 @@ func holds(c: Dictionary) -> bool:
 			"sem_marca": ok = not Story.has(v)
 			"tarefa": ok = Story.task(v[0]) == v[1]
 			"noite": ok = WorldTime.is_night() == v
+			"lugar": ok = NpcCatalog.slot(who).get("lugar", "") == v
 			_: push_error("Dialog %s: unknown condition %s" % [who, k]); ok = false
 		if not ok:
 			return false

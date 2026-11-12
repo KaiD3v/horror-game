@@ -33,6 +33,8 @@ var tone: AudioStreamPlayer
 var lights: Array[OmniLight3D] = []
 var windows: Array[OmniLight3D] = []   # the luz_janela lights: daylight, so DayCycle dims them at night
 var loops: Array[AudioStreamPlayer3D] = []
+var radio: AudioStreamPlayer3D          # the venda's (som_musica_venda): at 19h the Voz do Brasil (DayData.radio)
+var on_air := ""
 
 
 func _build() -> void:
@@ -70,3 +72,11 @@ func _started() -> void:  # the room tone (wind muffled by the walls), the drone
 		var n: String = LOOP_AT.get(kind, "") if m.name.begins_with("luz_") else (String(m.name).substr(4) if m.name.begins_with("som_") else "")
 		if n != "":
 			loops.append(Audio.play3d(self, n, (m as Node3D).position, -4.0, true, 1.5, 10.0))
+		if n == "musica_venda":
+			radio = loops[-1]; on_air = n
+
+
+func _process(_d: float) -> void:
+	if radio and DayData.radio(WorldTime.hour()) != on_air:
+		on_air = DayData.radio(WorldTime.hour())
+		radio.stream = Audio.sfx(on_air, true); radio.volume_db = -4.0 if on_air == "musica_venda" else -2.0; radio.play()

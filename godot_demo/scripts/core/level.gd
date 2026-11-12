@@ -69,6 +69,7 @@ func _started() -> void:
 func _physics_process(_delta: float) -> void:
 	if player == null:
 		return
+	_routine()
 	if player.global_position.y > FALL_Y:
 		if player.is_on_floor():  # (this frame's floor is last frame's: a teleport down there is not ground)
 			last_floor = player.global_position
@@ -92,11 +93,81 @@ func _place_notes() -> void:
 
 
 # --- shared building blocks ---------------------------------------------------------------------------------
-## A villager on every npc_<who> marker under root.
+## A villager on every npc_<who> marker under root; those with a routine (NpcCatalog "rotina") wherever it has them
+## now, if that is here (_routine moves them on as the hours go).
 func spawn_npcs(root: Node) -> void:
+	npc_root = root
 	for m in Nodes.children_named(root, "npc_"):
 		var who := String(m.name).trim_prefix("npc_")
-		npcs[who] = Npc.spawn(self, who, m.global_transform)
+		if NpcCatalog.slot(who).is_empty():
+			npcs[who] = Npc.spawn(self, who, m.global_transform)
+	_place_routines.call_deferred()  # (they stand on the floor: once the colliders are in)
+
+
+func _place_routines() -> void:
+	for who in NpcCatalog.NPCS:
+		var s := NpcCatalog.slot(who)
+		if s.is_empty():
+			continue
+		routine[who] = s
+		if s.cena == scene_id:
+			_come(who, s, _spot(s))
+
+
+var npc_root: Node                 # the model the villagers' places are named in (spawn_npcs)
+var routine := {}                  # who -> the slot of their routine they are in
+
+
+func _come(who: String, s: Dictionary, at: Transform3D) -> Npc:
+	var n := Npc.spawn(self, who, at); npcs[who] = n
+	n.gone.connect(func(): npcs.erase(who))
+	if NpcCatalog.info(who).get("luz", {}).get("fica", false):
+		var home := npc_root.find_child("npc_" + who, true, false)
+		if home:
+			n.leave_behind((home as Node3D).global_transform)
+	n.pose(s)
+	return n
+
+
+## The hour moved them on: across this scene (walking), out of it by the door to theirs, or in from it.
+func _routine() -> void:
+	for who in routine:
+		var was: Dictionary = routine[who]
+		var s := NpcCatalog.slot(who)
+		if s.i == was.i:
+			continue
+		routine[who] = s
+		var here: bool = s.cena == scene_id
+		var n: Npc = npcs.get(who)
+		if n and was.cena == scene_id:
+			n.go(_spot(s) if here else _door(s.cena), s, not here)
+		elif here:
+			n = _come(who, s, _door(was.cena)); n.go(_spot(s), s, false, true)
+
+
+## A slot's place here: its node (or point), its offset and turn, and the floor under it.
+func _spot(s: Dictionary) -> Transform3D:
+	var base := Transform3D(Basis(), s.get("pos", Vector3.ZERO))
+	if not s.has("pos"):
+		var m := npc_root.find_child(s.em, true, false) as Node3D
+		if m == null:
+			push_error("NPC routine: no %s in %s" % [s.em, scene_id]); return Transform3D()
+		base = m.global_transform.orthonormalized()
+	var at: Vector3 = base * (s.off as Vector3)
+	var hit := ray(at.x, at.z, at.y + 1.6)  # (from under a porch roof, down to the boards)
+	if hit and hit.position.y > at.y - 2.0:
+		at = hit.position
+	elif s.has("pos"):
+		at = ground(at.x, at.z)
+	return Transform3D(Basis(Vector3.UP, base.basis.get_euler().y + s.rumo), at)
+
+
+## Where you go in or out to `scene`: the village's porta_<scene>, a room's porta.
+func _door(scene: String) -> Transform3D:
+	var d := npc_root.find_child("porta_" + scene, true, false) as Node3D
+	if d == null:
+		d = npc_root.find_child("porta", false, false) as Node3D
+	return Transform3D(Basis(Vector3.UP, d.global_rotation.y + PI), d.global_position)
 
 
 func add_enemy(e: Enemy, at: Vector3, yaw: float) -> Enemy:
