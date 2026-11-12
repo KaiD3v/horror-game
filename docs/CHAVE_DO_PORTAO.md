@@ -1,6 +1,6 @@
 # A chave do portão: o chefe do vilarejo e as melhorias (plano)
 
-*Data: 2026-11-11. Plano. Feito: fases 1 a 3 (ver as seções "Fase N, feita" no fim). Continua [TUTORIAL_VILAREJO.md](TUTORIAL_VILAREJO.md). Coordenadas em
+*Data: 2026-11-11. Plano feito por inteiro: as quatro fases (ver as seções "Fase N, feita" no fim). Continua [TUTORIAL_VILAREJO.md](TUTORIAL_VILAREJO.md). Coordenadas em
 Godot (x, z).*
 
 ## A ideia
@@ -166,4 +166,23 @@ fundos, que já está meio caída.
   - o altar: facão inútil, virote, pedra parada na coluna e pedra que acerta no aberto;
   - o escuro: ele não acha quem está agachado com a lamparina no gancho, e vai atrás da lamparina na mão;
   - a morte, a chave e o coração.
-- **Falta:** a música da luta (o prompt vem na fase 4, para você gerar).
+
+## Fase 4, feita: o fim
+
+- **O portão:** a chave do molho abre o `Gate` da Colônia (que já esperava `chave_portao`): a corrente cai, as folhas
+  abrem uma fresta e "E · entrar na Colônia" leva para cima. O teste `gate_tests` confere.
+- **Falas depois da luta**, uma vez cada:
+  - Tenório, "Contar do Severino": trinta anos abrindo o portão para os doutores, "e no fim foram eles que trancaram ele
+    do lado de fora"; sobe de dia; "se a tua mãe estiver lá em cima... traz ela descendo essa estrada";
+  - Dona Firmina, "Contar do jazigo": era o Severino que trazia notícia do Joaquim, no começo; uma vela para ele e outra
+    para quem vai subir.
+- **A música da luta** (`godot_demo/music/chefe.mp3`, em loop, só durante a luta, -8 dB). Prompt para o ElevenLabs Music:
+
+  > Dark boss battle theme for a 1970s Brazilian rural horror game, fought in a candlelit stone crypt under a cemetery.
+  > Driving but heavy, 100 BPM, minor key. A detuned viola caipira playing a repeating, tense ostinato; low cellos and
+  > double basses sawing in sharp accents; a deep procession drum (surdo) and a frame drum pounding like footsteps;
+  > metallic percussion of iron keys and chains struck in rhythm; a wordless low male choir humming a mournful Catholic
+  > chant underneath, swelling in the second half. Gritty, raw, analog, no synths, no lyrics, no spoken words. Builds to
+  > a climax around 1:30 and returns to the opening ostinato so it loops cleanly. 2 minutes.
+
+- Teste: `test_vilarejo.gd` `jazigo_tests` (as falas, uma vez cada).

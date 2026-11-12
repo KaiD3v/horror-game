@@ -16,6 +16,7 @@ const MENU := [
 	{"texto": "Perguntar por uma besta", "vai": "besta_conta", "se": {"tem": "facao", "nao_tem": "besta", "tarefa": ["besta", "nova"]}},
 	{"texto": "Falar da besta", "vai": "besta_lembrete", "se": {"nao_tem": "besta", "tarefa": ["besta", "ativa"]}},
 	{"texto": "Mostrar a besta", "vai": "besta_achou", "se": {"tem": "besta", "sem_marca": "tenorio_besta"}},
+	{"texto": "Contar do Severino", "vai": "severino", "se": {"marca": "morto:porteiro", "sem_marca": "tenorio_severino"}},
 	{"texto": "Perguntar pela chave do portão", "vai": "chave_lembrete", "se": {"tarefa": ["chave", "ativa"], "nao_tem": "chave_portao"}},
 	{"texto": "Ir embora", "vai": "fim"},
 ]
@@ -59,6 +60,12 @@ const NOS := {
 		"Você quer subir. Eu sei. Então escuta: a chave do portão ficava com o Severino, o porteiro de lá de cima.",
 		"Na noite da sirene ele desceu com o molho de chaves na cinta e se trancou no jazigo dos Moura, no fundo do cemitério.",
 		"Eu ouço ele lá embaixo, batendo nas paredes. A corrente da grade é velha: o pé de cabra arrebenta. Leva tudo que tiver.",
+	]},
+	"severino": {"faz": [{"marca": "tenorio_severino"}], "fala": [
+		"Eu ouvi daqui. A terra tremeu até o balcão. ...Era ele mesmo, o Severino?",
+		"Trinta anos abrindo aquele portão pros doutores. E no fim foram eles que trancaram ele do lado de fora.",
+		"A chave está contigo. Sobe de dia, que de noite aquela estrada é deles.",
+		"E se a tua mãe estiver lá em cima... traz ela descendo essa estrada. Eu quero ver.",
 	]},
 	"chave_lembrete": {"fala": ["O jazigo dos Moura, no fundo do cemitério. Leva virote, leva atadura. E não deixa ele te pegar de frente com as duas mãos."]},
 	"matar": {"fala": [

@@ -799,6 +799,16 @@ func jazigo_tests() -> void:
 	var t: Transform3D = L._player_start(); SceneRouter.arriving = ""
 	check(t.origin.distance_to(spot.position) < 0.5, "up from the crypt: before the grate")
 	check(L.find_children("*", "Oratorio", true, false).any(func(o): return o.id == "cemiterio"), "an oratório by the mausoleum, to save before")
+	# after the fight: Tenório and Dona Firmina have something to say about Severino, once
+	Story.mark("morto:porteiro")
+	for who in ["armeiro", "benzedeira"]:
+		var d := Dialog.new(who, player); d.enter("oi")
+		var tell: Array = d.options().filter(func(o): return o.texto in ["Contar do Severino", "Contar do jazigo"])
+		if tell:
+			d.pick(tell[0])
+		d.enter("oi")
+		check(tell.size() == 1 and d.options().all(func(o): return not o.texto in ["Contar do Severino", "Contar do jazigo"]),
+			"%s, after the fight: a word about Severino, once" % who)
 	Story.reset(); Inventory.reset(); Inventory.give_tools()
 
 

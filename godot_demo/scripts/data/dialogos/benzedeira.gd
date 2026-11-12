@@ -18,6 +18,7 @@ const MENU := [
 	{"texto": "Falar da garrafada", "vai": "lembrete", "se": {"tarefa": ["garrafada", "ativa"], "nao_tem": "garrafada"}},
 	{"texto": "Entregar a garrafada", "vai": "entrega", "se": {"tarefa": ["garrafada", "ativa"], "tem": "garrafada"}},
 	{"texto": "Mostrar o escapulário", "vai": "escapulario", "se": {"tem": "escapulario"}},
+	{"texto": "Contar do jazigo", "vai": "severino", "se": {"marca": "morto:porteiro", "sem_marca": "firmina_severino"}},
 	{"texto": "Ir embora", "vai": "fim"},
 ]
 
@@ -60,6 +61,11 @@ const NOS := {
 		"Isso... isso é do meu Joaquim. Fui eu que costurei. Onde... embaixo da igreja?",
 		"Então ele passou por lá. Então ele estava vivo quando passou por lá.",
 		"Deixa comigo. Vou acender mais uma vela. Uma pra ele achar o caminho, e outra pra você.",
+	]},
+	"severino": {"faz": [{"marca": "firmina_severino"}], "fala": [
+		"O Severino... Então era ele batendo lá embaixo. No começo era ele que me trazia notícia do Joaquim.",
+		"Depois parou de trazer. Depois parou de descer.",
+		"Vou acender uma vela pra ele também. E outra pra você, que vai subir. Deus que te leve e te traga.",
 	]},
 	"lembrete": {"fala": ["A garrafada, menino. No baú do lado do altar. A capela é ali, a porta da torre."]},
 	"entrega": {"faz": [{"toma": "garrafada"}, {"cura": true}, {"dinheiro": 20}, {"da": "chave_sacristia"},
