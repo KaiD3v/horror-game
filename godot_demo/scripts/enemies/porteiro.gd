@@ -30,6 +30,8 @@ const LOUD := ["Attack_Slash", "Attack_Overhead", "Shoot_Crossbow", "Block_Hit",
 	"Dodge_Left", "Dodge_Right"]
 const DARK_SPEED := 2.1        # after a light in the dark: faster than a jog, slower than a sprint
 
+static var introduced := false  # his entrance (BossIntro) seen this game: a retry goes straight to the fight
+
 var phase := 0
 var blow := "Attack"
 var swings := 0
@@ -56,15 +58,29 @@ func _ready() -> void:
 	super()
 	lamp = OmniLight3D.new(); add_child(lamp); lamp.position = Vector3(0, 1.65, -0.35)
 	lamp.light_color = Color(1.0, 0.68, 0.32); lamp.light_energy = 1.4; lamp.omni_range = 6.0
+	_lamp_glow(false)  # (he waits in the dark: it flares when he wakes)
+
+
+## His lantern alight, flaring up over `s` seconds (0: at once).
+func light_lamp(s: float) -> void:
+	if lamp_on:
+		return
 	_lamp_glow(true)
+	if s > 0.0:
+		lamp.light_energy = 0.0
+		var t := create_tween(); t.tween_property(lamp, "light_energy", 2.6, s * 0.4); t.tween_property(lamp, "light_energy", 1.4, s * 0.6)
 
 
-## Down the stair: the roar, and the fight begins.
-func wake() -> void:
+## Down the stair: (the roar), and the fight begins. After his entrance (BossIntro) he has roared already.
+func wake(roar := true) -> void:
 	if phase != 0:
 		return
 	phase = 1; target = get_tree().get_first_node_in_group("player")
-	go(State.ALERT, "Roar", 0.2)
+	light_lamp(0.0)
+	if roar:
+		go(State.ALERT, "Roar", 0.2)
+	else:
+		go(State.CHASE, "Walk", 0.3)
 	phase_changed.emit(1)
 
 

@@ -1,7 +1,8 @@
 # The crypt under the Moura mausoleum (../docs/CHAVE_DO_PORTAO.md; ../tools/cenarios/jazigo_build.py): the arena of the
 # village's last fight. An interior (interior.gd) with O Porteiro (Porteiro) waiting by the coffin:
-#   down the stair and onto the floor he wakes: a fall of stone shuts the stair behind you, his name and his health at
-#   the top of the screen (bar), the fight's music if there is one (music/chefe.mp3);
+#   down the stair and onto the floor he wakes: the first time with his entrance (BossIntro: the stair falls in, his
+#   lantern flares, his name); a fall of stone shuts the stair behind you, his name and his health at the top of the
+#   screen (bar), the fight's music (music/chefe.mp3);
 #   phase 2 (up on the altar): a second box of bolts by the stair, if the first was taken;
 #   phase 3: the candles go out one by one, the room nearly black: only your lantern;
 #   his death: the stair opens, the candles come back, his ring of keys on the floor with the gate's key in it, and in the
@@ -16,6 +17,7 @@ var boss: Porteiro
 var shut: StaticBody3D          # the fallen stone across the stair's foot
 var bar: Control
 var bar_fill: ColorRect
+var intro: BossIntro             # his entrance, the first time (Porteiro.introduced)
 
 
 func _build() -> void:
@@ -43,8 +45,11 @@ func _bolts(id: String) -> void:  # a box of 6 bolts by the stair's foot
 
 func _physics_process(delta: float) -> void:
 	super(delta)
-	if boss and boss.phase == 0 and player and player.global_position.y < 0.5 and player.global_position.z < room.get_node("escada").position.z - 1.5:
-		boss.wake()
+	if boss and boss.phase == 0 and intro == null and player and player.global_position.y < 0.5 			and player.global_position.z < room.get_node("escada").position.z - 1.5:
+		if Porteiro.introduced:
+			boss.wake()
+		else:
+			intro = BossIntro.new(self, boss); add_child(intro); intro.run()
 	if bar and is_instance_valid(boss):
 		bar_fill.size.x = 400.0 * float(boss.health) / Porteiro.HEALTH
 
@@ -68,7 +73,16 @@ func _phase(n: int) -> void:
 func _shut_stair(on: bool) -> void:
 	if on and shut == null:
 		var foot: Node3D = room.get_node("escada")
-		shut = Looks.box(self, foot.position + Vector3(0, 1.6, 0.4), Vector3(2.6, 3.2, 0.8), Looks.triplanar("stone", 1.0, Color(0.45, 0.43, 0.4)))
+		shut = StaticBody3D.new(); add_child(shut); shut.position = foot.position + Vector3(0, 1.6, 0.4)
+		var cs := CollisionShape3D.new(); var box := BoxShape3D.new(); box.size = Vector3(2.6, 3.2, 0.8); cs.shape = box; shut.add_child(cs)
+		var rock := Looks.triplanar("stone", 1.0, Color(0.45, 0.43, 0.4))
+		var rng := RandomNumberGenerator.new(); rng.seed = 7
+		for i in 14:  # a heap of fallen blocks, the big ones low, up to the vault
+			var mi := MeshInstance3D.new(); shut.add_child(mi); var bm := BoxMesh.new()
+			var s := rng.randf_range(0.5, 1.0) * (1.2 - float(i) / 20.0)
+			bm.size = Vector3(s, s * 0.7, s * 0.8); bm.material = rock; mi.mesh = bm
+			mi.position = Vector3(rng.randf_range(-1.0, 1.0), -1.4 + float(i) * 0.21, rng.randf_range(-0.3, 0.3))
+			mi.rotation = Vector3(rng.randf_range(-0.5, 0.5), rng.randf_range(0, TAU), rng.randf_range(-0.5, 0.5))
 		Audio.play3d(self, "entulho_desabar", foot.position, 4.0, false, 6.0, 40.0)
 	elif not on and shut:
 		Audio.play3d(self, "entulho_desabar", shut.position, 2.0, false, 6.0, 40.0)

@@ -192,3 +192,24 @@ fundos, que já está meio caída.
   > a climax around 1:30 and returns to the opening ostinato so it loops cleanly. 2 minutes.
 
 - Teste: `test_vilarejo.gd` `jazigo_tests` (as falas, uma vez cada).
+
+## A entrada do Porteiro (cinemática)
+
+`scripts/ui/boss_intro.gd` (`BossIntro`, sobre a mesma base das outras cinemáticas: faixas pretas, título e "segure E
+para pular"). Uns 11 s, na primeira vez que você pisa no chão da cripta. Depois de uma morte, a nova tentativa vai direto
+para a luta (`Porteiro.introduced`, que volta a falso num jogo novo).
+
+| Plano | Duração | O que se vê | O que se ouve |
+|---|---|---|---|
+| 1. A escada | 2 s | por cima do ombro dele, um monte de pedras despenca e fecha a escada; a câmera treme | o desabamento |
+| 2. O escuro | 3 s | os círios baixam; a câmera avança devagar pela cripta até o vulto parado junto ao caixão | as chaves dele tilintando duas vezes; começa a tensão subindo (`chefe_tensao`) |
+| 3. O lampião | 2 s | de baixo, o lampião no peito dele se acende e mostra a cara enfaixada | a chama pegando (`lampiao_acender`) |
+| 4. O nome | 3,5 s | ele abre os braços e ruge | no mesmo instante: o impacto (`chefe_impacto`), o rugido e a música da luta, que começa aqui; aparece "O PORTEIRO", com a legenda "Severino · porteiro da Colônia Santa Clara" |
+
+- A tensão começa no plano 2 e é cortada no impacto, para tudo cair junto com a primeira nota da música.
+- Pulando (segurar E) ou não, termina igual: a escada fechada, o lampião dele aceso, a música tocando, a câmera de volta e
+  a luta começando (ele já rugiu, então parte direto para cima de você).
+- Ele agora espera no escuro, com o lampião apagado, até acordar.
+- O desabamento da escada virou um monte de pedras soltas, em vez de um bloco liso.
+- Sons novos (ElevenLabs, 32 créditos): `chefe_tensao`, `chefe_impacto`, `lampiao_acender`.
+- Teste: `test_jazigo.gd` `intro_tests` (uma captura de cada plano: `jazigo_8a` a `8d`).

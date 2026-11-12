@@ -9,6 +9,7 @@ func run() -> void:
 	var entry: Node3D = L.room.get_node("entrada")
 	check(player.is_on_floor() and player.global_position.distance_to(entry.position) < 0.3, "in at the grate, on the landing")
 	check(L.boss != null and L.boss.phase == 0, "O Porteiro waits by the coffin")
+	await intro_tests()
 	await walk(4.5)
 	check(player.global_position.y < 0.3 and player.global_position.z < -4.0, "down the stair into the crypt (y %.2f)" % player.global_position.y)
 	await shot("jazigo_1_escada")
@@ -32,6 +33,40 @@ func run() -> void:
 	check(SceneRouter.requested == Paths.VILAREJO and SceneRouter.arriving == "jazigo", "E at the grate: back up to the cemetery")
 	SceneRouter.requested = ""; SceneRouter.arriving = ""
 	await boss_tests()
+
+# --- his entrance (BossIntro), the first time: the stair falls in, the dark, his lantern, his name with the hit and the
+# music; then the fight, the camera back -------------------------------------------------------------------------
+func intro_tests() -> void:
+	Porteiro.introduced = false
+	var b: Porteiro = L.boss
+	check(not b.lamp_on, "he waits in the dark, his lantern out")
+	put(player, Vector3(0, 0.05, -6.6), PI); await wait(0.3)
+	var intro: BossIntro = L.intro
+	check(intro != null and player.busy and not L.hud.visible, "onto the crypt's floor: his entrance starts, the player held")
+	var names := ["8a_escada", "8b_escuro", "8c_lampiao", "8d_nome"]
+	for k in 4:
+		await until(func(): return not is_instance_valid(intro) or intro.shot > k, 8.0)
+		await wait(1.2 if k < 3 else 0.9)
+		if is_instance_valid(intro):
+			await shot("jazigo_%s" % names[k])
+		if k == 0:
+			check(L.shut != null, "the stair falls in behind him")
+		if k == 2:
+			check(b.lamp_on, "his lantern flares in the dark")
+		if k == 3 and is_instance_valid(intro):
+			check(intro.title.text == "O PORTEIRO" and intro.title.modulate.a > 0.9 and Audio.music_name == L.MUSIC
+				and "chefe_impacto" in Audio.heard, "the hit, the music and his name: \"%s\"" % intro.title.text)
+	await until(func(): return not is_instance_valid(intro), 8.0); await wait(0.3)
+	check(not player.busy and L.hud.visible and player.cam.current and b.phase == 1 and L.bar != null,
+		"then the fight: the camera back, his health up top")
+	check(Porteiro.introduced, "seen once: a retry goes straight to the fight")
+	b.phase = 0  # (the rest of this test walks the room as if he still waited)
+	_shut_off()
+
+
+func _shut_off() -> void:
+	L._shut_stair(false); Audio.music_stop(0.0)
+
 
 # --- O Porteiro (../docs/CHAVE_DO_PORTAO.md): asleep until you come down; the side swing blocked, the smash through the
 # block; up on the altar only bolts hurt him and the columns stop his stones; the dark: he goes for the lantern in the

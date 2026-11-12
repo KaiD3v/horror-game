@@ -33,7 +33,8 @@ PEAK = {"vento": 0.7, "casa": 0.5, "fogo": 0.6, "velas": 0.35, "relogio": 0.5, "
         "morcegos": 0.55, "morcegos_guincho": 0.7, "cana_cortar": 0.85,
         "ossos_pisar": 0.75, "corda_arrebentar": 0.8, "garrafa_quebrar": 0.85,
         "porteiro_chaves": 0.7, "porteiro_golpe": 0.95, "porteiro_gemido": 0.75, "porteiro_rugido": 0.9, "porteiro_queda": 0.85,
-        "lampiao_quebrar": 0.85, "pedra_quebrar": 0.85}
+        "lampiao_quebrar": 0.85, "pedra_quebrar": 0.85,
+        "chefe_tensao": 0.8, "chefe_impacto": 0.98, "lampiao_acender": 0.6}
 LOOPS = ("ambiente_hospital", "cidade_madrugada", "onibus", "vento", "casa", "fogo", "velas", "relogio", "coro", "reza", "musica", "chuva", "coracao",
          "bruxa_asas", "poceiro_balde", "carpideira_choro", "morcegos")  # generated seamless
 
