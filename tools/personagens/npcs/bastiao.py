@@ -1,7 +1,7 @@
 # Bastião, the ex-interno (docs/CONTEUDO_VILAREJO.md "Bastião, o ex-interno"): let out of the Colônia by the 1962 law
 # with nowhere to go, he lives in the ruin by the gate, by his fire. Built after the author's reference model
-# (2026-11-12): upright and lean; a brown hood standing up over the head, its point falling back, the face looking out of
-# it; the hood's cloth spread over the shoulders as a short cape, longer down the back; a vest, brown above, a paler
+# (2026-11-12): upright and lean; a thin brown hood close round the head, a small point falling back, the face looking
+# out of it; the hood's cloth spread over the shoulders as a short cape, longer down the back; a vest, brown above, a paler
 # patched panel below; long pale shirt sleeves; dark trousers; pale cloth-wrapped shoes. Hansen's disease the way it was
 # in those years, quietly: no eyebrows, pale patches on the face, strips of cloth round the wrists. Not a monster: a man.
 # Run alone: blender -b --factory-startup --python tools/personagens/npcs/bastiao.py (or all: npcs_build.py)
@@ -25,7 +25,7 @@ G = grime(61, 0.72)
 M = dict(skin=lp.mat("bs_skin", SKIN, tex=G), face=lp.mat("bs_face", SKIN, face=FACE),
          shirt=lp.mat("bs_shirt", (0.66, 0.63, 0.55), tex=grime(62, 0.62)),
          pants=lp.mat("bs_pants", (0.20, 0.18, 0.15), tex=G),
-         hood=lp.mat("bs_hood", (0.29, 0.19, 0.11), tex=grime(63, 0.78)),
+         hood=lp.mat("bs_hood", (0.29, 0.19, 0.11), tex=grime(63, 0.88)),  # (soft: cloth, not a block)
          vest=lp.mat("bs_vest", (0.45, 0.36, 0.25), tex=grime(64, 0.7)),
          panel=lp.mat("bs_panel", (0.58, 0.51, 0.40), tex=grime(65, 0.6)),
          wrap=lp.mat("bs_wrap", (0.68, 0.66, 0.60), tex=G))
@@ -42,15 +42,15 @@ K.box("panel", M["panel"], "hips", (0, -0.136, 0.97), (0.32, 0.012, 0.2))
 K.box("patch", M["panel"], "chest", (0.07, -0.135, 1.15), (0.08, 0.012, 0.07), rot=(0, 0.1, 0))
 K.seg("neck", M["skin"], "neck", J["chest"], J["neck"], 0.045, 0.04)
 head(K, J, M["skin"], M["face"], [(0, 0.06, 0.065), (0.15, 0.08, 0.085), (0.5, 0.09, 0.098), (0.85, 0.085, 0.092), (1, 0.045, 0.05)])
-ears(K, J, M["skin"])
-# the hood: loose round the head and well above it, set back so the whole face looks out; its top drawn back to a point
-K.tube("hood", M["hood"], "head", V(J, "neck", "skull", 0.05), V(J, "neck", "skull", 1.7),
-       [(0, 0.13, 0.11, 0.105), (0.18, 0.132, 0.13, 0.085), (0.345, 0.14, 0.14, 0.07), (0.485, 0.142, 0.145, 0.025),
-        (0.636, 0.13, 0.14, 0.04), (0.788, 0.09, 0.1, 0.07), (0.909, 0.05, 0.055, 0.1), (1, 0.015, 0.015, 0.13)], n=12)
-# (its edge comes down to the brow and stands open round the cheeks; its point rises well over the head)  # (open under the chin: the face framed, no beard)
+# (no ears: the hood covers them)
+# the hood: a thin layer of cloth close round the head (a finger's width off it), its edge down to the brow and open
+# round the cheeks and under the chin, a small point at the crown falling back
+K.tube("hood", M["hood"], "head", V(J, "neck", "skull", 0.05), V(J, "neck", "skull", 1.35),
+       [(0, 0.105, 0.09, 0.07), (0.23, 0.1, 0.105, 0.05), (0.44, 0.103, 0.112, 0.035), (0.615, 0.1, 0.11, 0.012),
+        (0.746, 0.075, 0.088, 0.028), (0.846, 0.05, 0.058, 0.055), (0.96, 0.02, 0.022, 0.095), (1, 0.008, 0.008, 0.11)], n=12)
 # the hood's cloth over the shoulders: a short cape, the arms coming out under it, longer down the back
 K.tube("cape", M["hood"], "chest", (0, 0.03, 1.16), (0, -0.01, 1.44),
-       [(0, 0.28, 0.16, 0.1), (0.5, 0.27, 0.15, 0.09), (0.82, 0.2, 0.125, 0.07), (1, 0.1, 0.08, 0.05)], n=12)
+       [(0, 0.26, 0.15, 0.1), (0.5, 0.25, 0.14, 0.09), (0.82, 0.18, 0.115, 0.07), (1, 0.095, 0.075, 0.05)], n=12)
 # (set back: over the shoulders and the back only, the vest open in front)
 K.box("back", M["hood"], "chest", (0, 0.17, 1.02), (0.4, 0.03, 0.3), rot=(-0.12, 0, 0))
 limbs(K, J, M, M["shirt"], M["shirt"], M["pants"], M["wrap"], upper_r=0.045, thigh_r=0.085)
