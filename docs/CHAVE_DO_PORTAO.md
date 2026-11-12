@@ -176,7 +176,13 @@ fundos, que já está meio caída.
     do lado de fora"; sobe de dia; "se a tua mãe estiver lá em cima... traz ela descendo essa estrada";
   - Dona Firmina, "Contar do jazigo": era o Severino que trazia notícia do Joaquim, no começo; uma vela para ele e outra
     para quem vai subir.
-- **A música da luta** (`godot_demo/music/chefe.mp3`, em loop, só durante a luta, -8 dB). Prompt para o ElevenLabs Music:
+- **A música da luta:** "Crypt Procession" (ElevenLabs Music, gerada pelo autor), em `godot_demo/music/chefe.mp3`.
+  - Entra quando o Porteiro acorda, toca em loop e some quando ele morre.
+  - A faixa original tem 2:00, mas termina em 4 s de silêncio; foi cortada em 1:55,5, com um final suave de 2 s, para o loop
+    voltar sem buraco.
+  - Toca a -14 dB. É bem mais alta que as outras (média de -14,5 dB, contra -20 da abertura), e por baixo dela as chaves
+    precisam continuar audíveis, porque avisam o golpe de cima.
+  - O prompt usado:
 
   > Dark boss battle theme for a 1970s Brazilian rural horror game, fought in a candlelit stone crypt under a cemetery.
   > Driving but heavy, 100 BPM, minor key. A detuned viola caipira playing a repeating, tense ostinato; low cellos and

@@ -41,6 +41,8 @@ func boss_tests() -> void:
 	b.active = true; player.health = 99.0; player.max_health = 99
 	put(player, Vector3(0, 0.05, -8.0), 0.0); await wait(0.6)  # (the walk round the room above may have woken him already)
 	check(b.phase == 1 and L.shut != null and L.bar != null, "down on the floor: he wakes, the stair shuts behind, his name and health up top")
+	await wait(0.3)
+	check(Audio.music_name == L.MUSIC and is_instance_valid(Audio.music), "the fight's music comes in")
 	await shot("jazigo_3_porteiro")
 	if player.mode != Player.Mode.COMBAT:
 		await tap("draw"); await wait(1.2)
@@ -104,6 +106,7 @@ func boss_tests() -> void:
 	b.take_hit(99, "besta")
 	await until(func(): return L.shut == null, 6.0); await wait(0.5)
 	check(Story.has("morto:porteiro") and L.shut == null, "dead: the stair open again")
+	check(Audio.music_name == "", "...and the music goes")
 	var spoils: Array = L.find_children("*", "Pickup", true, false)
 	var key: Array = spoils.filter(func(p): return p.id == "jazigo_chave")
 	var heart: Array = spoils.filter(func(p): return p.id == "jazigo_coracao")

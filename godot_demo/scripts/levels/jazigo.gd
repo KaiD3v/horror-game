@@ -8,7 +8,8 @@
 #   doctor's coffin the ex-voto heart (the upgrade, FoundBanner). Story "morto:porteiro": after, the crypt stays quiet.
 extends "res://scripts/levels/interior.gd"
 
-const MUSIC := "chefe"
+const MUSIC := "chefe"        # music/chefe.mp3 ("Crypt Procession", cut to 1:55 so it loops without the tail of silence)
+const MUSIC_DB := -14.0        # (a loud track: under it the keys must still be heard, they warn of the smash)
 
 var candles: Array[OmniLight3D] = []
 var boss: Porteiro
@@ -53,7 +54,7 @@ func _phase(n: int) -> void:
 		1:
 			_shut_stair(true)
 			_bar()
-			Audio.music_play(self, MUSIC, -8.0, 1.0, true)
+			Audio.music_play(self, MUSIC, MUSIC_DB, 1.0, true)
 		2:
 			if Story.has("pego:jazigo_virotes"):
 				_bolts("jazigo_virotes_2")
