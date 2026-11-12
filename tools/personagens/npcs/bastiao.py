@@ -9,6 +9,7 @@
 import os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "comum"))  # tools/comum
 from npc_kit import *
+import bmesh
 
 lp.clear_scene()
 SKIN = (0.70, 0.54, 0.43)
@@ -34,25 +35,33 @@ J = {"pelvis": (0, 0.0, 0.92), "spine": (0, 0.0, 1.12), "chest": (0, -0.01, 1.33
 sides(J, {"hip": (0.09, 0.0, 0.91), "knee": (0.095, -0.01, 0.50), "ank": (0.095, 0.02, 0.08), "toe": (0.095, -0.10, 0.03),
           "sh": (0.18, 0.0, 1.33), "el": (0.21, 0.02, 1.07), "wr": (0.17, -0.13, 0.90), "tip": (0.15, -0.19, 0.83)})
 K = lp.Kit()
+
+
+def open_front(o, ny, zmax):
+    """Take out the faces of a part that look forward (local normal y < ny) below zmax: an opening (the hood's face)."""
+    bm = bmesh.new(); bm.from_mesh(o.data)
+    bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.normal.y < ny and f.calc_center_median().z < zmax], context="FACES")
+    bm.to_mesh(o.data); bm.free()
+
+
 K.tube("hips", M["pants"], "hips", J["pelvis"], J["spine"], [(0, 0.15, 0.115), (1, 0.145, 0.11)], n=8)
-# the vest over the shirt: brown, a paler patched panel low on the front
-K.tube("vest", M["vest"], "chest", (0, 0.0, 0.86), (0, -0.01, 1.31),
-       [(0, 0.185, 0.135), (0.45, 0.18, 0.13), (0.8, 0.17, 0.125), (1, 0.14, 0.11)], n=10)
-K.box("panel", M["panel"], "hips", (0, -0.136, 0.97), (0.32, 0.012, 0.2))
-K.box("patch", M["panel"], "chest", (0.07, -0.135, 1.15), (0.08, 0.012, 0.07), rot=(0, 0.1, 0))
+# the vest over the shirt: brown, the paler patched panel low on its front painted onto it (front(): no loose boxes)
+vest = K.tube("vest", M["vest"], "chest", (0, 0.0, 0.86), (0, -0.01, 1.31),
+              [(0, 0.185, 0.135), (0.45, 0.18, 0.13), (0.8, 0.17, 0.125), (1, 0.14, 0.11)], n=10)
+front(vest, M["panel"], -0.35, zmax=0.2)
 K.seg("neck", M["skin"], "neck", J["chest"], J["neck"], 0.045, 0.04)
 head(K, J, M["skin"], M["face"], [(0, 0.06, 0.065), (0.15, 0.08, 0.085), (0.5, 0.09, 0.098), (0.85, 0.085, 0.092), (1, 0.045, 0.05)])
 # (no ears: the hood covers them)
-# the hood: a thin layer of cloth close round the head (a finger's width off it), its edge down to the brow and open
-# round the cheeks and under the chin, a small point at the crown falling back
-K.tube("hood", M["hood"], "head", V(J, "neck", "skull", 0.05), V(J, "neck", "skull", 1.35),
-       [(0, 0.105, 0.09, 0.07), (0.23, 0.1, 0.105, 0.05), (0.44, 0.103, 0.112, 0.035), (0.615, 0.1, 0.11, 0.012),
-        (0.746, 0.075, 0.088, 0.028), (0.846, 0.05, 0.058, 0.055), (0.96, 0.02, 0.022, 0.095), (1, 0.008, 0.008, 0.11)], n=12)
-# the hood's cloth over the shoulders: a short cape, the arms coming out under it, longer down the back
-K.tube("cape", M["hood"], "chest", (0, 0.03, 1.16), (0, -0.01, 1.44),
-       [(0, 0.26, 0.15, 0.1), (0.5, 0.25, 0.14, 0.09), (0.82, 0.18, 0.115, 0.07), (1, 0.095, 0.075, 0.05)], n=12)
-# (set back: over the shoulders and the back only, the vest open in front)
-K.box("back", M["hood"], "chest", (0, 0.17, 1.02), (0.4, 0.03, 0.3), rot=(-0.12, 0, 0))
+# the hood: a thin shell of cloth round the head, its sides coming forward past the cheeks, open in front from the chin
+# to the brow (the face inside it), a small point at the crown falling back; two-sided, so its inside shows as cloth
+hood = K.tube("hood", M["hood"], "head", V(J, "neck", "skull", -0.05), V(J, "neck", "skull", 1.3),
+              [(0, 0.12, 0.12, 0.0), (0.25, 0.125, 0.128, 0.0), (0.5, 0.126, 0.13, 0.005), (0.66, 0.12, 0.125, 0.012),
+               (0.78, 0.09, 0.098, 0.03), (0.88, 0.055, 0.06, 0.055), (0.97, 0.02, 0.022, 0.085), (1, 0.008, 0.008, 0.095)], n=12)
+open_front(hood, -0.6, 0.66 * (V(J, "skull") - V(J, "neck")).length * 1.35)
+M["hood"].use_backface_culling = False
+# the hood's cloth over the shoulders: a short cape closing round the neck (it hides it), the arms out under it
+K.tube("cape", M["hood"], "chest", (0, 0.02, 1.16), (0, -0.02, 1.47),
+       [(0, 0.275, 0.16, 0.03), (0.45, 0.265, 0.15, 0.02), (0.75, 0.18, 0.115, 0.01), (1, 0.072, 0.07, 0.0)], n=12)
 limbs(K, J, M, M["shirt"], M["shirt"], M["pants"], M["wrap"], upper_r=0.045, thigh_r=0.085)
 for s in (".L", ".R"):                                               # strips of cloth round the wrists
     K.seg("wrist", M["wrap"], "forearm" + s, V(J, "el" + s, "wr" + s, 0.8), V(J, "wr" + s), 0.041, 0.039)

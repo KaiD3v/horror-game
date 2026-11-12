@@ -2,23 +2,21 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://crmo8o14hl74p"
-path="res://.godot/imported/npc_bastiao_bastiao_face_64.png-04e3762e0e32c412b2483d5488bd8ad7.ctex"
+uid="uid://dlg2ponmw6odf"
+path.s3tc="res://.godot/imported/npc_bastiao_bastiao_face_64.png-04e3762e0e32c412b2483d5488bd8ad7.s3tc.ctex"
 metadata={
-"vram_texture": false
-}
-generator_parameters={
-"md5": "4505587e441156dc0c2108eb7a17c8b8"
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://models/characters/npc_bastiao_bastiao_face_64.png"
-dest_files=["res://.godot/imported/npc_bastiao_bastiao_face_64.png-04e3762e0e32c412b2483d5488bd8ad7.ctex"]
+dest_files=["res://.godot/imported/npc_bastiao_bastiao_face_64.png-04e3762e0e32c412b2483d5488bd8ad7.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +38,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0
