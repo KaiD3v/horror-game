@@ -108,7 +108,7 @@ func holds(c: Dictionary) -> bool:
 		var v = c[k]
 		var ok: bool
 		match k:
-			"tem": ok = Inventory.has(v)
+			"tem", "tem_tambem": ok = Inventory.has(v)
 			"nao_tem": ok = not Inventory.has(v)
 			"marca": ok = Story.has(v)
 			"sem_marca": ok = not Story.has(v)

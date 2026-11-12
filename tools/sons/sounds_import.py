@@ -36,9 +36,10 @@ PEAK = {"vento": 0.7, "casa": 0.5, "fogo": 0.6, "velas": 0.35, "relogio": 0.5, "
         "lampiao_quebrar": 0.85, "pedra_quebrar": 0.85,
         "chefe_tensao": 0.8, "chefe_impacto": 0.98, "lampiao_acender": 0.6,
         "bater_porta": 0.8, "voz_do_brasil": 0.45,
-        "galinhas": 0.5, "palitos": 0.7}  # Tenório's yard and his palitinho (docs/CONTEUDO_VILAREJO.md fase 4)  # the routines (docs/CONTEUDO_VILAREJO.md): a shut door, Bento's radio at 19h
+        "galinhas": 0.5, "palitos": 0.7,
+        "mula": 0.55, "tronco_cair": 0.95}  # the peddler's mule, the log across the ravine (fase 5)  # Tenório's yard and his palitinho (docs/CONTEUDO_VILAREJO.md fase 4)  # the routines (docs/CONTEUDO_VILAREJO.md): a shut door, Bento's radio at 19h
 LOOPS = ("ambiente_hospital", "cidade_madrugada", "onibus", "vento", "casa", "fogo", "velas", "relogio", "coro", "reza", "musica", "chuva", "coracao",
-         "bruxa_asas", "poceiro_balde", "carpideira_choro", "morcegos", "voz_do_brasil", "galinhas")  # generated seamless
+         "bruxa_asas", "poceiro_balde", "carpideira_choro", "morcegos", "voz_do_brasil", "galinhas", "mula")  # generated seamless
 
 
 def load(path):

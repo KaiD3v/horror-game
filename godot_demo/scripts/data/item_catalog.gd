@@ -35,6 +35,8 @@ const ITEMS := {
 	"chave_enfermeira": {"nome": "Chave da casa da enfermeira", "descricao": "Uma chave comprida, enferrujada. O Bastião guardou: \"Se eu não descer, queima tudo\", ela disse.", "tipo": "chave", "modelo": "chave"},
 	"cobertor": {"nome": "Cobertor de lã", "descricao": "Lã grossa, xadrez, cheirando a fumaça. Era da cama do Zé.", "tipo": "lembranca"},
 	"aljava_couro": {"nome": "Aljava de couro", "descricao": "A do Tenório, de couro cru, forrada de feltro: os virotes não batem uns nos outros quando ele corre.", "tipo": "equipamento"},
+	"chave_motorista": {"nome": "Chave da casa do motorista", "descricao": "Do Seu Abílio, o motorista da Colônia. Ele deixou com o Seu Dito, pra guardar a mercadoria.", "tipo": "chave", "modelo": "chave"},
+	"medalha": {"nome": "Medalha de São Cristóvão", "descricao": "Lata dourada, o santo com o Menino nas costas atravessando o rio. Protetor dos motoristas. No verso: \"Abílio\".", "tipo": "lembranca"},
 	"escapulario": {"nome": "Escapulário", "descricao": "Dois quadradinhos de pano num cordão, Nossa Senhora do Carmo. No verso, a lápis: Joaquim.", "tipo": "lembranca"},
 	"coracao_exvoto": {"nome": "Coração de ex-voto", "descricao": "Lata batida em forma de coração, de quem pagou promessa. Um coração a mais.", "tipo": "melhoria"},
 	"conta_terco": {"nome": "Conta de terço", "descricao": "Madeira escura, gasta de tanto rezar. Quatro fazem o terço crescer: mais fôlego.", "tipo": "melhoria"},

@@ -1,4 +1,4 @@
-# The nurse's house (casa_14 in the village, by the gate: docs/CONTEUDO_VILAREJO.md "As casas acorrentadas"): Dalva,
+# The nurse's house (casa_14 in the village, by the gate: docs/CONTEUDO_VILAREJO.md "As casas acorrentadas"): Celina,
 # the Colônia's nurse, who lived down here and went up every day. Padlocked; Bastião kept her key ("if I don't come
 # down, burn it all"). Her room as she left it the last time: the bed, the wire hanger on the wall with no uniform on
 # it, her cap on the shelf, the mirror covered with a cloth, a little suitcase packed and never taken, on the table her

@@ -1,7 +1,7 @@
 # O vilarejo vivo: conteúdo secundário (plano)
 
 *Data: 2026-11-11. Continua [TUTORIAL_VILAREJO.md](TUTORIAL_VILAREJO.md) e [CHAVE_DO_PORTAO.md](CHAVE_DO_PORTAO.md).
-Fases 1 a 4 feitas (ver "Fase N, feita" no fim); o resto é plano. Coordenadas em Godot (x, z).*
+Fases 1 a 5 feitas (ver "Fase N, feita" no fim); o resto é plano. Coordenadas em Godot (x, z).*
 
 ## O problema
 
@@ -431,7 +431,7 @@ campanário: é preciso erguer um pouco o olhar.
 - **O que conta:**
   - o túnel velho da água embaixo do muro ("com uma picareta, quem sabe");
   - o pavilhão das crianças: aos filhos diziam que os pais tinham morrido, e aos pais, que os filhos tinham morrido;
-  - a Dalva, a enfermeira ("Se você encontrar ela lá em cima... olha pra ela"). Isso aponta para a lamparina na mão contra a Enfermeira.
+  - a Celina, a enfermeira ("Se você encontrar ela lá em cima... olha pra ela"). Isso aponta para a lamparina na mão contra a Enfermeira.
 
 **As galinhas do Tenório** (`QuestData` "galinhas", depois da besta):
 - **O pedido:** "Some galinha... Bicho que acende fogo eu nunca vi. Vai lá e resolve. Leva a besta."
@@ -448,7 +448,7 @@ campanário: é preciso erguer um pouco o olhar.
   - a touca na prateleira e o espelho coberto com um pano;
   - a mala feita e nunca levada;
   - a seringa de vidro vazia;
-  - as cartas da Dalva à mãe (nota `cartas_dalva`): o pavilhão das crianças, o soro, e "hoje eu tomei também".
+  - as cartas da Celina à mãe (nota `cartas_celina`): o pavilhão das crianças, o soro, e "hoje eu tomei também".
 - A casa apresenta a Enfermeira antes da Colônia.
 
 **Sons novos (ElevenLabs, 38 créditos):** `galinhas` (loop) e `palitos`.
@@ -463,3 +463,72 @@ campanário: é preciso erguer um pouco o olhar.
   - a porta da enfermeira.
 - `test_enfermeira.gd`: a casa e a nota.
 - Capturas `v68` a `v71` e `enfermeira_*`.
+
+## Fase 5, feita: o mascate e a ravina
+
+**O Seu Dito** (`npcs/mascate.py`):
+- **Quem é:** alto e magro, queimado de sol, chapéu de palha, paletó desbotado, bolsa a tiracolo, bigode fino. Subiu
+  vendendo de vila em vila e ficou preso deste lado quando serraram a ponte.
+- **O acampamento** junto da ravina, a leste da chegada (`vilarejo.gd` `_mascate`, `CAMP`): a mula com a cangalha e os
+  cestos (som `mula`), a carrocinha com panelas e fazenda, a lona onde ele dorme, o caixote onde se senta. As peças
+  ficam em `mascate_build.py` / `props/mascate.glb`.
+- **A rotina:**
+  - nos dias pares, das 8h às 15h, ele faz feira no largo ("Feira de um homem só e uma mula");
+  - no resto do tempo fica no acampamento.
+  - A rotina ganhou a condição `dias` (par/ímpar) e a chave `some` (com a marca, ele sumiu de vez).
+- **A loja** (`ShopCatalog` "mascate"):
+  - a única **corda** (Cr$ 25, uma só);
+  - ataduras e virotes.
+- **A troca:** o relógio de bolso da professora vale a corda e mais Cr$ 5 ("Prata de verdade"). Se ele já tem corda, vale Cr$ 25. É para isso que serve o relógio.
+- **A ponte:** "Caiu não. Serraram." Ele ouviu a serra de madrugada e viu um carro preto descer sem farol e não subir do
+  outro lado. Isso é a pista do fundo da ravina.
+
+**O tronco do Seu Dito** (`QuestData` "tronco"):
+- **O tronco:** do outro lado da ravina, o pessoal da estrada deixou um tronco de 11,5 m em pé, inclinado para cá e
+  amarrado no alto por uma corda presa a uma estaca atrás.
+- **O tiro:** um virote na corda, perto do alto (o único ponto que passa por cima da cerca vista daqui), e o tronco cai
+  atravessado na ravina (som `tronco_cair`, Story "tronco:caiu"). "Amanhã cedo eu passo com a mula."
+- **A partida:** na manhã seguinte, depois das 5h30 e longe da vista do jogador, o acampamento some com ele
+  (Story "dito:foi"). No chão ficam o bilhete dele (nota `bilhete_dito`) e a **chave da casa do motorista**.
+- O tronco é só para a mula e para a vista: a cerca da ravina continua, e o jogador não atravessa.
+
+**O fundo da ravina** (`_ravine`):
+- **A descida:** com a corda, junto da cerca do acampamento: "E · amarrar a corda e descer" (Story "corda:ravina", a corda
+  fica pendurada). A tela escurece e ele está lá embaixo. "E · subir pela corda" o traz de volta.
+- **Lá embaixo:** um trecho de uns 16 m entre os escombros da ponte e a corda (paredes invisíveis nas pontas) e o
+  **carro do Dr. Euclides**, um sedã dos anos 60 com o nariz amassado e a porta aberta.
+  - A carteira: Cr$ 20, com um brilho.
+  - A **pasta do doutor** (nota `pasta_euclides`): o soro R-4, os internos que já não obedecem, a sirene com o Severino,
+    "A ponte será cortada esta noite, pelo bem da vila. Vou buscar ajuda na capital. Não volto."
+  - Quem serrou a ponte fica dito, e quem derrubou o carro não: a pergunta fica para a Colônia.
+
+**A casa do motorista** (casa 10, a amarela a leste; `motorista_build.py`):
+- **A porta:** a corrente saiu do modelo; agora é um cadeado que a chave do Dito abre.
+- **Dentro:**
+  - o catre, a bancada com ferramentas e um pneu de caminhão, o quepe no prego e o calendário;
+  - na mesa, o **livro de viagens do Abílio** (nota `livro_viagens`): quem subia, quem descia ("nada"), as caixas do
+    Tenório, e "16/04 · noite da sirene. O doutor mandou subir a vila inteira. Eu subo.";
+  - embaixo do catre, numa lata, a **medalha de São Cristóvão** (`medalha`).
+- Com isso as três casas acorrentadas estão abertas: a professora, a enfermeira e o motorista.
+
+**Correção de enredo:** a enfermeira da casa 14 passou a se chamar **Celina** (era Dalva na fase 4). A ficha da Colônia,
+que já existia, dá a enfermeira-chefe como "Celina A.", de admissão voluntária, com o soro e a boca costurada. As cartas
+dela (`cartas_celina`) e as falas do Bastião foram ajustadas.
+
+**Sons novos (ElevenLabs, 46 créditos):** `mula` (loop) e `tronco_cair`.
+
+**Mudou do plano:**
+- O Dito não sobe a estrada de dois em dois dias: ele mora no acampamento e só vem ao largo nos dias pares.
+- A troca é só do relógio: a medalha e o rosário de prata ficaram de fora, porque a medalha só se acha depois que ele vai embora.
+
+**Testes:**
+- `test_vilarejo.gd` `mascate_tests`:
+  - o acampamento e a feira no dia par;
+  - o relógio pela corda;
+  - o tronco derrubado com um virote;
+  - a partida, com o bilhete e a chave;
+  - a descida, o carro e a pasta;
+  - as paredes do fundo e a subida;
+  - o cadeado do motorista.
+- `test_motorista.gd`: a casa e a medalha.
+- Capturas `v72` a `v75` e `motorista_*`.

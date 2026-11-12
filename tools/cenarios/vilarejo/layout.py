@@ -31,7 +31,8 @@ HOUSES = [
     (27, 13.5, 0, 6.5, 5.0, "wood", {"siding": "red", "shutter": "ochre", "porch": True, "sign": "armaria"}),  # Tenório's
     (30, -3, 180, 7.0, 5.5, "taipa", {"barra": "blue", "shutter": "ochre", "chimney": True,
                                       "decais": [("cartaz", "front", 2.6, 1.5, 0.32, 0.4, 0.1), ("cartaz", "front", 2.95, 1.35, 0.32, 0.4, -0.05)]}),
-    (41, 16, 5, 5.5, 5.0, "taipa", {"barra": "ochre", "shutter": "blue", "chained": True}),
+    (41, 16, 5, 5.5, 5.0, "taipa", {"barra": "ochre", "shutter": "blue", "porta": "motorista"}),  # the Colônia's driver's:
+                                                          # padlocked (Godot: BlockedDoor, Seu Dito's key, docs/CONTEUDO_VILAREJO.md)
     (-26, -7, 180, 6.5, 5.0, "wood", {"siding": "grey", "shutter": "oxblood", "burnt": True}),
     (-10, 26, 90, 6.5, 5.5, "taipa", {"barra": "green", "shutter": "green", "chimney": True}),
     (9.5, 31, -92, 6.0, 5.0, "wood", {"siding": "brown", "shutter": "green", "porch": True}),

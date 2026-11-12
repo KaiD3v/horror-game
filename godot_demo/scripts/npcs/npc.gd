@@ -88,6 +88,9 @@ func pose(s: Dictionary) -> void:
 ## walking the path when there is one in sight, otherwise unseen.
 func go(to: Transform3D, s: Dictionary, leave := false, arriving := false) -> void:
 	slot = s; goal = to; leaving = leave; going = true
+	if s.is_empty():  # (gone for good: only unseen)
+		path = PackedVector3Array(); unseen = true
+		return
 	if prop:
 		prop.queue_free(); prop = null
 	var map := get_world_3d().navigation_map

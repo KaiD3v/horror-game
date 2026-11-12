@@ -67,6 +67,17 @@ var bottles: Array[Target] = []
 var bottle_t := -1.0                           # the bottles' clock, -1 when not shooting
 var bottle_bolts := 0                          # bolts in the quiver when it started (the spent ones come back)
 var bottle_label: Label
+const CAMP := Vector3(13.6, 0, 42.6)           # Seu Dito's camp by the ravine (../docs/CONTEUDO_VILAREJO.md "O mascate")
+const LOG_FOOT := Vector3(10.5, 0, 57.0)       # the road crew's log on the far side, standing; falls north across
+const LOG_LEN := 11.5
+const ROPE_DOWN := Vector3(16.6, 0, 46.0)      # where the rope goes down into the ravine, by the fence
+const RAVINE_Z := 51.5                         # the bottom (layout.GULLY_Y)
+const CAR := Vector3(6.4, 0, 51.3)             # Dr. Euclides's car down there
+var camp: Array[Node3D] = []                   # the mule, the cart, the tarp, his crate (gone with him)
+var log_pivot: Node3D                          # the log, turning on its foot
+var log_rope: Target
+var down_rope: Interactable
+var up_rope: Interactable
 var creakers: Array[Vector3] = []
 const BRUXAS := 2             # perched on the roofs each night (one, before he has the machete: roster())
 var bruxas: Array[Bruxa] = []
@@ -111,6 +122,7 @@ func _build() -> void:
 	_jazigo()
 	_padlocked("professora", "chave_professora", "E · entrar na casa da professora")
 	_padlocked("enfermeira", "chave_enfermeira", "E · entrar na casa da enfermeira")
+	_padlocked("motorista", "chave_motorista", "E · entrar na casa do motorista")
 	_finds.call_deferred()  # (they stand on the ground: once the colliders are in)
 	var well := marker("porta_poco")  # the ossuary's rope up the well (../docs/TUTORIAL_VILAREJO.md "Dungeon 2"): once
 	var down := Door.make(well, "E · descer pela corda", Paths.interior("ossuario"), "poco", 1.4)  # tied, a way back down
@@ -147,6 +159,7 @@ func _process(delta: float) -> void:
 	_view(delta)
 	_cida_tick(delta)
 	_bottles_tick(delta)
+	_dito_tick()
 	# (not before the navigation map has synced: the night's places come from it. Arriving at night, up the well's rope
 	# or out of a door, the first frames have none yet)
 	if night_watch and WorldTime.is_night() != night and NavigationServer3D.map_get_iteration_id(get_world_3d().navigation_map) > 0:
@@ -517,6 +530,8 @@ func _belfry() -> void:
 		_cida()
 		_bastiao()
 		_tenorio_yard()
+		_mascate()
+		_ravine()
 		if not Story.has("bastiao:expulso"):
 			_smoke(ground(RUIN_SMOKE.x, RUIN_SMOKE.z), 6.0, true)
 		_smoke(ground(QUARRY_SMOKE.x, QUARRY_SMOKE.z), 14.0, false)).call_deferred()  # (on the ground: once it is in)
@@ -719,6 +734,134 @@ func _tenorio_yard() -> void:
 		Looks.box(self, p + Vector3(0, 0.5, 0), Vector3(0.12, 1.0, 0.12), planks)
 	var mid := ground(26.0, RANGE_Z)
 	Looks.box(self, mid + Vector3(0, 1.02, 0), Vector3(5.4, 0.08, 0.14), planks)
+
+
+# --- Seu Dito's camp by the ravine (../docs/CONTEUDO_VILAREJO.md "O mascate"): the mule (heard), his cart, the tarp, the
+# crate he sits on (NpcCatalog "mascate": there, or on the square on market days). Across the ravine the road crew's log
+# stands, held up by a rope at its top (a Target): cut, it falls north across (Story "tronco:caiu"), and the next morning
+# he is gone over it with the mule, unseen (Story "dito:foi"): his note and the driver's key left at the camp.
+func _mascate() -> void:
+	var all: Node = load(Paths.PROP % "mascate").instantiate()
+	var put := func(n: String, at: Vector3, yaw: float) -> Node3D:
+		var o: Node3D = all.find_child(n, false); all.remove_child(o); o.owner = null; add_child(o)
+		o.position = ground(at.x, at.z); o.rotation.y = yaw; Looks.n64(o)
+		return o
+	if not Story.has("dito:foi"):
+		camp.append(put.call("mula", CAMP + Vector3(3.2, 0, 0.6), PI / 2))
+		camp.append(put.call("carroca", CAMP + Vector3(-1.4, 0, 0.2), 0.3))
+		camp.append(put.call("lona", CAMP + Vector3(1.0, 0, -1.6), PI))
+		camp.append(Looks.box(self, ground(12.6, 44.5) + Vector3(0, 0.22, 0), Vector3(0.45, 0.44, 0.4), Looks.triplanar("planks", 1.0, Color(0.7, 0.6, 0.5))))
+		camp.append(Audio.play3d(self, "mula", CAMP + Vector3(3.2, ground(CAMP.x, CAMP.z).y + 1.2, 0.6), -8.0, true, 2.0, 16.0))
+	else:
+		_dito_left()
+	# the log: its foot on the far side; upright and leaning a little north, or fallen across
+	var foot := ground(LOG_FOOT.x, LOG_FOOT.z)
+	log_pivot = Node3D.new(); add_child(log_pivot); log_pivot.position = foot
+	var trunk: Node3D = all.find_child("tronco", false); all.remove_child(trunk); trunk.owner = null
+	log_pivot.add_child(trunk); Looks.n64(trunk)
+	var stake := ground(LOG_FOOT.x, LOG_FOOT.z + 4.5)
+	var stake_body := Looks.box(self, stake + Vector3(0, 0.4, 0), Vector3(0.18, 0.8, 0.18), Looks.triplanar("planks", 1.0, Color(0.6, 0.5, 0.4)))
+	stake_body.name = "estaca_tronco"
+	all.free()
+	if Story.has("tronco:caiu"):
+		log_pivot.rotation.x = _fallen_angle()
+		return
+	log_pivot.rotation.x = -0.1  # (leaning north: the rope at its top holds it back)
+	var top := log_pivot.global_transform * Vector3(0, LOG_LEN - 0.3, 0)
+	var rope := MeshInstance3D.new(); add_child(rope)
+	var rm := CylinderMesh.new(); rm.top_radius = 0.02; rm.bottom_radius = 0.02; rm.height = top.distance_to(stake + Vector3(0, 0.75, 0))
+	var sisal := StandardMaterial3D.new(); sisal.albedo_color = Color(0.7, 0.62, 0.42); rm.material = sisal; rope.mesh = rm
+	rope.global_transform = Transform3D(Basis(), (top + stake + Vector3(0, 0.75, 0)) / 2.0)
+	rope.look_at(top, Vector3.FORWARD); rope.rotate_object_local(Vector3.RIGHT, PI / 2)
+	var aim := top.lerp(stake + Vector3(0, 0.75, 0), 0.12)  # (near the top: over the fence from this side)
+	log_rope = Target.make(self, aim, Vector3(0.5, 0.5, 0.5))
+	log_rope.hit.connect(func():
+		rope.queue_free()
+		Audio.play3d(self, "corda_arrebentar", aim, 4.0, false, 6.0, 40.0)
+		var tw := create_tween(); tw.tween_interval(0.4)
+		tw.tween_property(log_pivot, "rotation:x", _fallen_angle(), 2.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw.tween_callback(func():
+			Audio.play3d(self, "tronco_cair", ground(LOG_FOOT.x, LOG_FOOT.z - LOG_LEN + 1.0) + Vector3(0, 1, 0), 6.0, false, 10.0, 70.0)
+			Story.mark("tronco:caiu"); Story.mark("tronco:dia", int(WorldTime.minutes / 1440.0))
+			player.notice.emit("O tronco caiu atravessado na ravina. Uma ponte.")))
+
+
+## How far the log turns on its foot to lie from the far bank onto this one (its top on the fence's brink).
+func _fallen_angle() -> float:
+	var foot := ground(LOG_FOOT.x, LOG_FOOT.z)
+	var end := ground(LOG_FOOT.x, LOG_FOOT.z - LOG_LEN + 0.6)
+	return -PI / 2 + asin(clampf((end.y + 0.3 - foot.y) / LOG_LEN, -1.0, 1.0))
+
+
+## The morning after the log fell he goes, unseen: the camp packed up, his note and the driver's key on the ground.
+func _dito_tick() -> void:
+	if not Story.has("tronco:caiu") or Story.has("dito:foi") or player == null:
+		return
+	if int(WorldTime.minutes / 1440.0) <= int(Story.marks.get("tronco:dia", 0)) or WorldTime.hour() < 5.5:
+		return
+	if player.global_position.distance_to(CAMP) < 30.0:  # (not while he could be seen packing)
+		return
+	Story.mark("dito:foi")
+	for o in camp:
+		if is_instance_valid(o):
+			o.queue_free()
+	camp.clear()
+	_dito_left()
+
+
+func _dito_left() -> void:
+	var n := NotesData.note("bilhete_dito").duplicate()
+	if n.id not in NotesReader.read:
+		NotePaper.make(self, n)
+	var key := Pickup.make(self, ground(13.3, 43.0) + Vector3(0, 0.03, 0), "chave_motorista", 1, "dito_chave")
+	if is_instance_valid(key):
+		key.prompt = "E · pegar a chave embrulhada no bilhete"
+
+
+# --- the bottom of the ravine (../docs/CONTEUDO_VILAREJO.md "O fundo da ravina"): with a rope, down from beside the camp
+# (Story "corda:ravina" once tied); Dr. Euclides's car down there in the mud, his briefcase (NotesData "pasta_euclides"),
+# his wallet. Walled in at both ends of the stretch; the rope back up.
+func _ravine() -> void:
+	var top := ground(ROPE_DOWN.x, ROPE_DOWN.z)
+	var bottom := ground(ROPE_DOWN.x, RAVINE_Z - 0.6)
+	down_rope = Interactable.new(); add_child(down_rope); down_rope.position = top; down_rope.radius = 1.4
+	down_rope.requires = "corda"; down_rope.refusal = "Fundo demais. Sem uma corda não dá para descer."
+	down_rope.prompt = "E · descer pela corda" if Story.has("corda:ravina") else "E · amarrar a corda e descer"
+	down_rope.used.connect(func(_by):
+		if not Story.has("corda:ravina"):
+			Story.mark("corda:ravina"); Audio.play3d(self, "corda_amarrar", top, 0.0, false, 3.0, 20.0)
+			_hanging_rope(top, bottom); down_rope.prompt = "E · descer pela corda"
+		_blink(func(): _put_player(bottom + Vector3(0, 0.1, -0.4), PI)))
+	up_rope = Interactable.new(); add_child(up_rope); up_rope.position = bottom; up_rope.radius = 1.4; up_rope.height = 2.5
+	up_rope.prompt = "E · subir pela corda"
+	up_rope.used.connect(func(_by): _blink(func(): _put_player(top + Vector3(0, 0.1, -0.9), 0.0)))
+	if Story.has("corda:ravina"):
+		_hanging_rope(top, bottom)
+	for x in [2.6, 19.0]:  # the stretch of the bottom he can walk: from the bridge's rubble to past the rope
+		var wall := StaticBody3D.new(); add_child(wall); wall.position = Vector3(x, bottom.y + 3.0, RAVINE_Z)
+		var cs := CollisionShape3D.new(); var box := BoxShape3D.new(); box.size = Vector3(0.4, 8.0, 10.0); cs.shape = box; wall.add_child(cs)
+	var all: Node = load(Paths.PROP % "mascate").instantiate()
+	var car: Node3D = all.find_child("carro", false); all.remove_child(car); car.owner = null; all.free()
+	var body := StaticBody3D.new(); add_child(body); body.position = ground(CAR.x, CAR.z); body.rotation.y = 0.35
+	body.add_child(car); Looks.n64(car)
+	var cs2 := CollisionShape3D.new(); var cb := BoxShape3D.new(); cb.size = Vector3(1.7, 1.2, 4.4); cs2.shape = cb
+	cs2.position.y = 0.6; body.add_child(cs2)
+	Looks.omni(self, body.position + Vector3(0.5, 3.5, 0), Color(0.62, 0.66, 0.74), 1.2, 9.0)  # (the grey sky down the gap)
+	var wallet := Pickup.money(self, ground(CAR.x + 1.1, CAR.z + 0.6) + Vector3(0, 0.05, 0), 20, "ravina_carteira", "a carteira do doutor")
+	if is_instance_valid(wallet):
+		Looks.omni(self, wallet.position + Vector3(0, 0.4, 0), Color(0.9, 0.85, 0.7), 0.6, 2.5)  # (a glint down there)
+
+
+func _hanging_rope(top: Vector3, bottom: Vector3) -> void:
+	var m := MeshInstance3D.new(); add_child(m)
+	var c := CylinderMesh.new(); c.top_radius = 0.025; c.bottom_radius = 0.025; c.height = top.y + 1.0 - bottom.y
+	var sisal := StandardMaterial3D.new(); sisal.albedo_color = Color(0.7, 0.62, 0.42); c.material = sisal; m.mesh = c
+	m.position = Vector3(bottom.x, (top.y + 1.0 + bottom.y) / 2.0, (top.z + bottom.z) / 2.0)
+	m.rotation.x = atan2(bottom.z - top.z, top.y + 1.0 - bottom.y)
+
+
+func _put_player(at: Vector3, yaw: float) -> void:
+	player.global_position = at; player.velocity = Vector3.ZERO; player.rotation.y = yaw
 
 
 ## A game started from a talk (Dialog "jogo"): Tenório's palitinho on the porch, or his bottles out the back.

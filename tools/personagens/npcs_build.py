@@ -10,7 +10,7 @@
 import os, runpy
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-NPCS = ['vendeiro', 'armeiro', 'benzedeira', 'mae', 'cida', 'bastiao']  # (mae: his mother in 1955, only in the opening's memory)
+NPCS = ['vendeiro', 'armeiro', 'benzedeira', 'mae', 'cida', 'bastiao', 'mascate']  # (mae: his mother in 1955, only in the opening's memory)
 
 for who in NPCS:
     runpy.run_path(os.path.join(HERE, "npcs", who + ".py"), run_name="__main__")

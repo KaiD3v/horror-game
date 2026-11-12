@@ -1,6 +1,6 @@
 # Bastião, the ex-interno (Dialog explains the format; ../docs/CONTEUDO_VILAREJO.md "Bastião, o ex-interno"). Let out
 # of the Colônia by the 1962 law, nowhere to go; lives in the ruin by the gate with his fire. Keeps his distance for your
-# sake, not his. Knows the Colônia from inside: the children's pavilion, the old water tunnel under the wall, Dalva the
+# sake, not his. Knows the Colônia from inside: the children's pavilion, the old water tunnel under the wall, Celina the
 # nurse. Given the Zé's blanket he gives her key. Tenório told of him: he is gone (vilarejo.gd _bastiao).
 extends RefCounted
 
@@ -44,14 +44,14 @@ const NOS := {
 		"...Você tem a cara de quem já ouviu isso. Desculpa.",
 	]},
 	"dalva": {"fala": [
-		"A Dalva. A enfermeira. Morava aqui embaixo, na casa vermelha perto do portão, e subia todo dia.",
+		"A Celina. A enfermeira-chefe. Morava aqui embaixo, na casa vermelha perto do portão, e subia todo dia.",
 		"Era boa. Trazia carta escondida. Depois do soro do doutor ela parou de falar. Andava na ponta do pé.",
 		"Se você encontrar ela lá em cima... olha pra ela. Ela não gosta de ser esquecida no escuro.",
 	]},
 	"cobertor": {"faz": [{"marca": "bastiao:ajudou"}, {"toma": "cobertor"}, {"da": "chave_enfermeira"}], "fala": [
 		"...Pra mim?",
 		"Faz trinta anos que ninguém me dá uma coisa sem jogar de longe.",
-		"Toma. A chave da casa da Dalva. Ela me deu antes de subir a última vez: \"Se eu não descer, queima tudo.\" Eu não tive coragem.",
+		"Toma. A chave da casa da Celina. Ela me deu antes de subir a última vez: \"Se eu não descer, queima tudo.\" Eu não tive coragem.",
 		"Vai você. Lê o que ela deixou. Alguém tem que saber.",
 	]},
 }

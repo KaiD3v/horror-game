@@ -20,9 +20,21 @@ const NOTES := [
 		"text": "Meu filho,\nlembra do parlatório? Eu disse que ia te buscar. Não consegui. A você disseram que eu morri, a mim, que você tinha morrido. Era mentira.\nEstou viva. O doutor não deixa ninguém sair e dá injeção toda semana. O Bento da venda põe esta no correio.\nAgora é você que tem que vir. Antes do fim de março.\ntua mãe"},
 	# Cida's map (../tools/texturas/mapa_cida.py): she gives it at the end of the hide-and-seek (vilarejo.gd _cida)
 	{"id": "mapa_cida", "scene": "", "at": Vector2.ZERO, "yaw": 0.0, "paper": "mapa_cida", "title": "O mapa da Cida", "text": ""},
+	# the peddler's goodbye (../docs/CONTEUDO_VILAREJO.md "O mascate"): scene "", put at his camp when he has gone (vilarejo.gd)
+	{"id": "bilhete_dito", "scene": "", "at": Vector2(12.9, 43.2), "yaw": 20.0, "paper": "caderno",
+		"title": "Bilhete do Seu Dito",
+		"text": "Moço,\nfui com a mula antes do sol, pelo tronco. Não gosto de despedida, a mula também não.\nA chave é do Abílio, o motorista da Colônia. Deixou comigo pra guardar a mercadoria dele e não desceu mais. A casa é a amarela, do lado leste. Abre você, que eu não tenho coragem.\nSe um dia descer pro litoral, procura o Dito. Todo mundo conhece.\n\nDeus te guarde lá em cima."},
+	# the bottom of the ravine: Dr. Euclides's briefcase by his car (../docs/CONTEUDO_VILAREJO.md "O fundo da ravina")
+	{"id": "pasta_euclides", "scene": "vilarejo", "at": Vector2(8.1, 50.6), "yaw": -30.0, "from": 4.0, "paper": "oficio",
+		"title": "Pasta do Dr. Euclides",
+		"text": "COLÔNIA SANTA CLARA · Diretoria Clínica\nReservado\n\nSoro R-4: 214 doses aplicadas. Os internos não morrem; também não dormem, não falam e não sentem frio. Os de dentro já não obedecem.\nCasas de força e pavilhões fechados às 18h. A sirene fica com o Severino.\nA ponte será cortada esta noite, pelo bem da vila.\n\nVou buscar ajuda na capital. Não volto.\nE. M."},
+	# the driver's house: his trip book on the table
+	{"id": "livro_viagens", "scene": "motorista", "at": Vector2(-0.35, -0.6), "yaw": 6.0, "from": 1.5, "paper": "caderno",
+		"title": "Livro de viagens do Abílio",
+		"text": "Colônia × Vila × Capital\n\n03/03 · subida: 6 internos novos, 2 crianças. Descida: roupa suja.\n17/03 · subida: caixas do doutor (vidro, frágil). Descida: nada.\n02/04 · subida: 4 da vila, \"para o tratamento\". Descida: nada.\n09/04 · subida: cartucho do Tenório, 6 caixas. O doutor pagou em dobro.\n16/04 · noite da sirene. O doutor mandou subir a vila inteira. Eu subo. O caminhão tá cheio.\n\n(daqui pra baixo, em branco)"},
 	# the nurse's house (../docs/CONTEUDO_VILAREJO.md "As casas acorrentadas"): her letters on the table, never sent
-	{"id": "cartas_dalva", "scene": "enfermeira", "at": Vector2(0.45, -1.95), "yaw": -15.0, "from": 1.5, "paper": "caderno",
-		"title": "Cartas da Dalva à mãe (1974)",
+	{"id": "cartas_celina", "scene": "enfermeira", "at": Vector2(0.45, -1.95), "yaw": -15.0, "from": 1.5, "paper": "caderno",
+		"title": "Cartas da Celina à mãe (1974)",
 		"text": "Mãe,\no pavilhão das crianças agora são quarenta. Elas perguntam pelos pais, e o doutor manda dizer que os pais morreram. Os pais estão no pavilhão do lado.\n\nMãe,\no doutor começou o soro. Diz que tira a doença do sangue. Eu aplico de noite. Eles não dormem mais.\n\nMãe,\nhoje eu tomei também. Pra ver. Não conta pra ninguém. Não vou mais poder escrever direito, a mão já não para."},
 	# Dona Lurdes's house (../docs/CONTEUDO_VILAREJO.md "As casas acorrentadas"): on her desk
 	{"id": "diario_classe", "scene": "professora", "at": Vector2(0.65, -1.95), "yaw": 10.0, "from": 1.5, "paper": "caderno",

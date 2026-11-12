@@ -135,8 +135,14 @@ func _routine() -> void:
 	for who in routine:
 		var was: Dictionary = routine[who]
 		var s := NpcCatalog.slot(who)
-		if s.i == was.i:
+		if s.get("i", -1) == was.get("i", -1):
 			continue
+		if s.is_empty():  # gone for good (NpcCatalog "some"): off, unseen
+			routine.erase(who)
+			var gone: Npc = npcs.get(who)
+			if gone:
+				gone.go(gone.global_transform, {}, true)
+			return
 		routine[who] = s
 		var here: bool = s.cena == scene_id
 		var n: Npc = npcs.get(who)

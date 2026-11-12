@@ -36,7 +36,7 @@ func run() -> void:
 		var at: Vector3 = L.npcs[who].global_position
 		var q := _capsule_at(at + Vector3(0, 0.9, 0)); q.collision_mask = 1 << (Npc.LAYER - 1)
 		var solid: bool = not L.get_world_3d().direct_space_state.intersect_shape(q, 1).is_empty()
-		check(ap.is_playing() and ap.current_animation == "Idle" and solid,
+		check(ap.is_playing() and ap.current_animation == NpcCatalog.slot(who).get("faz", "Idle") and solid,
 			"NPC %s stands on its marker, idling, solid (%.1f, %.1f)" % [who, at.x, at.z])
 	await map_shot("v0_mapa", Vector3(0, 80, -3), 120, 1.5)
 
@@ -1318,4 +1318,83 @@ func tenorio_tests() -> void:
 	check(Story.has("aberta:enfermeira") and SceneRouter.requested == Paths.interior("enfermeira"),
 		"her key: in (%s, \"%s\", %s)" % [Story.has("aberta:enfermeira"), L.hud.prompt.text, SceneRouter.requested])
 	SceneRouter.requested = ""; SceneRouter.arriving = ""
+	_hour(16.5); Story.reset(); Inventory.reset(); Inventory.give_tools()
+
+
+# --- Seu Dito and the ravine (../docs/CONTEUDO_VILAREJO.md fase 5): his camp (the mule heard), the square on market days,
+# his shop with the one rope, the teacher's watch traded for it, the log across the ravine cut down by a bolt, his going
+# the next morning (note, the driver's key), the rope down to Dr. Euclides's car, the driver's door
+func mascate_tests() -> void:
+	L.night_watch = false
+	_hour(10.0); WorldTime.minutes += 1440.0 * (1 - int(WorldTime.minutes / 1440.0) % 2)  # (an odd day: at his camp)
+	await wait(0.6)
+	var dito: Npc = L.npcs.get("mascate")
+	check(dito != null and dito.global_position.distance_to(Vector3(12.6, dito.global_position.y, 44.1)) < 0.4
+		and dito.anim.current_animation == "Sit", "Seu Dito at his camp by the ravine, on his crate")
+	check("mula" in Audio.heard and L.camp.size() >= 4, "his mule, cart and tarp; the mule heard")
+	var at := dito.global_position + dito.global_basis.z * 1.3
+	put(player, at, atan2(dito.global_basis.z.x, dito.global_basis.z.z)); await wait(0.5)
+	await shot("v72_mascate")
+	var d := Dialog.new("mascate", player); d.begin()
+	check(Story.has("dito_conheceu") and d.at == "primeira", "Dito, mascate: stuck since the bridge")
+	# market day: on the square
+	put(player, Vector3(0, L.ground(0, 40).y, 40), PI); WorldTime.minutes += 1440.0; await wait(0.5)
+	check(L.npcs.has("mascate") and NpcCatalog.slot("mascate").lugar == "largo", "an even day: market on the square")
+	WorldTime.minutes -= 1440.0; await wait(0.3)
+	dito = L.npcs.get("mascate")  # (back at his camp: no need to watch him walk the 40 m)
+	dito.global_transform = L._spot(NpcCatalog.slot("mascate")); dito.pose(NpcCatalog.slot("mascate"))
+	# the watch for the rope
+	Inventory.items.erase("corda"); Inventory.add("relogio_bolso"); var money := Inventory.money
+	d.enter("oi")
+	var show: Array = d.options().filter(func(o): return o.texto == "Mostrar o relógio de bolso")
+	if show:
+		d.pick(show[0])
+	check(Inventory.has("corda") and not Inventory.has("relogio_bolso") and Inventory.money == money + 5, "the teacher's watch: his rope, and change")
+	check(Shop.left("mascate", 0) == 0, "...so the rope is off his list")
+	# the log
+	d.enter("oi")
+	var ask: Array = d.options().filter(func(o): return o.texto == "Perguntar da ponte")
+	d.pick(ask[0]); d.enter("oi")
+	ask = d.options().filter(func(o): return o.texto == "Perguntar como sair daqui")
+	if ask:
+		d.pick(ask[0])
+	check(Story.task("tronco") == "ativa", "the way out: the log on the far side, held up by a rope")
+	var from: Vector3 = L.CAMP + Vector3(-2.0, 1.6, 2.0); from.y += L.ground(from.x, from.z).y
+	var see: Vector3 = L.log_pivot.global_position + Vector3(0, 5, 0) - from
+	put(player, from - Vector3(0, 1.6, 0), atan2(-see.x, -see.z)); player.pitch.rotation.x = 0.25; await wait(0.6)
+	await shot("v73_tronco_em_pe")
+	Bolt.fire(L, from, (L.log_rope.global_position - from).normalized(), player.get_rid())
+	await until(func(): return Story.has("tronco:caiu"), 6.0); await wait(0.6)
+	check(Story.has("tronco:caiu") and absf(L.log_pivot.rotation.x - L._fallen_angle()) < 0.05, "a bolt in the rope: the log falls across the ravine")
+	await wait(0.4); await shot("v74_tronco_ponte"); player.pitch.rotation.x = -0.25
+	d.begin()
+	check(d.at == "vai_embora" and Story.task("tronco") == "feita", "he will go over it in the morning")
+	# the next morning, far away: gone; his note and the key
+	put(player, Vector3(0, L.ground(0, 0).y, 0), 0.0); WorldTime.minutes += 1440.0 - fmod(WorldTime.minutes, 1440.0) + 7 * 60.0
+	await until(func(): return Story.has("dito:foi") and not L.npcs.has("mascate"), 5.0)
+	check(Story.has("dito:foi") and L.camp.is_empty() and not L.npcs.has("mascate"),
+		"the next morning he is gone, the camp with him (%s, %d, %s)" % [Story.has("dito:foi"), L.camp.size(), L.npcs.has("mascate")])
+	var key: Array = L.find_children("*", "Pickup", true, false).filter(func(p): return p.id == "dito_chave")
+	var note: Array = L.find_children("*", "NotePaper", true, false).filter(func(p): return p.id == "bilhete_dito")
+	check(key.size() == 1 and note.size() == 1, "his note on the ground, the driver's key wrapped in it")
+	if key:
+		key[0].use(player)
+	# down the ravine with the rope
+	put(player, L.ROPE_DOWN + Vector3(0, L.ground(L.ROPE_DOWN.x, L.ROPE_DOWN.z).y, -0.6), PI); await wait(0.5)
+	check(L.hud.prompt.text == "E · amarrar a corda e descer", "by the fence: \"%s\"" % L.hud.prompt.text)
+	await tap("interact"); await wait(2.4)
+	check(Story.has("corda:ravina") and player.global_position.z > 50.0 and player.is_on_floor(), "down the rope to the bottom (z %.1f)" % player.global_position.z)
+	put(player, L.ground(L.CAR.x + 3.4, L.CAR.z - 0.2), atan2(3.4, -0.2)); await wait(0.6)
+	await shot("v75_carro")
+	check(L.find_children("*", "NotePaper", true, false).any(func(p): return p.id == "pasta_euclides"), "by the doctor's car: his briefcase")
+	put(player, Vector3(L.ROPE_DOWN.x - 6.0, player.global_position.y, L.RAVINE_Z), -PI / 2); await walk(3.0)
+	check(player.global_position.x < 19.2 and player.global_position.x > 2.4, "walled in along the bottom")
+	put(player, L.up_rope.global_position + Vector3(0, 0.05, -0.3), 0.0); await wait(0.4)
+	await tap("interact"); await wait(2.4)
+	check(player.global_position.z < 46.5, "up the rope again")
+	# the driver's door
+	var w: Node3D = L.marker("parede_motorista")
+	put(player, w.position + w.basis.z * 1.0, w.rotation.y + PI); await wait(0.4)
+	await tap("interact"); await until(func(): return Story.has("aberta:motorista"), 5.0)
+	check(Story.has("aberta:motorista"), "the driver's key opens his padlock")
 	_hour(16.5); Story.reset(); Inventory.reset(); Inventory.give_tools()

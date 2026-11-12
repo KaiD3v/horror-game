@@ -15,7 +15,8 @@
 #                           off    an offset in that node's frame; rumo: a turn (added to the node's)
 #                           faz    their animation (Idle); lugar: what Dialog's "lugar" condition reads
 #                           leva   a prop in hand or by them (vassoura, lamparina)
-#                           se     only with this Story mark (sem: only without it)
+#                           se     only with this Story mark (sem: only without it); dias: "par" / "impar" days only
+#   some                  a Story mark: with it they are gone for good (no routine, nowhere)
 #                         A level puts each one where their slot is when it opens; when the hour moves on they walk
 #                         there, or out by the door to another scene, or in by it (Level._routine, Npc.go).
 # What they say: scripts/data/dialogos/<who>.gd (Dialog). With none they still greet you, sell and say goodbye.
@@ -58,6 +59,11 @@ const NPCS := {
 		"som": {"nome": "reza", "at": Vector3(0, 1.3, 0), "db": -6.0, "size": 1.2, "far": 9.0}},  # praying under her breath
 	"bastiao": {"nome": "Bastião", "papel": "ex-interno da Colônia, na ruína do portão (vilarejo.gd _bastiao)",
 		"passo": 0.95},
+	"mascate": {"nome": "Seu Dito", "papel": "mascate, preso deste lado da ravina (vilarejo.gd _mascate)", "loja": "mascate",
+		"passo": 1.16, "casa": "vilarejo", "some": "dito:foi", "rotina": [
+			{"de": 0, "pos": Vector3(12.6, 0, 44.1), "rumo": PI, "faz": "Sit", "lugar": "acampamento"},  # on his crate by the cart
+			{"de": 8, "dias": "par", "pos": Vector3(3.2, 0, -3.2), "rumo": -2.2, "lugar": "largo"},     # market day on the square
+			{"de": 15, "pos": Vector3(12.6, 0, 44.1), "rumo": PI, "faz": "Sit", "lugar": "acampamento"}]},
 	"cida": {"nome": "Cida", "papel": "a filha do Zé, escondida no forno atrás da venda (vilarejo.gd _cida)",
 		"raio": 0.22, "altura": 1.15, "passo": 0.71},
 }
@@ -73,10 +79,12 @@ static func info(who: String) -> Dictionary:
 static func slot(who: String, hour := WorldTime.hour()) -> Dictionary:
 	var d := info(who)
 	var r: Array = d.get("rotina", [])
-	if r.is_empty():
+	if r.is_empty() or Story.has(d.get("some", "-")):
 		return {}
+	var even := int(WorldTime.minutes / 1440.0) % 2 == 0
 	var i := r.size() - 1
-	while i > 0 and (r[i].de > hour or (r[i].has("se") and not Story.has(r[i].se)) or (r[i].has("sem") and Story.has(r[i].sem))):
+	while i > 0 and (r[i].de > hour or (r[i].has("se") and not Story.has(r[i].se)) or (r[i].has("sem") and Story.has(r[i].sem))
+			or (r[i].has("dias") and (r[i].dias == "par") != even)):
 		i -= 1
 	var s := {"cena": d.get("casa", ""), "em": "npc_" + who, "off": Vector3.ZERO, "rumo": 0.0, "faz": "Idle", "lugar": "",
 		"leva": ""}
