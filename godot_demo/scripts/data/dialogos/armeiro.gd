@@ -16,6 +16,7 @@ const MENU := [
 	{"texto": "Perguntar por uma besta", "vai": "besta_conta", "se": {"tem": "facao", "nao_tem": "besta", "tarefa": ["besta", "nova"]}},
 	{"texto": "Falar da besta", "vai": "besta_lembrete", "se": {"nao_tem": "besta", "tarefa": ["besta", "ativa"]}},
 	{"texto": "Mostrar a besta", "vai": "besta_achou", "se": {"tem": "besta", "sem_marca": "tenorio_besta"}},
+	{"texto": "Perguntar pela chave do portão", "vai": "chave_lembrete", "se": {"tarefa": ["chave", "ativa"], "nao_tem": "chave_portao"}},
 	{"texto": "Ir embora", "vai": "fim"},
 ]
 
@@ -52,10 +53,14 @@ const NOS := {
 		"E não corre lá dentro. Osso no chão é sino.",
 	]},
 	"besta_lembrete": {"fala": ["Sacristia, ossuário, besta. A chave é com a Firmina. E pisa macio, que aquilo ouve."]},
-	"besta_achou": {"faz": [{"marca": "tenorio_besta"}, {"tarefa": ["besta", "feita"]}], "fala": [
+	"besta_achou": {"faz": [{"marca": "tenorio_besta"}, {"tarefa": ["besta", "feita"]}, {"tarefa": ["chave", "ativa"]}], "fala": [
 		"Voltou. E com ela. ...Eu não voltei lá, sabe. Nem pra buscar.",
 		"Fica. Virote eu vendo, que eu não sou santo. Mira no peito e não erra a primeira, que a segunda demora.",
+		"Você quer subir. Eu sei. Então escuta: a chave do portão ficava com o Severino, o porteiro de lá de cima.",
+		"Na noite da sirene ele desceu com o molho de chaves na cinta e se trancou no jazigo dos Moura, no fundo do cemitério.",
+		"Eu ouço ele lá embaixo, batendo nas paredes. A corrente da grade é velha: o pé de cabra arrebenta. Leva tudo que tiver.",
 	]},
+	"chave_lembrete": {"fala": ["O jazigo dos Moura, no fundo do cemitério. Leva virote, leva atadura. E não deixa ele te pegar de frente com as duas mãos."]},
 	"matar": {"fala": [
 		"Chumbo não adianta. Eu gastei duas caixas num só. Ele levantou.",
 		"Lâmina e ponta de virote. No peito, de perto. A besta é melhor: não faz barulho, não chama os outros.",

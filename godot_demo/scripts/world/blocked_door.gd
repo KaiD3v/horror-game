@@ -1,6 +1,8 @@
 # A door in a wall that will not open as it is, and what opens it (`kind`):
 #   "cadeado"  a padlock on a hasp: E with its key (ItemCatalog tipo "chave", `requires`) and the padlock is gone, the
 #              key spent on it (Interactable), the door swings open. No animation of his own.
+#   "corrente" an iron grate, a rusted chain wound through it: E with the crowbar and he breaks the chain (link by link,
+#              like the planks), the grate swings open.
 #   "tabuas"   boarded up, three planks nailed across: E with the crowbar (pe_de_cabra) and he forces them off one by
 #              one with it in his hand, then "Porta aberta" (FoundBanner) and the door swings open.
 # Once open it stays open (Story "aberta:<id>"). Its origin: the foot of the doorway, the front (where you come from)
@@ -29,6 +31,8 @@ static func make(level: Node, at: Vector3, yaw: float, k: String, door_id: Strin
 	d.radius = 1.3; d.height = 2.0
 	if k == "cadeado":
 		d.requires = key; d.prompt = "E · abrir o cadeado"; d.refusal = "Trancada com cadeado. Precisa da chave."
+	elif k == "corrente":
+		d.requires = "pe_de_cabra"; d.prompt = "E · arrebentar a corrente"; d.refusal = "Corrente velha, podre de ferrugem. Um pé de cabra arrebenta."
 	else:
 		d.requires = "pe_de_cabra"; d.prompt = "E · arrombar a porta"; d.refusal = "Pregada com tábuas. Com um pé de cabra, talvez."
 	level.add_child(d)
@@ -37,7 +41,9 @@ static func make(level: Node, at: Vector3, yaw: float, k: String, door_id: Strin
 
 func _ready() -> void:
 	super()
-	if bare:
+	if kind == "corrente":
+		_grate()
+	elif bare:
 		leaf = Node3D.new(); add_child(leaf)  # (the painted door stays as it is)
 	else:
 		_wall_and_leaf()
@@ -56,8 +62,23 @@ func _wall_and_leaf() -> void:
 	leaf = hinge
 
 
+func _grate() -> void:  # iron bars on a hinge, in the doorway (the building's dark opening behind)
+	var hinge := Node3D.new(); add_child(hinge); hinge.position = Vector3(-0.6, 0, 0.08)
+	for i in 7:
+		_part(hinge, Vector3(0.1 + i * 0.167, 1.1, 0), Vector3(0.03, 2.2, 0.03), Color(0.2, 0.19, 0.18))
+	for y in [0.15, 1.1, 2.05]:
+		_part(hinge, Vector3(0.6, y, 0), Vector3(1.2, 0.05, 0.04), Color(0.2, 0.19, 0.18))
+	leaf = hinge
+
+
 func _lock() -> void:
-	if kind == "cadeado":
+	if kind == "corrente":  # three turns of chain through the bars, a padlock on them
+		for i in 3:
+			var p := Node3D.new(); add_child(p); p.position = Vector3(0.45, 0.85 + i * 0.12, 0.14); p.rotation.z = [0.3, -0.2, 0.15][i]
+			for k in 5:
+				_part(p, Vector3(-0.16 + k * 0.08, 0, 0), Vector3(0.07, 0.035, 0.035), Color(0.36, 0.22, 0.12))
+			planks.append(p)
+	elif kind == "cadeado":
 		lock_shape = Node3D.new(); add_child(lock_shape); lock_shape.position = Vector3(WIDTH / 2 - 0.12, 1.0, 0.14)
 		_part(lock_shape, Vector3(0.0, 0.0, 0), Vector3(0.07, 0.08, 0.03), Color(0.62, 0.48, 0.2))  # the brass body
 		_part(lock_shape, Vector3(0.0, 0.065, 0), Vector3(0.05, 0.05, 0.012), Color(0.4, 0.38, 0.35))  # the shackle
@@ -113,7 +134,10 @@ func _force(p: Player) -> void:
 	await get_tree().create_timer(0.3).timeout
 	bar.queue_free()
 	p.busy = false
-	await FoundBanner.tell(self, "A PORTA CEDEU", "Porta aberta", "As tábuas saíram. O caminho está livre.")
+	if kind == "corrente":
+		await FoundBanner.tell(self, "A CORRENTE CEDEU", "Grade aberta", "A ferrugem não aguentou. O caminho desce.")
+	else:
+		await FoundBanner.tell(self, "A PORTA CEDEU", "Porta aberta", "As tábuas saíram. O caminho está livre.")
 	_opened(true)
 
 

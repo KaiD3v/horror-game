@@ -24,7 +24,8 @@ const LIGHT := {  # kind: colour, energy, range
 	"lamparina": [Color(1.0, 0.68, 0.36), 1.3, 5.0], "lampiao": [Color(1.0, 0.72, 0.42), 1.5, 7.5],
 	"fogao": [Color(1.0, 0.42, 0.18), 1.0, 3.0], "vela": [Color(1.0, 0.62, 0.3), 0.8, 2.5],
 	"janela": [Color(0.62, 0.68, 0.78), 0.5, 3.5],  # grey daylight through the fog
-	"velario": [Color(1.0, 0.6, 0.28), 1.4, 4.5], "altar": [Color(1.0, 0.7, 0.42), 1.1, 6.5]}
+	"velario": [Color(1.0, 0.6, 0.28), 1.4, 4.5], "altar": [Color(1.0, 0.7, 0.42), 1.1, 6.5],
+	"cirio": [Color(1.0, 0.62, 0.32), 0.9, 4.5]}  # (the crypt's thick candles: no sound, there are a dozen)
 const GLOWING := ["window_in", "lampglass", "ember"]  # their own light: unshaded
 
 var room: Node3D

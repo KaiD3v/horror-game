@@ -1,6 +1,6 @@
 # A chave do portão: o chefe do vilarejo e as melhorias (plano)
 
-*Data: 2026-11-11. Plano. Feito: fase 1, as melhorias (ver "Fase 1, feita" no fim). Continua [TUTORIAL_VILAREJO.md](TUTORIAL_VILAREJO.md). Coordenadas em
+*Data: 2026-11-11. Plano. Feito: fases 1 e 2 (ver as seções "Fase N, feita" no fim). Continua [TUTORIAL_VILAREJO.md](TUTORIAL_VILAREJO.md). Coordenadas em
 Godot (x, z).*
 
 ## A ideia
@@ -113,3 +113,20 @@ fundos, que já está meio caída.
   | no vaso em cima de um túmulo de 2 m no canto sudoeste do cemitério, com uma pedra para empurrar até ele | sim: o telhado da casa queimada pedia geometria nova no Blender; o túmulo usa só peças do jogo (pedra, borda com cal) |
 
 - Testes: treino `upgrades_tests`; vilarejo `tomb_tests`; a conta de cada interior no teste dele.
+
+## Fase 2, feita: a tarefa e a arena
+
+- **A tarefa** (`QuestData` "chave"): ao mostrar a besta, o Tenório conta do Severino e do jazigo dos Moura e dá a tarefa.
+  Depois dá para perguntar de novo ("Perguntar pela chave do portão").
+- **O jazigo no cemitério** (`construcoes.py` `jazigo()`, `layout.JAZIGO`): mausoléu de pedra cinza no fundo do cemitério,
+  de frente para o portão dele, com frontão, cruz de ferro e uma grade. Saíram dali duas covas que ficavam embaixo dele.
+  - Antes da tarefa: "E · olhar a grade" e "Tem alguma coisa batendo lá embaixo."
+  - Com a tarefa: a grade tem uma corrente enferrujada (`BlockedDoor` "corrente", nova: grade de ferro com dobradiça, três
+    voltas de corrente e um cadeado). O pé de cabra arrebenta ("A CORRENTE CEDEU · Grade aberta") e "E · descer ao jazigo".
+  - Um oratório ao lado, para salvar antes.
+- **A cripta** (`jazigo_build.py`, `jazigo.tscn`, `jazigo.gd`): escada de 12 degraus da grade até a sala redonda de 14 m e
+  6 m de pé-direito; 8 colunas; 10 círios em suportes de ferro (luz nova `cirio`, sem som, guardados em `candles` para a
+  fase 3 apagar); gavetas dos Moura nas paredes; o altar de 2 m com a cruz (não se sobe); o caixão do doutor aberto no
+  centro; 6 virotes numa caixa ao pé da escada. Marcadores para o chefe: `porteiro`, `altar`, `caixao`, `escada`.
+- Ainda sem o chefe: é a fase 3.
+- Testes: `test_vilarejo.gd` `jazigo_tests`, `test_jazigo.gd`.

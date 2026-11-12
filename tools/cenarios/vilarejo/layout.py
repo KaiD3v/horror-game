@@ -43,6 +43,7 @@ CHAPEL = (-15.5, 9.0, 90)          # facing the square
 # the NPCs (npcs_build.py, placed by vilarejo.gd on these markers): x, y, facing; their stalls stand on flat pads
 NPCS = {"benzedeira": (-4.5, 7.0, 0)}  # Tenório and Seu Bento are inside their shops (armaria_build.py, venda_build.py)
 CEMETERY = (-31.0, 9.0, 12.0, 15.0)  # centre, size (x, y); gate on its east side, behind the chapel
+JAZIGO = (-34.6, 12.8, 90, 3.2, 3.6)   # the Moura family's mausoleum at the back of it, facing the gate: x, y, facing, w, d
 FIELDS = [((20, -38), (40, -38), (40, -18), (20, -18)), ((-36, 22), (-20, 22), (-20, 40), (-36, 40))]
 
 

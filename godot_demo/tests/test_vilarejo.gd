@@ -760,6 +760,48 @@ func tomb_tests() -> void:
 	Story.reset(); Inventory.reset(); Inventory.give_tools()
 
 
+# The last task (../docs/CHAVE_DO_PORTAO.md): the Moura mausoleum's grate only sounds before Tenório tells of it; his
+# task after the crossbow; the crowbar breaks the rusted chain; down to the crypt.
+func jazigo_tests() -> void:
+	WorldTime.reset(10 * 60); L.day._step(0.0); Story.reset(); Inventory.reset()
+	var spot: Node3D = L.marker("porta_jazigo")
+	put(player, L.ground(spot.position.x, spot.position.z), spot.rotation.y); await wait(0.4)  # (facing it)
+	check(L.hud.prompt.text == "E · olhar a grade", "the mausoleum's grate, before the task: \"%s\"" % L.hud.prompt.text)
+	await tap("interact"); await wait(0.2)
+	check(L.hud.message.text.begins_with("Tem alguma coisa batendo"), "...a sound from below (\"%s\")" % L.hud.message.text)
+	await shot("v95_jazigo")
+	var ten := Dialog.new("armeiro", player); Story.mark("tenorio_conheceu"); Inventory.add("besta"); ten.enter("oi")
+	var show: Array = ten.options().filter(func(o): return o.texto == "Mostrar a besta")
+	if show:
+		ten.pick(show[0])
+	check(Story.task("chave") == "ativa", "Tenório, shown the crossbow: the task of the gate's key")
+	ten.enter("oi")
+	check(ten.options().any(func(o): return o.texto == "Perguntar pela chave do portão"), "...and he can be asked about it again")
+	var grate: BlockedDoor = L.find_children("*", "BlockedDoor", true, false).filter(func(d): return d.id == "jazigo").front()
+	grate.enabled = true  # (the level reads the task as it loads: here set by hand)
+	for c in spot.get_children():
+		if c is Interactable and not c is Door:
+			c.enabled = false
+	await wait(0.2)
+	check(L.hud.prompt.text == "E · arrebentar a corrente", "with the task: \"%s\"" % L.hud.prompt.text)
+	Inventory.items.erase("pe_de_cabra")
+	await tap("interact"); await wait(0.2)
+	check(L.hud.message.text.begins_with("Corrente velha"), "no crowbar: \"%s\"" % L.hud.message.text)
+	Inventory.add("pe_de_cabra")
+	await tap("interact")
+	var banner: bool = await until(func(): return get_tree().get_first_node_in_group("found_banner") != null, 12.0)
+	await wait(0.9); await tap("interact"); await wait(1.2)
+	check(banner and Story.has("aberta:jazigo") and L.hud.prompt.text == "E · descer ao jazigo", "the crowbar breaks the chain (\"%s\")" % L.hud.prompt.text)
+	await shot("v96_jazigo_aberto")
+	await tap("interact")
+	check(SceneRouter.requested == Paths.interior("jazigo") and SceneRouter.arriving == "jazigo", "E: down to the crypt")
+	SceneRouter.requested = ""; SceneRouter.arriving = "jazigo"
+	var t: Transform3D = L._player_start(); SceneRouter.arriving = ""
+	check(t.origin.distance_to(spot.position) < 0.5, "up from the crypt: before the grate")
+	check(L.find_children("*", "Oratorio", true, false).any(func(o): return o.id == "cemiterio"), "an oratório by the mausoleum, to save before")
+	Story.reset(); Inventory.reset(); Inventory.give_tools()
+
+
 # The ossuary from up here (../docs/TUTORIAL_VILAREJO.md "Dungeon 2"): Tenório's task only with a blade; Dona Firmina
 # and the scapular; up the rope out by the square's well, and the rope a way back down; killed down there, O Poceiro
 # comes up no more.

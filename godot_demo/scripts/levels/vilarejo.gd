@@ -75,6 +75,7 @@ func _build() -> void:
 	_alambique()
 	var ze := marker("parede_casa_ze")  # Zé's house, nailed up after they took him
 	_nailed(ze.position, ze.rotation.y, marker("porta_casa_ze"), "casa_ze", "E · entrar na casa do Zé", Paths.interior("casa_ze"))
+	_jazigo()
 	_finds.call_deferred()  # (they stand on the ground: once the colliders are in)
 	var well := marker("porta_poco")  # the ossuary's rope up the well (../docs/TUTORIAL_VILAREJO.md "Dungeon 2"): once
 	var down := Door.make(well, "E · descer pela corda", Paths.interior("ossuario"), "poco", 1.4)  # tied, a way back down
@@ -213,6 +214,21 @@ func _finish(root: Node) -> void:
 			mi.set_surface_override_material(i, h); haze.append(h)
 		elif m is BaseMaterial3D:
 			m.vertex_color_use_as_albedo = true)  # the baked AO (meshes without colours read white)
+
+
+## The Moura mausoleum (../docs/CHAVE_DO_PORTAO.md): its grate chained; before Tenório's task only a sound from
+## below, after it the crowbar breaks the chain and the way goes down to the crypt.
+func _jazigo() -> void:
+	var wall := marker("parede_jazigo"); var spot := marker("porta_jazigo")
+	var asked := Story.task("chave") != "nova" or Story.has("aberta:jazigo")
+	var grate := BlockedDoor.make(self, wall.position, wall.rotation.y, "corrente", "jazigo", "", true)
+	grate.enabled = asked and not Story.has("aberta:jazigo")
+	var shut := Interactable.new(); shut.prompt = "E · olhar a grade"; shut.radius = 1.4; spot.add_child(shut)
+	shut.enabled = not asked
+	shut.used.connect(func(by): by.notice.emit("Tem alguma coisa batendo lá embaixo."))
+	var down := Door.make(spot, "E · descer ao jazigo", Paths.interior("jazigo"), "jazigo", 1.6)
+	down.enabled = Story.has("aberta:jazigo")
+	grate.opened.connect(func(): down.enabled = true)
 
 
 ## A door nailed up (the crowbar): the planks on the wall at `wall`, and once they are off, E at `door` goes in.

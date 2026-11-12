@@ -326,6 +326,8 @@ def cemetery(b, cem_cross):
         for j in range(5):
             x = cx - sx / 2 + 2.0 + i * 3.6 + rng.uniform(-0.3, 0.3); y = cy - sy / 2 + 1.8 + j * 2.7 + rng.uniform(-0.2, 0.2)
             g = H(x, y)
+            if i == 0 and j >= 3:  # where the Moura mausoleum stands (jazigo())
+                continue
             if (i, j) in ((1, 2), (2, 4)):  # the empty graves: a dark pit, the earth heaped beside it
                 bx(cem_cross, (x, y - 0.3, g + 0.02), (0.8, 1.8, 0.06), "pit")
                 bx(cem_cross, (x + 0.85, y - 0.3, g + 0.1), (0.6, 1.6, 0.4), "mud", rot=(0, 0.2, 0))
@@ -335,6 +337,30 @@ def cemetery(b, cem_cross):
             M = Matrix.LocRotScale(Vector((x, y + 0.55, g)), Euler(tilt), None)
             cem_cross.box(M @ Matrix.LocRotScale(Vector((0, 0, 0.55)), None, Vector((0.1, 0.1, 1.3))), "planks")
             cem_cross.box(M @ Matrix.LocRotScale(Vector((0, 0, 0.85)), None, Vector((0.6, 0.08, 0.1))), "planks")
+
+
+mat("cal_jazigo", "whitewash", 2.0, tint=(0.6, 0.6, 0.58))  # grey, weathered
+
+
+def jazigo():
+    """The Moura family's mausoleum (docs/CHAVE_DO_PORTAO.md): grey stone, a pediment with a cross, an iron grate for a
+    door (vilarejo.gd: the chain on it, and the way down). Local frame, front = -Y, floor at z = 0."""
+    b = B(); w, d = JAZIGO[3], JAZIGO[4]; h = 2.9
+    bx(b, (0, 0, -0.3), (w + 0.3, d + 0.3, 0.8), "stone")                          # plinth
+    bx(b, (0, 0, h / 2 + 0.1), (w, d, h), "cal_jazigo")
+    bx(b, (0, 0, h + 0.2), (w + 0.4, d + 0.4, 0.2), "stone")                       # cornice
+    b.poly([(-w / 2 - 0.2, -d / 2 - 0.21, h + 0.3), (w / 2 + 0.2, -d / 2 - 0.21, h + 0.3), (0, -d / 2 - 0.21, h + 1.1)], "stone")
+    b.poly([(w / 2 + 0.2, d / 2 + 0.21, h + 0.3), (-w / 2 - 0.2, d / 2 + 0.21, h + 0.3), (0, d / 2 + 0.21, h + 1.1)], "stone")
+    for sx in (-1, 1):                                                                 # the roof's two slopes
+        bx(b, (sx * (w / 4 + 0.05), 0, h + 0.7), (w / 2 + 0.3, d + 0.42, 0.12), "stone", rot=(0, sx * -0.46, 0))
+    bx(b, (0, -d / 2 - 0.15, h + 1.55), (0.1, 0.1, 0.8), "iron"); bx(b, (0, -d / 2 - 0.15, h + 1.7), (0.45, 0.1, 0.1), "iron")
+    front = wall_frame("front", w, d, 0.03)
+    opening(b, front, -0.6, 0.6, 0.1, 2.3, "pit")                                     # the dark behind the grate
+    for sx in (-1, 1):
+        bx(b, (sx * 0.8, -d / 2 - 0.12, 1.2), (0.25, 0.25, 2.4), "stone")             # pilasters
+    bx(b, (0, -d / 2 - 0.45, -0.05), (1.6, 0.6, 0.3), "stone")                         # a step
+    wall_decal(b, wall_frame("front", w, d, 0.065), 0, 2.55, 1.6, 0.3, "umidade")
+    return b
 
 
 def fence_line(b, a, c, rng, gone=0.25):

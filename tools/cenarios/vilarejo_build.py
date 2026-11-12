@@ -40,6 +40,12 @@ e.location = (_x, _y, H(_x, _y)); e.rotation_euler.z = _a
 b = B(); well(b, Vector((3.0, 3.0, H(3.0, 3.0)))); obj(b, "poco-col")
 b = B(); colony_wall(b); obj(b, "muro_colonia-col")
 b = B(); cross = B(); cemetery(b, cross); obj(b, "cemiterio_muro-col"); obj(cross, "cemiterio_cruzes")
+_jx, _jy, _jf, _jw, _jd = JAZIGO; _a = math.radians(_jf)
+obj(jazigo(), "jazigo-col", (_jx, _jy, H(_jx, _jy)), _a)
+for name, ly in (("parede_jazigo", -_jd / 2 - 0.04), ("porta_jazigo", -_jd / 2 - 1.3)):  # the grate's face, where you stand
+    e = bpy.data.objects.new(name, None); bpy.context.collection.objects.link(e)
+    _x, _y = _jx - ly * math.sin(_a), _jy + ly * math.cos(_a)
+    e.location = (_x, _y, H(_jx, _jy) + 0.1); e.rotation_euler.z = _a
 b = B(); fences(b); obj(b, "cercas-col")
 b = B(); rocks(b); obj(b, "pedras-col")
 col = B(); placed = trees(col); obj(col, "troncos-colonly")
