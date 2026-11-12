@@ -1,7 +1,7 @@
 # O vilarejo vivo: conteúdo secundário (plano)
 
 *Data: 2026-11-11. Continua [TUTORIAL_VILAREJO.md](TUTORIAL_VILAREJO.md) e [CHAVE_DO_PORTAO.md](CHAVE_DO_PORTAO.md).
-As sete fases estão feitas (ver "Fase N, feita" no fim). Ficou em aberto a procissão, que depende do autor. Coordenadas em Godot (x, z).*
+As sete fases estão feitas, e a procissão também (ver "Fase N, feita" e "A procissão, feita" no fim). Coordenadas em Godot (x, z).*
 
 ## O problema
 
@@ -635,8 +635,45 @@ dela (`cartas_celina`) e as falas do Bastião foram ajustadas.
 
 ## O que ficou
 
-- **A procissão** (seção 7): uma noite, depois do Porteiro, uma fila de luzes desce do portão ao cemitério. Falta decidir
-  quem são: a Carpideira com outras, ou os da Colônia.
 - **A casa de farinha** (seção 6, "abertos agora"): não entrou nas sete fases.
 - **A picareta:** vem com o capítulo da Colônia e abre o túnel do ossuário e a pedreira.
 - **Arte para melhorar:** a galinha morta (um bloco), o pneu na casa do motorista e a luz no fundo da ravina.
+
+## A procissão, feita (decisão do autor: a Carpideira e outras)
+
+**Quem são:** as mães, a Carpideira e mais quatro como ela, que vêm da Colônia atrás dos filhos que ela enterrou. O
+menino do túmulo sem nome, o que o Antero trouxe do rio, era filho de uma delas (`scripts/world/procissao.gd`).
+
+**Quando:**
+- Depois que o Porteiro morre e a Firmina conta a história do túmulo, a partir das 21h (`Procissao.due()`).
+- De dia, a Firmina avisa ("Perguntar o que desce do portão"): "Uma fila de velas, do portão pro cemitério... Se for
+  olhar, vai de noite, depois das nove. Sem luz na mão, abaixado, de longe."
+- Nessas noites, a Carpideira não anda sozinha pelas vielas (está na fila) e a voz que imita não vem.
+
+**A fila:** cinco mães de vela na mão, chorando, em fila a 2,2 m uma da outra, descem devagar (0,8 m/s) pelo navmesh
+do portão ao túmulo, uns 62 m: a estrada, o largo, a capela e o cemitério.
+
+**Ser visto:**
+- Cada uma vê como a Carpideira: de longe a lamparina na mão, de perto quem está em pé no escuro e de muito perto quem está agachado; só à frente dela e sem nada no caminho.
+- Visto por 1,2 s: o grito ("Ela viu você. As velas se apagam todas de uma vez."), a noite inteira vai ao grito (as Bruxas e o Poceiro) e elas somem.
+- Elas voltam em outra noite.
+
+**Seguir até o fim:**
+- Sem ser visto, e perto do túmulo quando elas chegam (14 m), as cinco se ajoelham em meia-roda em volta da cova e
+  choram (10 s, com o choro de criança).
+- "Uma delas risca alguma coisa na cruz com a unha. Depois deixam as velas acesas e vão embora."
+- Na cruz fica **BENEDITO 1947 · 1958**, e na cova as cinco velas continuam acesas (Story "procissao:vista").
+- Se ele não estava perto, elas choram e vão embora sem riscar nada, e voltam em outra noite. Depois de vistas até o
+  fim, não descem mais.
+
+**A Firmina** ("Contar da procissão"): "...Benedito. Ela escreveu Benedito? Vinte anos eu limpei o túmulo de um menino
+sem nome. ... Vou escrever no livro da igreja."
+
+**Teste:** `test_vilarejo.gd` `procissao_tests`:
+- o aviso da Firmina;
+- as cinco descendo às 21h30;
+- o grito e o sumiço quando ele está em pé na frente delas;
+- o seguimento agachado por trás até o túmulo, o luto, o nome e as velas;
+- a fala da Firmina e o fim das descidas.
+
+Capturas `v81` a `v83`.

@@ -1483,3 +1483,55 @@ func pedreira_tests() -> void:
 	check(SceneRouter.requested == Paths.interior("pedreira"), "E: into the gallery")
 	SceneRouter.requested = ""; SceneRouter.arriving = ""
 	Story.reset(); Inventory.reset(); Inventory.give_tools()
+
+
+# --- the procession (Procissao, ../docs/CONTEUDO_VILAREJO.md "A procissão"): due after O Porteiro and Firmina's grave
+# story, from 21h; five mourners with candles from the gate to the nameless grave; seen, they scream and go; followed
+# unseen to the grave, they mourn, the boy's name goes on the cross, their candles stay; Firmina hears of it
+func procissao_tests() -> void:
+	L.night_watch = false
+	await wait(1.0)
+	Story.mark("firmina_conheceu"); Story.mark("morto:porteiro"); Story.mark("tumulo:contou")
+	_hour(10.0)
+	var d := Dialog.new("benzedeira", player); d.enter("oi")
+	check(d.options().any(func(o): return o.texto == "Perguntar o que desce do portão"), "Firmina, by day: the mothers come down at night")
+	if player.holds_lantern():
+		await tap("lantern"); await wait(0.9)
+	# seen: a scream, and gone
+	L.night = true; _hour(21.5); await wait(0.5)
+	check(L.procession != null and L.procession.mourners.size() == 5 and L.procession.path.size() > 1,
+		"21:30: five mourners come down from the gate (%.0f m to the grave)" % (L.procession.total if L.procession else 0.0))
+	var p: Procissao = L.procession
+	p.lead = 30.0; p._place(); await wait(0.3)
+	var lead: Node3D = p.mourners[0]
+	var front: Vector3 = lead.global_position - lead.global_basis.z * 5.0
+	put(player, L.ground(front.x, front.z), atan2(-lead.global_basis.z.x, -lead.global_basis.z.z))
+	await wait(0.6); await shot("v81_procissao")
+	await until(func(): return not is_instance_valid(p), 5.0)
+	check(not is_instance_valid(p) and Story.count("procissao:vista_de_longe") == 1 and "carpideira_grito" in Audio.heard,
+		"standing in front of them: a scream, the candles out, gone")
+	check(not Story.has("procissao:vista"), "...and they will come another night")
+	# unseen, to the grave
+	L.procession_night = -1; L.start_procession(); p = L.procession
+	await tap("crouch"); await wait(0.8)
+	var g: Vector3 = L.ground(L.GRAVE.x, L.GRAVE.z)
+	p.lead = p.total + Procissao.GAP * (Procissao.COUNT - 1) - 4.0; p._place(); await wait(0.2)  # (the last one 4 m short)
+	var behind: Vector3 = p.mourners[Procissao.COUNT - 1].global_position + p.mourners[Procissao.COUNT - 1].global_basis.z * 3.5
+	put(player, L.ground(behind.x, behind.z), 0.0); player.crouched = true; await wait(0.3)
+	await until(func(): return not is_instance_valid(p) or p.phase == "mourn", 12.0)
+	check(is_instance_valid(p) and p.phase == "mourn", "followed crouched in the dark from behind: unseen to the grave, where they kneel")
+	var see: Vector3 = g + Vector3(4.5, 0, 4.0)
+	put(player, L.ground(see.x, see.z), atan2(4.5, 4.0)); player.crouched = true; await wait(0.6)
+	await shot("v82_procissao_tumulo")
+	await until(func(): return not is_instance_valid(p), Procissao.MOURN + 6.0)
+	check(Story.has("procissao:vista") and L.has_node("cruz_nome"), "they mourn, the boy's name goes on the cross, their candles stay")
+	put(player, g + Vector3(0.9, 0, 1.4), 0.55); player.pitch.rotation.x = -0.35; await wait(0.6)
+	await shot("v83_cruz_nome"); player.pitch.rotation.x = -0.25
+	d.enter("oi")
+	var tell: Array = d.options().filter(func(o): return o.texto == "Contar da procissão")
+	if tell:
+		d.pick(tell[0])
+	check(Story.has("firmina_procissao"), "Firmina: \"Benedito. Ela escreveu Benedito?\"")
+	check(not Procissao.due(), "they do not come again")
+	await tap("crouch"); await wait(0.6)
+	L.night = false; _hour(16.5); Story.reset()

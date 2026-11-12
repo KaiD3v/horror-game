@@ -82,6 +82,8 @@ const GRAVE := Vector3(-27.6, 0, -5.5)         # the nameless grave Dona Firmina
 const VOICE_HOUSES := ["casa_03", "casa_05", "casa_06", "casa_09", "casa_12", "casa_13"]  # shut houses, nobody in them
 const VOICE_FOR := 45.0                        # how long it calls
 var grave_note: NotePaper
+var procession: Procissao
+var procession_night := -1                     # the night it last came (once a night)
 var voice: AudioStreamPlayer3D                 # the voice that imitates, calling from inside a shut house
 var voice_door: Interactable
 var voice_left := 0.0
@@ -176,6 +178,7 @@ func _process(delta: float) -> void:
 	_bottles_tick(delta)
 	_dito_tick()
 	_voice_tick(delta)
+	_procession_tick()
 	_morning_tick()
 	if Story.has("tumulo:contou") and grave_note == null and "caderneta_antero" not in NotesReader.read:
 		grave_note = NotePaper.make(self, NotesData.note("caderneta_antero"))
@@ -239,7 +242,7 @@ func _nightfall() -> void:
 				alleys.append(a)
 		if alleys.size() < 3:  # (nothing found: try again the next night)
 			alleys.clear()
-	if who.carpideira and not alleys.is_empty():
+	if who.carpideira and not alleys.is_empty() and not Procissao.due():  # (on its nights she walks with the others)
 		var start := alleys.filter(func(a): return a.distance_to(player.global_position) > 18.0)
 		carpideira = Carpideira.new(); carpideira.walks = alleys
 		add_enemy(carpideira, start.pick_random() if start else alleys[0], randf() * TAU)
@@ -924,10 +927,51 @@ func _grave() -> void:
 		var stem := MeshInstance3D.new(); add_child(stem); var sm := BoxMesh.new(); sm.size = Vector3(0.015, 0.34, 0.015)
 		var green := StandardMaterial3D.new(); green.albedo_color = Color(0.25, 0.4, 0.2); sm.material = green; stem.mesh = sm
 		stem.position = f.position - Vector3(0, 0.18, 0)
+	if Story.has("procissao:vista"):
+		_grave_named()
 	var look := Interactable.new(); add_child(look); look.position = g; look.radius = 1.6; look.prompt = "E · olhar o túmulo"
 	look.used.connect(func(_by):
 		Story.mark("tumulo:visto")
 		player.notice.emit("Uma cruz sem nome. Flores frescas, do mato: alguém vem aqui toda tarde."))
+
+
+## The procession (Procissao): from 21h on its nights, down from the gate to the nameless grave.
+func _procession_tick() -> void:
+	if not night or is_instance_valid(procession) or not Procissao.due() or player == null:
+		return
+	var night_n := int((WorldTime.minutes - 12 * 60) / 1440.0)
+	var h := WorldTime.hour()
+	if night_n == procession_night or not (h >= 21.0 or h < 3.0):
+		return
+	start_procession()
+
+
+func start_procession() -> Procissao:
+	procession_night = int((WorldTime.minutes - 12 * 60) / 1440.0)
+	var gate := marker(GATE)
+	var from: Vector3 = NavigationServer3D.map_get_closest_point(get_world_3d().navigation_map, gate.position + Vector3(0, 0, 3.0))
+	procession = Procissao.new(self, from, ground(GRAVE.x, GRAVE.z)); add_child(procession)
+	procession.ended.connect(func(through: bool):
+		if through:
+			_grave_named())
+	return procession
+
+
+## After the procession: the boy's name scratched into the nameless cross, their candles left burning on the grave.
+func _grave_named() -> void:
+	if has_node("cruz_nome"):
+		return
+	var g := ground(GRAVE.x, GRAVE.z)
+	var l := Label3D.new(); l.name = "cruz_nome"; add_child(l)
+	l.text = Procissao.NAME; l.font_size = 20; l.pixel_size = 0.0028; l.modulate = Color(0.85, 0.82, 0.72)
+	l.position = Vector3(GRAVE.x, g.y + 0.62, GRAVE.z - 0.85)  # (on the cross's post, below the bar, facing south)
+	l.font_size = 22; l.pixel_size = 0.0018; l.outline_size = 4; l.outline_modulate = Color(0.12, 0.08, 0.05)
+	var wax := StandardMaterial3D.new(); wax.albedo_color = Color(0.9, 0.86, 0.72)
+	for k in 5:
+		var c := MeshInstance3D.new(); add_child(c); var cm := CylinderMesh.new(); cm.top_radius = 0.02; cm.bottom_radius = 0.02
+		cm.height = 0.12 + 0.03 * (k % 3); cm.material = wax; c.mesh = cm
+		c.position = g + Vector3(-0.3 + 0.15 * k, 0.32, -0.2 + 0.05 * (k % 2))
+	Looks.omni(self, g + Vector3(0, 0.55, -0.2), Color(1.0, 0.68, 0.36), 1.1, 4.0)
 
 
 # --- the voice that imitates (../docs/CONTEUDO_VILAREJO.md "A noite"): once a night, between 20h and 3h, near a shut
@@ -942,7 +986,7 @@ func _voice_tick(delta: float) -> void:
 		return
 	var h := WorldTime.hour()
 	var night_n := int((WorldTime.minutes - 12 * 60) / 1440.0)  # (a night runs from noon to noon)
-	if not night or night_n == voice_night or not (h >= 20.0 or h < 3.0) or player == null or player.busy:
+	if not night or night_n == voice_night or not (h >= 20.0 or h < 3.0) or player == null or player.busy or Procissao.due():  # (the procession's night)
 		return
 	var best: Node3D = null; var bd := 22.0
 	for n in VOICE_HOUSES:

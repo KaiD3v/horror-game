@@ -15,6 +15,8 @@ const ENTRADA := [
 
 const MENU := [
 	{"texto": "Perguntar do túmulo sem nome", "vai": "tumulo", "se": {"marca": "tumulo:visto", "sem_marca": "tumulo:contou"}},
+	{"texto": "Perguntar o que desce do portão", "vai": "maes", "se": {"marca": "tumulo:contou", "marca_2": "morto:porteiro", "sem_marca": "procissao:vista"}},
+	{"texto": "Contar da procissão", "vai": "procissao", "se": {"marca": "procissao:vista", "sem_marca": "firmina_procissao"}},
 	{"texto": "Perguntar o que se fala por aí", "vai": "rumores"},
 	{"texto": "Perguntar sobre ela", "vai": "ela"},
 	{"texto": "Perguntar sobre a Colônia", "vai": "colonia"},
@@ -54,6 +56,16 @@ const NOS := {
 		"O Antero era capataz de lá. Pegava quem fugia. O doutor pagava por cabeça, e era com isso que a gente comia.",
 		"Esse aqui era um menino. O Antero trouxe ele do rio, frio, e não quis levar pra cima. Eu enterrei sem saber o nome.",
 		"Debaixo da cruz tem a caderneta dele. Eu nunca abri. Abre você, que eu já não tenho olho pra isso.",
+	]},
+	"maes": {"fala": [
+		"Desde que o Severino calou, elas descem. Eu vi da janela, uma noite. Uma fila de velas, do portão pro cemitério.",
+		"As mães, menino. As de lá de cima. A que chora na viela é uma delas. Vêm atrás dos filhos que a Colônia enterrou.",
+		"Se for olhar, vai de noite, depois das nove. Sem luz na mão, abaixado, de longe. Se elas te virem, gritam, e a noite inteira vem.",
+	]},
+	"procissao": {"faz": [{"marca": "firmina_procissao"}], "fala": [
+		"...Benedito. Ela escreveu Benedito?",
+		"Vinte anos eu limpei o túmulo de um menino sem nome. E a mãe dele descia o morro toda noite pra procurar.",
+		"Vou escrever no livro da igreja. Benedito. Pelo menos isso a gente devolve.",
 	]},
 	"cemiterio_depois": {"fala": ["Eu limpo o túmulo de um menino que eu não sei o nome. É o que dá pra fazer. Não me olha assim."]},
 	"cemiterio": {"falas": [
