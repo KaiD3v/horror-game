@@ -32,6 +32,7 @@ var rows := {}                    # item id (or "dinheiro") -> time left on scre
 var delta_n := {}                 # ...and by how much it just changed (0 = no change, only shown)
 var shake_t := 0.0                # a blow: the hearts shake
 var glow_t := 0.0                 # a new heart glowing in
+var _beads_max := INF             # stamina_max last frame (an upgrade: the beads show)
 var _health := NAN
 var _max := 0
 var _counts := {}
@@ -79,8 +80,9 @@ func _process(delta: float) -> void:
 			shake_t = 0.35
 		hearts_t = _show(hearts_t)
 	_health = player.health; _max = player.max_health
-	if player.stamina < player.stamina_max - 0.01:
+	if player.stamina < player.stamina_max - 0.01 or player.stamina_max > _beads_max:  # (a new bead shows itself)
 		beads_t = _show(beads_t)
+	_beads_max = player.stamina_max
 	var now := _snapshot()
 	for id in now:
 		if now[id] != _counts.get(id, 0):

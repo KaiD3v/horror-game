@@ -248,9 +248,28 @@ const HANGING := [["lata_espantalho", Vector3(30.6, 3.1, 26.6), "lata", ["", 8]]
 	["trouxa_torre", Vector3.INF, "trouxa", ["atadura", 2]]]                        # (INF: at the chapel tower's window)
 
 
+# A raised tomb in the cemetery's south-west corner, 2 m (no climbing it from the ground), its east edge chalked, a
+# rosary bead in the vase on top (../docs/CHAVE_DO_PORTAO.md); a block to push against it: x, z of each.
+const TOMB := Vector2(-35.0, -3.5)
+const TOMB_BLOCK := Vector2(-31.7, -3.5)
+
+
+func _tomb() -> void:
+	var g := ground(TOMB.x, TOMB.y)
+	var stone := Looks.triplanar("stone", 1.0, Color(0.62, 0.6, 0.56))
+	Looks.box(self, g + Vector3(0, 0.95, 0), Vector3(1.6, 2.1, 2.2), stone)
+	Looks.box(self, g + Vector3(0, 2.03, 0), Vector3(1.8, 0.1, 2.4), stone)                       # its lid
+	Looks.box(self, g + Vector3(0.905, 1.97, 0), Vector3(0.02, 0.12, 2.4), Color(0.92, 0.9, 0.84))  # chalk
+	Looks.box(self, g + Vector3(-0.35, 2.2, 0.3), Vector3(0.16, 0.24, 0.16), Color(0.45, 0.4, 0.36))  # a vase
+	Climbable.make(self, g + Vector3(0, 1.0, 0), 0.0, 1.08, Vector2(1.8, 2.4), [Vector3.RIGHT])  # from a block's top
+	Pickup.bead(self, g + Vector3(-0.2, 2.09, -0.15), "conta_cemiterio")
+	Pushable.make(self, ground(TOMB_BLOCK.x, TOMB_BLOCK.y))
+
+
 ## The thickets (Breakable "mato") with what they hide behind them, and the things hung up high (a Target: the rope)
 ## that fall when a bolt cuts it; what was found but not taken lies where it fell.
 func _finds() -> void:
+	_tomb()
 	for t in THICKETS:
 		var g := ground(t[1], t[2]); var yaw: float = t[3]
 		var behind := g + Basis(Vector3.UP, yaw) * Vector3(0, 0.05, -0.5)

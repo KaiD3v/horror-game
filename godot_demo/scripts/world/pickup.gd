@@ -23,6 +23,19 @@ static func money(parent: Node, at: Vector3, n: int, once: String, what: String)
 	return p
 
 
+## A rosary bead (conta_terco, an upgrade): small and dark, a faint glint on it for a careful eye. Found once.
+static func bead(parent: Node, at: Vector3, once: String) -> Pickup:
+	var p := make(parent, at, "conta_terco", 1, once)
+	if not is_instance_valid(p) or p.is_queued_for_deletion():
+		return p
+	var mi := MeshInstance3D.new(); p.add_child(mi); mi.position.y = 0.035
+	var s := SphereMesh.new(); s.radius = 0.035; s.height = 0.06; mi.mesh = s
+	var wood := StandardMaterial3D.new(); wood.albedo_color = Color(0.22, 0.13, 0.08)
+	wood.emission_enabled = true; wood.emission = Color(1.0, 0.75, 0.45); wood.emission_energy_multiplier = 0.35
+	s.material = wood
+	return p
+
+
 func _ready() -> void:
 	if (item != "" and ItemCatalog.tool(item) and Inventory.has(item)) or (id != "" and Story.has("pego:" + id)):
 		queue_free()
@@ -40,6 +53,7 @@ func _use(by: Node3D) -> void:
 	else:
 		Inventory.add(item, qtd)
 		if by is Player:
-			by.notice.emit("Pegou: %s%s" % [ItemCatalog.item(item).nome, " (%d)" % qtd if qtd > 1 else ""])
+			by.notice.emit(Inventory.upgrade_line(item) if ItemCatalog.item(item).tipo == "melhoria"
+				else "Pegou: %s%s" % [ItemCatalog.item(item).nome, " (%d)" % qtd if qtd > 1 else ""])
 	Audio.play2d(by, "compra", -8.0)
 	queue_free()

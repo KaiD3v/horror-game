@@ -31,6 +31,7 @@ func _build() -> void:
 	_shape(Pickup.make(self, at.call("virotes").position, "virote", 5, "ossuario_virotes"), "virote")
 	_shape(Pickup.make(self, at.call("besta").position, "besta"), "besta")
 	_shape(Pickup.make(self, at.call("escapulario").position, "escapulario"), "escapulario")
+	Pickup.bead(self, Vector3(-1.42, 0.37, -9.42), "conta_ossuario")  # in a low drawer of the gallery, among the bones
 	HintSpot.make(self, Vector3(0, 0, -3.9), "agachar", 1.6, func(pl: Player): return pl.mode == Player.Mode.EXPLORE and not pl.crouched)
 	Climbable.make(self, Vector3(0, -1.5, -16.5), 0.0, 1.5, Vector2(6.0, 3.0), [Vector3.FORWARD])  # up out of the cut, near side only
 	_bridge(at.call("ponte").position, at.call("argola").position)

@@ -192,6 +192,7 @@ func run() -> void:
 	await chest_tests()
 	await course_tests()
 	await pull_tests()
+	await upgrades_tests()
 	await steps_tests()
 	await descend_tests()
 	await hud_tests()
@@ -703,6 +704,39 @@ func pull_tests() -> void:
 	Input.action_release("block"); await wait(0.3)
 	check(b.held == Vector3.ZERO and not player.busy, "the button let go: he lets go of it")
 	b.global_position = start
+
+
+# --- upgrades (../docs/CHAVE_DO_PORTAO.md "As melhorias"): rosary beads by four, a heart at once; they hold in any
+# scene (the player is made with them); never sold ---------------------------------------------------------------
+func upgrades_tests() -> void:
+	Inventory.items.erase("conta_terco"); Inventory.items.erase("coracao_exvoto")
+	player.max_health = Inventory.health_max(); player.stamina_max = Inventory.breath_max()
+	var hearts := player.max_health; var breath := player.stamina_max
+	check(hearts == Inventory.BASE_HEALTH and breath == Player.STAMINA_MAX, "with none: %d hearts, %.1f of breath" % [hearts, breath])
+	for i in 3:
+		Pickup.bead(L, player.global_position, "teste_conta_%d" % i).use(player)
+	check(player.stamina_max == breath and L.hud.message.text == "Conta de terço (3 de 4)", "three beads: no more breath yet (\"%s\")" % L.hud.message.text)
+	await wait(0.2)
+	Pickup.bead(L, player.global_position, "teste_conta_3").use(player); await wait(0.3)
+	check(player.stamina_max == breath + HudStatus.BEAD and player.stamina == player.stamina_max and L.hud.status.beads_t > 0.0,
+		"the fourth: one more bead of breath, full, shown (\"%s\")" % L.hud.message.text)
+	check(Pickup.bead(L, player.global_position, "teste_conta_3").is_queued_for_deletion(), "a bead taken is not there again")
+	player.health = 1.0
+	Inventory.add("coracao_exvoto"); await wait(0.2)
+	check(player.max_health == hearts + 1 and player.health == player.max_health and L.hud.status.glow_t > 0.0,
+		"the ex-voto heart: one more heart, all of them full, glowing in")
+	var shop_items: Array = []
+	for id in ShopCatalog.SHOPS:
+		for o in ShopCatalog.SHOPS[id].itens:
+			shop_items.append(o.item)
+	check(not shop_items.has("conta_terco") and not shop_items.has("coracao_exvoto"), "no shop sells them")
+	var fresh := Player.new()
+	check(fresh.max_health == 3 and Inventory.health_max() == hearts + 1, "a new scene's player is made with them (health_max %d)" % Inventory.health_max())
+	fresh.free()
+	Inventory.items.erase("conta_terco"); Inventory.items.erase("coracao_exvoto")
+	for k in ["teste_conta_0", "teste_conta_1", "teste_conta_2", "teste_conta_3"]:
+		Story.marks.erase("pego:" + k)
+	player.max_health = Inventory.health_max(); player.stamina_max = Inventory.breath_max(); player.health = player.max_health
 
 
 func steps_tests() -> void:

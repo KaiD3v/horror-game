@@ -126,7 +126,8 @@ var condition: PlayerCondition  # blood, breathing, panting
 
 
 func _ready() -> void:
-	health = max_health
+	max_health = Inventory.health_max(); stamina_max = Inventory.breath_max()  # (the upgrades carried)
+	health = max_health; stamina = stamina_max
 	add_to_group("player")
 	Steps.keep_down(self)
 	GameInput.setup()

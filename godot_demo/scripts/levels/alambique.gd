@@ -49,6 +49,7 @@ func _build() -> void:
 	front.enabled = Story.has("quebrado:alambique_cana")
 	if is_instance_valid(cane):
 		cane.broken.connect(func(): front.enabled = true)
+	Pickup.bead(self, Vector3(2.3, 0.23, -4.3), "conta_alambique")  # on the floor of the vinhoto tank: for whoever falls in
 	var aid := Pickup.make(self, at.call("atadura").position, "atadura", 1, "alambique_atadura")
 	if is_instance_valid(aid) and not aid.is_queued_for_deletion():
 		var all_items: Node = load(Paths.PROP % "itens").instantiate()

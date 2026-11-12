@@ -90,3 +90,5 @@ func run() -> void:
 	check(t.origin.distance_to((L.room.get_node("entrada_poco") as Node3D).position) < 0.1, "down the rope from the square: under the shaft")
 	SceneRouter.arriving = ""
 	Story.reset()
+	var bead: Array = L.find_children("*", "Pickup", true, false).filter(func(p): return p.id == "conta_ossuario")
+	check(bead.size() == 1, "a rosary bead hidden here (conta_ossuario)")

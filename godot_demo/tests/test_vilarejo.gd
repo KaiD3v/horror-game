@@ -736,6 +736,30 @@ func finds_tests() -> void:
 	Story.reset(); Inventory.reset(); Inventory.give_tools()
 
 
+# The village's rosary bead (../docs/CHAVE_DO_PORTAO.md): on the tomb in the cemetery, 2 m up; the block pushed
+# against its chalked edge, up on the block, up on the tomb, the bead.
+func tomb_tests() -> void:
+	WorldTime.reset(10 * 60); L.day._step(0.0); Story.reset(); Inventory.reset()
+	await wait(0.5)
+	var b: Pushable = L.find_children("*", "Pushable", true, false).front()
+	put(player, b.global_position + Vector3(0.8, 0, 0), PI / 2); player.pivot.rotation.y = PI / 2; await wait(0.4)
+	Input.action_press("forward")
+	await until(func(): return b.global_position.x < L.TOMB.x + 1.32 and not b.moving, 9.0)
+	Input.action_release("forward"); await wait(0.5)
+	check(absf(b.global_position.x - (L.TOMB.x + 1.3)) < 0.05, "the block pushed against the tomb (x %.2f)" % b.global_position.x)
+	put(player, b.global_position + Vector3(0.8, 0, 0), PI / 2); await wait(0.3)
+	await tap("interact"); await until(func(): return not player.busy, 4.0); await wait(0.3)
+	await tap("interact"); await until(func(): return not player.busy, 4.0); await wait(0.3)
+	var top: float = b.global_position.y + 2.08  # (the block stands on the same ground as the tomb)
+	check(absf(player.global_position.y - top) < 0.15, "up the block, up onto the tomb (%.2f, top %.2f)" % [player.global_position.y, top])
+	var bead: Pickup = L.find_children("*", "Pickup", true, false).filter(func(p): return p.id == "conta_cemiterio").front()
+	put(player, bead.global_position + Vector3(0.35, 0, 0), PI / 2); await wait(0.3)
+	await tap("interact"); await wait(0.2)
+	check(Inventory.count("conta_terco") == 1 and L.hud.message.text == "Conta de terço (1 de 4)", "the bead in the vase: \"%s\"" % L.hud.message.text)
+	await shot("v90_tumulo")
+	Story.reset(); Inventory.reset(); Inventory.give_tools()
+
+
 # The ossuary from up here (../docs/TUTORIAL_VILAREJO.md "Dungeon 2"): Tenório's task only with a blade; Dona Firmina
 # and the scapular; up the rope out by the square's well, and the rope a way back down; killed down there, O Poceiro
 # comes up no more.

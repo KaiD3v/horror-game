@@ -85,3 +85,5 @@ func tour() -> void:
 	check(t.origin.distance_to((L.room.get_node("entrada_frente") as Node3D).position) < 0.1, "coming in by the front: just inside it")
 	SceneRouter.arriving = ""; SceneRouter.requested = ""
 	player.health = player.max_health
+	var bead: Array = L.find_children("*", "Pickup", true, false).filter(func(p): return p.id == "conta_alambique")
+	check(bead.size() == 1, "a rosary bead hidden here (conta_alambique)")

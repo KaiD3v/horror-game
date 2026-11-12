@@ -129,7 +129,9 @@ func _entries() -> Array:
 					var it: Dictionary = ItemCatalog.ITEMS[id]
 					var n := Inventory.count(id)
 					if n > 0 and (it.tipo == kind or (kind == "" and it.tipo not in ["ferramenta", "chave"])):
-						out.append({"texto": it.nome + (" (%d)" % n if it.tipo != "ferramenta" else ""), "titulo": it.nome,
+						var label: String = "Contas de terço (%d de %d)" % [(n - 1) % Inventory.BEADS + 1, Inventory.BEADS] if id == "conta_terco" \
+							else it.nome + (" (%d)" % n if it.tipo not in ["ferramenta", "melhoria"] else "")
+						out.append({"texto": label, "titulo": it.nome,
 							"detalhe": it.descricao})
 		"Notas":
 			for i in NotesReader.read.size():
