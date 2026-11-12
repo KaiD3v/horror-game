@@ -23,13 +23,19 @@ static func left(shop_id: String, i: int) -> int:
 	return -1 if o.estoque < 0 else o.estoque - _sold.get("%s/%d" % [shop_id, i], 0)
 
 
+## What an offer costs now: Bento lets his things go for less once you told him of Cida (Story "cida:contou").
+static func price(shop_id: String, i: int) -> int:
+	var p: int = offers(shop_id)[i].preco
+	return int(ceil(p * 0.75)) if shop_id == "venda" and Story.has("cida:contou") else p
+
+
 static func buy(shop_id: String, i: int) -> Result:
 	var o: Dictionary = offers(shop_id)[i]
 	if left(shop_id, i) == 0:
 		return Result.SOLD_OUT
 	if not Inventory.has(o.get("requires", "")):  # bolts with no crossbow to shoot them
 		return Result.LOCKED
-	if not Inventory.spend(o.preco):
+	if not Inventory.spend(price(shop_id, i)):
 		return Result.NO_MONEY
 	Inventory.add(o.item, o.qtd)
 	var k := "%s/%d" % [shop_id, i]

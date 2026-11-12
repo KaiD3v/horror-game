@@ -30,6 +30,8 @@ const ITEMS := {
 	"picareta": {"nome": "Picareta", "descricao": "Cabo de pau e ferro de duas pontas. Cava buracos e quebra entulho de pedra.", "tipo": "ferramenta"},
 	"corda": {"nome": "Corda", "descricao": "Sisal trançado, uns vinte metros. Para descer e subir por poços, buracos e barrancos.", "tipo": "ferramenta"},
 	"corda_sino": {"nome": "Corda de sino", "descricao": "Sisal grosso de amarrar carga, da venda do Bento. Para o sino da capela, mudo desde a noite da sirene.", "tipo": "chave"},
+	"chave_professora": {"nome": "Chave da casa da professora", "descricao": "Pequena, de latão, num cordão de sapato. A Dona Lurdes deixou com a mãe da Cida.", "tipo": "chave", "modelo": "chave"},
+	"relogio_bolso": {"nome": "Relógio de bolso", "descricao": "Prata, parado nas quatro e dez. Na tampa, por dentro: \"Ao meu Tonico. Lurdes, 1960.\"", "tipo": "lembranca"},
 	"escapulario": {"nome": "Escapulário", "descricao": "Dois quadradinhos de pano num cordão, Nossa Senhora do Carmo. No verso, a lápis: Joaquim.", "tipo": "lembranca"},
 	"coracao_exvoto": {"nome": "Coração de ex-voto", "descricao": "Lata batida em forma de coração, de quem pagou promessa. Um coração a mais.", "tipo": "melhoria"},
 	"conta_terco": {"nome": "Conta de terço", "descricao": "Madeira escura, gasta de tanto rezar. Quatro fazem o terço crescer: mais fôlego.", "tipo": "melhoria"},

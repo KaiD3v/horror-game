@@ -19,7 +19,8 @@ RIM = (49.0, 55.0, 8.0)   # the bowl's rim east and west: a steep rocky bank (to
 # houses: x, y, facing (0 = south, 90 = east, -90 = west, 180 = north; = the object's yaw, front is local -Y), width, depth, kind, extras
 HOUSES = [
     (-10, -36, 90, 6.0, 5.0, "ruin", {"aula": True}),  # the classroom of the moves (construcoes.AULA)
-    (9.5, -30, -90, 6.5, 5.5, "taipa", {"barra": "blue", "shutter": "blue", "chimney": True, "chained": True}),
+    (9.5, -30, -90, 6.5, 5.5, "taipa", {"barra": "blue", "shutter": "blue", "chimney": True, "porta": "professora"}),  # Dona Lurdes's:
+                                                          # padlocked (Godot: BlockedDoor, Cida's key, docs/CONTEUDO_VILAREJO.md)
     (-9.5, -20, 90, 6.0, 5.0, "wood", {"siding": "grey", "shutter": "green", "porch": True}),
     (10, -15, -88, 7.5, 5.5, "taipa", {"barra": "ochre", "shutter": "green", "porta": "casa_ze",  # the one they took: the trail
                                                                      # starts here; nailed up after (the crowbar: TUTORIAL_VILAREJO.md)

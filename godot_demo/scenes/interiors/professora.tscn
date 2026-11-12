@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/professora.gd" id="1"]
+
+[node name="Professora" type="Node3D"]
+script = ExtResource("1")
+title = "Casa da professora"
+floor_kind = "madeira"
+model = "professora"
+door = "professora"
+cutaway = Vector3(0, 7, 5.5)
+ambient = 0.16
+dim = 0.75

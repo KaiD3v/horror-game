@@ -7,7 +7,8 @@ extends CanvasLayer
 signal closed
 
 const PAGE := Vector2(420, 540)   # the paper on screen: 210 x 270 texels at 2x
-const INK := {"caderno": Color(0.13, 0.12, 0.2), "oficio": Color(0.11, 0.1, 0.1), "ficha": Color(0.2, 0.12, 0.08)}
+const INK := {"caderno": Color(0.13, 0.12, 0.2), "oficio": Color(0.11, 0.1, 0.1), "ficha": Color(0.2, 0.12, 0.08),
+	"mapa_cida": Color(0.13, 0.12, 0.2)}
 
 static var read: Array[String] = []   # ids, in the order you found them
 

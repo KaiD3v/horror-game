@@ -48,6 +48,16 @@ const QUARRY_SMOKE := Vector3(52.0, 0, -28.0)  # the quarry up on the east bank 
 var belfry: Transform3D       # the belfry: its middle on its floor, +z out over the square
 var bell: Interactable        # the bell up there: the new rope tied, then rung
 var up_top := false           # he is up in the belfry (the fog lies below)
+const OVEN := Vector3(20.5, 0, -7.5)  # Cida's clay oven behind the venda (../docs/CONTEUDO_VILAREJO.md "Cida")
+const PRINTS_FROM := Vector3(16.2, 0, -12.2)  # ...her small footprints in the mud from the venda's back to it
+const SHY := 9.0              # how near she lets a grown man come standing, before she ducks into the oven
+const CLUES := ["Tô onde a água dorme e ninguém bebe!", "Tô onde o homem de palha vigia a estrada!",
+	"Tô onde a casa ainda cheira a fumaça!", "Agora uma que só eu sei: onde a gente aprendia a ler!"]
+var cida: Npc
+var oven_seat: Transform3D    # where she sits, on the oven's ledge by its mouth
+var prints: Node3D            # her footprints (after the rain, while the bread's task is on)
+var hide_left := 0.0          # she ducked into the oven: back out after this, unseen
+var seek := -1                # the hide-and-seek: the round, -1 when not playing
 var creakers: Array[Vector3] = []
 const BRUXAS := 2             # perched on the roofs each night (one, before he has the machete: roster())
 var bruxas: Array[Bruxa] = []
@@ -90,6 +100,7 @@ func _build() -> void:
 	var ze := marker("parede_casa_ze")  # Zé's house, nailed up after they took him
 	_nailed(ze.position, ze.rotation.y, marker("porta_casa_ze"), "casa_ze", "E · entrar na casa do Zé", Paths.interior("casa_ze"))
 	_jazigo()
+	_professora()
 	_finds.call_deferred()  # (they stand on the ground: once the colliders are in)
 	var well := marker("porta_poco")  # the ossuary's rope up the well (../docs/TUTORIAL_VILAREJO.md "Dungeon 2"): once
 	var down := Door.make(well, "E · descer pela corda", Paths.interior("ossuario"), "poco", 1.4)  # tied, a way back down
@@ -124,6 +135,7 @@ func _started() -> void:
 func _process(delta: float) -> void:
 	_radio()
 	_view(delta)
+	_cida_tick(delta)
 	# (not before the navigation map has synced: the night's places come from it. Arriving at night, up the well's rope
 	# or out of a door, the first frames have none yet)
 	if night_watch and WorldTime.is_night() != night and NavigationServer3D.map_get_iteration_id(get_world_3d().navigation_map) > 0:
@@ -491,6 +503,7 @@ func _belfry() -> void:
 	bell.used.connect(_ring)
 	_bell_prompt()
 	(func():
+		_cida()
 		_smoke(ground(RUIN_SMOKE.x, RUIN_SMOKE.z), 6.0, true)
 		_smoke(ground(QUARRY_SMOKE.x, QUARRY_SMOKE.z), 14.0, false)).call_deferred()  # (on the ground: once it is in)
 
@@ -547,6 +560,119 @@ func _smoke(at: Vector3, tall: float, fire: bool) -> void:
 	q.material = mat; p.draw_pass_1 = q
 	if fire:
 		Looks.omni(self, at + Vector3(0, 0.6, 0), Color(1.0, 0.5, 0.2), 1.6, 6.0)
+
+
+# --- Cida (../docs/CONTEUDO_VILAREJO.md "Cida, a filha do Zé"): the Zé's girl, hiding in the clay oven behind the
+# venda. By day she sits on its ledge by the mouth; at night she is inside. Shy: a grown man standing within SHY m and she
+# ducks into the oven (crouched, she lets you come). Bento's task ("pao") points at her: after a rain her footprints run
+# in the mud from the venda's back to the oven. Known, she plays hide-and-seek (her clue for each round; the fourth only
+# if you kept her secret from Bento), and gives her map at the end (a note, NotesReader).
+func _cida() -> void:
+	var g := ground(OVEN.x, OVEN.z)
+	var body := StaticBody3D.new(); add_child(body); body.position = g
+	var clay := Looks.triplanar("mud", 1.0, Color(0.72, 0.5, 0.36))
+	var ledge := MeshInstance3D.new(); var lm := BoxMesh.new(); lm.size = Vector3(1.9, 0.36, 1.9); lm.material = clay
+	ledge.mesh = lm; ledge.position.y = 0.18; body.add_child(ledge)
+	var dome := MeshInstance3D.new(); var dm := SphereMesh.new(); dm.radius = 0.8; dm.height = 0.8; dm.is_hemisphere = true
+	dm.material = clay; dome.mesh = dm; dome.position.y = 0.36; body.add_child(dome)
+	var mouth := MeshInstance3D.new(); var mm := BoxMesh.new(); mm.size = Vector3(0.06, 0.38, 0.46)
+	var dark := StandardMaterial3D.new(); dark.albedo_color = Color(0.03, 0.025, 0.02); mm.material = dark
+	mouth.mesh = mm; mouth.position = Vector3(-0.76, 0.52, 0); body.add_child(mouth)  # its mouth, to the venda (west)
+	var cs := CollisionShape3D.new(); var cyl := CylinderShape3D.new(); cyl.radius = 0.9; cyl.height = 1.2
+	cs.shape = cyl; cs.position.y = 0.6; body.add_child(cs)
+	oven_seat = Transform3D(Basis(Vector3.UP, -PI / 2), g + Vector3(-1.02, 0, 0))  # (her front +z: turned to the west)
+	cida = Npc.spawn(self, "cida", oven_seat); cida.pose({"faz": "Sit", "leva": ""})
+	prints = Node3D.new(); add_child(prints)
+	var mud := StandardMaterial3D.new(); mud.albedo_color = Color(0.46, 0.49, 0.53); mud.roughness = 0.05; mud.metallic = 0.3  # (filled with rain: the grey sky in them, like the puddles)
+	var to := g + Vector3(-1.3, 0, -0.3); var n := 12
+	for i in n:  # left, right, from the venda's back door to the oven's mouth
+		var p := PRINTS_FROM.lerp(to, float(i) / (n - 1)); var dir := (to - PRINTS_FROM).normalized()
+		p += Vector3(-dir.z, 0, dir.x) * (0.09 if i % 2 else -0.09)
+		var f := MeshInstance3D.new(); var q := PlaneMesh.new(); q.size = Vector2(0.13, 0.26); q.material = mud; f.mesh = q
+		prints.add_child(f); f.position = ground(p.x, p.z, g.y + 2.0) + Vector3(0, 0.04, 0); f.rotation.y = atan2(dir.x, dir.z)  # (under the eaves)
+	prints.visible = false
+
+
+func _cida_tick(delta: float) -> void:
+	if not is_instance_valid(cida) or player == null:
+		return
+	prints.visible = Story.task("pao") == "ativa" and not Story.has("cida_conheceu") and Weather.wet > 0.25
+	if seek >= 0:
+		_seek_tick()
+		return
+	if Story.has("cida:esconde") and not Story.has("cida:mapa") and not WorldTime.is_night() and not cida.going:
+		seek = 0; _seek_round()
+		return
+	if cida.going:
+		return
+	var d := Vector2(player.global_position.x - cida.global_position.x, player.global_position.z - cida.global_position.z).length()
+	if cida.visible and not Story.has("cida_conheceu") and d < SHY and not player.crouched:  # a grown man: into the oven
+		hide_left = 25.0
+		if not Story.has("cida:fugiu"):
+			Story.mark("cida:fugiu"); player.notice.emit("Uma criança? ...Sumiu para dentro do forno.")
+	hide_left = maxf(0.0, hide_left - delta)
+	var out := not WorldTime.is_night() and hide_left <= 0.0
+	if out != cida.visible and (not out or not cida._seen_from(cida.global_position)):
+		cida.visible = out
+	cida.talk.enabled = cida.visible
+
+
+func _seek_spots() -> Array:  # where she hides: by the trough on the square, the scarecrow, behind the burnt house,
+	var map := get_world_3d().navigation_map            # in the ruin where the children learnt to read
+	var near := func(n: String, off: Vector3) -> Vector3:
+		var o := village.find_child(n, true, false) as Node3D
+		var p := NavigationServer3D.map_get_closest_point(map, o.global_position + off)
+		return ground(p.x, p.z)
+	var burnt := marker("casa_11")
+	return [near.call("cocho_01*", Vector3(1.4, 0, 0.6)), near.call("espantalho_01*", Vector3(0.9, 0, 0.9)),
+		near.call("casa_11", -burnt.global_basis.z * 3.9), near.call(AULA, Vector3.ZERO)]
+
+
+func _seek_round() -> void:
+	var spot: Vector3 = _seek_spots()[seek]
+	var face := player.global_position - spot; face.y = 0
+	cida.visible = false  # (off to hide: found only once she is there)
+	_blink(func():
+		cida.global_transform = Transform3D(Basis(Vector3.UP, atan2(face.x, face.z)), spot); cida.visible = true
+		cida.pose({"faz": "Kneel", "leva": ""}); cida.talk.enabled = false)
+	player.notice.emit("Cida, de longe: — %s" % CLUES[seek])
+	if seek == 3:  # the one only she knows: her tin of picture cards, left there
+		Pickup.money(self, spot + Vector3(0.6, 0.05, 0.3), 10, "cida_esconderijo", "a lata de figurinhas")
+
+
+func _seek_tick() -> void:
+	var d := Vector2(player.global_position.x - cida.global_position.x, player.global_position.z - cida.global_position.z).length()
+	if d > 2.0 or not cida.visible:
+		return
+	seek += 1
+	if seek < (4 if Story.has("cida:segredo") else 3):
+		player.notice.emit("Cida: — Achou! Agora conta de novo.")
+		_seek_round()
+		return
+	seek = -1  # found the last time: her map, and back to her oven
+	Story.mark("cida:mapa"); Story.set_task("esconde", "feita")
+	player.notice.emit("Cida: — Achou! Ganhou. Toma, fiz pra você.")
+	notes.take("mapa_cida")
+	cida.talk.enabled = true
+	cida.go(oven_seat, {"faz": "Sit", "leva": ""}, false, true)
+
+
+## He shuts his eyes and counts: the screen goes dark a moment, and `then` happens unseen.
+func _blink(then: Callable) -> void:
+	var layer := CanvasLayer.new(); layer.layer = 50; add_child(layer)
+	var black := ColorRect.new(); black.color = Color(0, 0, 0, 0); black.set_anchors_preset(Control.PRESET_FULL_RECT)
+	black.mouse_filter = Control.MOUSE_FILTER_IGNORE; layer.add_child(black)
+	var tw := create_tween(); tw.tween_property(black, "color:a", 1.0, 0.5); tw.tween_callback(then)
+	tw.tween_interval(0.8); tw.tween_property(black, "color:a", 0.0, 0.6); tw.tween_callback(layer.queue_free)
+
+
+## Dona Lurdes's house (casa_02, ../docs/CONTEUDO_VILAREJO.md "As casas acorrentadas"): padlocked; Cida's key.
+func _professora() -> void:
+	var w := marker("parede_professora")
+	var lock := BlockedDoor.make(self, w.position, w.rotation.y, "cadeado", "professora", "chave_professora", true)
+	var into := Door.make(marker("porta_professora"), "E · entrar na casa da professora", Paths.interior("professora"), "professora", 1.6)
+	into.enabled = Story.has("aberta:professora")
+	lock.opened.connect(func(): into.enabled = true)
 
 
 ## At 19h the Voz do Brasil through the venda's door, muffled by the boards; gone at 20h.

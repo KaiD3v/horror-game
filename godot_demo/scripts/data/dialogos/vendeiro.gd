@@ -19,6 +19,10 @@ const MENU := [
 	{"texto": "Perguntar se precisa de alguma coisa", "vai": "pedido", "se": {"tarefa": ["alambique", "nova"]}},
 	{"texto": "Pedir uma corda grossa", "vai": "corda", "uma_vez": true,
 		"se": {"tarefa": ["sino", "ativa"], "nao_tem": "corda_sino", "sem_marca": "sino:corda"}},
+	{"texto": "Perguntar pelo pão", "vai": "pao_pedido", "se": {"tarefa": [["alambique", "feita"], ["pao", "nova"]]}},
+	{"texto": "Falar do pão", "vai": "pao_lembrete", "se": {"tarefa": ["pao", "ativa"], "sem_marca": "cida_conheceu"}},
+	{"texto": "Contar da menina no forno", "vai": "pao_contou", "se": {"tarefa": ["pao", "ativa"], "marca": "cida_conheceu"}},
+	{"texto": "Dizer que foi um gato", "vai": "pao_gato", "se": {"tarefa": ["pao", "ativa"], "marca": "cida_conheceu"}},
 	{"texto": "Falar do Juca", "vai": "lembrete", "se": {"tarefa": ["alambique", "ativa"], "nao_tem": "facao"}},
 	{"texto": "Contar do alambique", "vai": "noticia", "se": {"tarefa": ["alambique", "ativa"], "tem": "facao"}},
 	{"texto": "Ir embora", "vai": "fim"},
@@ -66,6 +70,22 @@ const NOS := {
 	"corda": {"faz": [{"da": "corda_sino"}], "fala": [
 		"Corda? Pro sino? Tenho sisal de amarrar carga, desse grosso. Ninguém mais amarra carga nenhuma.",
 		"Leva, leva. Fiado eu anoto no nome do santo. Se ele pagar, ótimo.",
+	]},
+	"pao_pedido": {"faz": [{"tarefa": ["pao", "ativa"]}], "fala": [
+		"Freguês, me diz se eu tô ficando louco. Some pão do balaio. Toda noite. Um, dois. Nunca o balaio inteiro.",
+		"Bicho não é: bicho leva tudo e derruba o resto. Isso aí tem educação.",
+		"Depois da chuva fica pegadinha no barro, nos fundos. Pequena. Eu não fui ver. Vai você, que eu tenho medo do que eu vou achar.",
+	]},
+	"pao_lembrete": {"fala": ["O pão, freguês. Depois da chuva, nos fundos. A pegadinha no barro."]},
+	"pao_contou": {"faz": [{"marca": "cida:contou"}, {"tarefa": ["pao", "feita"]}], "fala": [
+		"A filha do Zé? A Cida? Viva? ...No meu forno?",
+		"Nossa Senhora. Eu deixava o balaio destampado e fingia que não via. Achei que era a minha cabeça.",
+		"A minha Odete subiu em sessenta e oito. Hanseníase, disseram. Mancha na mão. Eu deixei levarem, freguês. Eu deixei.",
+		"Essa não sobe. Vou deixar pão de propósito agora, e um cobertor. E pra você, o que levar daqui é mais barato. Não discute.",
+	]},
+	"pao_gato": {"faz": [{"marca": "cida:segredo"}, {"tarefa": ["pao", "feita"]}], "fala": [
+		"Um gato? ...Gato que come pão e deixa pegada de gente.",
+		"Tá bom. Foi um gato. Eu vou deixar o balaio destampado pro gato, então. Gato precisa comer.",
 	]},
 	"fiado": {"fala": [
 		"O caderno? Está tudo anotado. O Zé me deve um quilo de sal. A Dita, querosene. O padre, vinho de missa.",

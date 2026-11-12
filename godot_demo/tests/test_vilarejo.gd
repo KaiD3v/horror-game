@@ -1139,3 +1139,89 @@ func sino_tests() -> void:
 		d.pick(told[0])
 	check(Story.task("sino") == "feita", "telling her: the task done")
 	_hour(16.5); Story.reset(); Inventory.reset(); Inventory.give_tools()
+
+
+# --- Cida (../docs/CONTEUDO_VILAREJO.md "Cida, a filha do Zé"): Bento's bread, her footprints after the rain, shy of a
+# grown man standing (crouched she lets you come), the choice at Bento's, the hide-and-seek, her map, the teacher's key
+# and her padlocked house
+func cida_tests() -> void:
+	L.night_watch = false
+	Story.mark("bento_conheceu"); _hour(10.0); await wait(0.5)
+	Story.set_task("alambique", "feita")
+	var b := Dialog.new("vendeiro", player); b.enter("oi")
+	var ask: Array = b.options().filter(func(o): return o.texto == "Perguntar pelo pão")
+	if ask:
+		b.pick(ask[0])
+	check(Story.task("pao") == "ativa", "the machete back from the still: Bento asks who eats his bread")
+	var c: Npc = L.cida
+	check(c.visible, "a small girl on the oven's ledge")
+	Weather.wet = 0.1; await wait(0.2)
+	check(not L.prints.visible, "dry ground: no footprints")
+	Weather.wet = 0.7; await wait(0.2)
+	check(L.prints.visible and L.prints.get_child_count() >= 10, "after the rain: small footprints from the venda's back to the oven")
+	var mid: Vector3 = (L.PRINTS_FROM + L.OVEN) / 2.0; var dir: Vector3 = (L.OVEN - L.PRINTS_FROM).normalized()
+	var eye: Vector3 = mid + Vector3(dir.z, 0, -dir.x) * 4.0; var look: Vector3 = mid - eye
+	put(player, L.ground(eye.x, eye.z), atan2(-look.x, -look.z) + 0.45)
+	await wait(0.6); await shot("v63_pegadas")
+	var top := Camera3D.new(); L.add_child(top); top.position = L.ground(mid.x, mid.z) + Vector3(0, 4.0, 0.01); top.look_at(L.ground(mid.x, mid.z))
+	top.make_current(); await wait(0.3); await shot("v63b_pegadas_cima"); player.cam.make_current(); top.queue_free()
+	# standing, near: she ducks into the oven
+	put(player, Vector3(0, L.ground(0, 40).y, 40), PI); L.hide_left = 0.0; await wait(0.4)
+	var at := c.global_position + c.global_basis.z * 6.0
+	put(player, at, atan2(c.global_basis.z.x, c.global_basis.z.z)); await wait(0.4)
+	check(not c.visible and Story.has("cida:fugiu"), "a grown man standing 6 m off: she ducks into the oven")
+	put(player, Vector3(0, L.ground(0, 40).y, 40), PI); L.hide_left = 0.0; await wait(0.4)
+	check(c.visible, "...and comes back out when nobody is looking")
+	# crouched she lets you come
+	await tap("crouch"); await wait(0.8)
+	put(player, at, atan2(c.global_basis.z.x, c.global_basis.z.z)); await wait(0.6)
+	check(c.visible and player.crouched, "crouched, 6 m off: she stays")
+	put(player, c.global_position + c.global_basis.z * 1.4, atan2(c.global_basis.z.x, c.global_basis.z.z)); await wait(0.5)
+	check(L.hud.prompt.text == "E · falar com Cida", "close, crouched: \"%s\"" % L.hud.prompt.text)
+	await shot("v64_cida_forno")
+	var d := Dialog.new("cida", player); d.begin()
+	check(Story.has("cida_conheceu") and d.at == "primeira", "she talks: who she is")
+	await tap("crouch"); await wait(0.8)
+	# Bento: tell him, or say it was a cat
+	b.enter("oi")
+	var opts: Array = b.options().map(func(o): return o.texto)
+	check("Contar da menina no forno" in opts and "Dizer que foi um gato" in opts, "back at Bento's: tell him, or keep her secret")
+	Story.mark("cida:contou")
+	check(Shop.price("venda", 0) < Shop.offers("venda")[0].preco, "told: his things for less (%d for %d)" % [Shop.price("venda", 0), Shop.offers("venda")[0].preco])
+	Story.marks.erase("cida:contou")
+	var cat: Array = b.options().filter(func(o): return o.texto == "Dizer que foi um gato")
+	b.pick(cat[0])
+	check(Story.has("cida:segredo") and Story.task("pao") == "feita", "a cat, he says: her secret kept, the task done")
+	# hide-and-seek: four rounds for keeping her secret, her map at the end
+	d.enter("oi")
+	var play: Array = d.options().filter(func(o): return o.texto == "Brincar de esconde-esconde")
+	if play:
+		d.pick(play[0])
+	for k in 4:
+		await until(func(): return L.seek == k and c.visible and not c.going, 4.0); await wait(1.6)
+		check(L.seek == k and c.anim.current_animation == "Kneel", "round %d: she hides (%s)" % [k + 1, L.CLUES[k]])
+		if k == 1:
+			var see := c.global_position + Vector3(2.5, 0, 2.5); put(player, L.ground(see.x, see.z), atan2(2.5, 2.5)); await wait(0.6)
+			await shot("v66_esconde")
+		put(player, c.global_position + Vector3(1.2, 0, 0.6), 0.0); await wait(0.4)
+	await until(func(): return L.notes.showing >= 0, 4.0); await wait(0.4)
+	check(Story.has("cida:mapa") and "mapa_cida" in NotesReader.read and Story.task("esconde") == "feita", "found the last time: her map, in the notebook")
+	await shot("v65_mapa")
+	L.notes.close(); await wait(0.3)
+	check(L.find_children("*", "Pickup", true, false).any(func(p): return p.id == "cida_esconderijo"),
+		"the hideout only she knows: her tin of picture cards there")
+	d = Dialog.new("cida", player); d.begin()
+	check(d.at == "chave" and Inventory.has("chave_professora"), "then the teacher's key")
+	# the teacher's house: the padlock, the key, in
+	var w: Node3D = L.marker("parede_professora")
+	put(player, w.position + w.basis.z * 1.0, w.rotation.y + PI); await wait(0.4)
+	check(L.hud.prompt.text == "E · abrir o cadeado", "at the blue house's door: \"%s\"" % L.hud.prompt.text)
+	await shot("v67_professora_porta")
+	await tap("interact"); await wait(1.5)
+	check(Story.has("aberta:professora"), "the key opens the padlock")
+	put(player, L.marker("porta_professora").position, L.marker("porta_professora").rotation.y + PI); await wait(0.4)
+	SceneRouter.requested = ""
+	await tap("interact")
+	check(SceneRouter.requested == Paths.interior("professora"), "E: into Dona Lurdes's house")
+	SceneRouter.requested = ""; SceneRouter.arriving = ""
+	_hour(16.5); Story.reset(); Inventory.reset(); Inventory.give_tools(); Weather.force(1.0, 1.0)

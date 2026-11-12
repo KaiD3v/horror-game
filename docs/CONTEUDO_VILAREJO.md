@@ -1,7 +1,7 @@
 # O vilarejo vivo: conteúdo secundário (plano)
 
 *Data: 2026-11-11. Continua [TUTORIAL_VILAREJO.md](TUTORIAL_VILAREJO.md) e [CHAVE_DO_PORTAO.md](CHAVE_DO_PORTAO.md).
-Fases 1 e 2 feitas (ver "Fase N, feita" no fim); o resto é plano. Coordenadas em Godot (x, z).*
+Fases 1 a 3 feitas (ver "Fase N, feita" no fim); o resto é plano. Coordenadas em Godot (x, z).*
 
 ## O problema
 
@@ -348,3 +348,52 @@ campanário: é preciso erguer um pouco o olhar.
   - o campanário: o piso, o alçapão, a neblina, as paredes e o sino;
   - o Ângelus às 18h e a tarefa cumprida;
   - quatro capturas (`v60` a `v62` e `torre_*`).
+
+## Fase 3, feita: a Cida
+
+**A Cida** (`npcs/cida.py`, `npc_cida.glb`):
+- **O modelo:** 1,18 m, vestido florido desbotado, tranças com fita vermelha, descalça. Usa a mesma receita dos outros NPCs, com as animações do dia.
+- **Onde fica:** num forno de barro atrás da venda (`vilarejo.gd` `OVEN`; cúpula, base e a boca virada para a venda). De dia ela fica sentada na base, junto da boca. De noite fica dentro, sem aparecer.
+
+**A tarefa do Bento** (`QuestData` "pao"):
+- **Quando:** depois do alambique ("Perguntar pelo pão"): "Some pão do balaio... Isso aí tem educação."
+- **As pegadas:** depois da chuva (`Weather.wet` > 0,25), pegadas pequenas cheias de água, refletindo o céu como as poças, vão dos fundos da venda até o forno. Só aparecem com a tarefa ativa e até ele conhecer a menina.
+- **A timidez:** um homem em pé a menos de 9 m e ela some para dentro do forno ("Uma criança? ...Sumiu para dentro do forno."). Ela volta quando ninguém olha.
+  - Agachado, ela deixa chegar e conversa. É o agachar, que o jogo já ensinou, usado para ser gentil.
+- **A escolha, de volta no Bento:**
+  - "Contar da menina no forno": ele se abre. A Odete, mulher dele, subiu em 68 com uma mancha na mão, e "eu deixei levarem". Ele passa a deixar pão e um cobertor, e a venda fica 25% mais barata (`Shop.price`). A Cida depois agradece o cobertor.
+  - "Dizer que foi um gato": "Gato que come pão e deixa pegada de gente. ...Tá bom." O segredo dela fica guardado, e ela passa a confiar mais: o esconde-esconde ganha uma quarta rodada.
+
+**A Cida conversa** (`dialogos/cida.gd`):
+- quem ela é;
+- a voz que imita: "Se alguém te chamar de dentro de uma casa, não abre. Nunca abre. Nem se for a tua mãe." Isso prepara a fase 6;
+- o pai e a mãe;
+- o esconde-esconde.
+
+**O esconde-esconde** (`vilarejo.gd` `_seek_*`, `QuestData` "esconde", só de dia):
+- "Fecha o olho e conta até vinte": a tela escurece um instante e ela some. A pista dela aparece na tela:
+  1. "onde a água dorme e ninguém bebe": o cocho do largo;
+  2. "onde o homem de palha vigia a estrada": o espantalho;
+  3. "onde a casa ainda cheira a fumaça": atrás da casa queimada;
+  4. só com o segredo guardado: "onde a gente aprendia a ler": a ruína da sala de aula, onde ficou a lata de figurinhas dela (Cr$ 10, uma vez).
+- Ela é achada quando ele chega a menos de 2 m. No fim ela dá **o mapa dela**: uma nota (`mapa_cida`, `tools/texturas/mapa_cida.py`) desenhada a lápis de cor numa folha de caderno.
+  - O vilarejo do jeito dela, com "EU" e um coração no forno.
+  - Os medos em X vermelho: a ruína do portão, o campo a oeste, a ravina e a casa dela.
+  - O mapa não marca nada que se possa ticar como tarefa; marca só os medos dela.
+
+**A casa da professora** (casa 02, a azul da entrada; `professora_build.py`, `professora.tscn`):
+- **A chave:** depois do mapa, a Cida dá a chave: "É da casa da Dona Lurdes... Eu não tenho coragem de entrar sozinha."
+- **A porta:** a corrente da casa saiu do modelo. Agora é um cadeado (`BlockedDoor`) que a chave abre.
+- **Dentro:** a cama arrumada, a escrivaninha com os diários e a lousa, a estante e a foto da turma.
+  - O diário de classe (nota `diario_classe`): os nomes dos alunos com "subiu" ao lado, "para o tratamento".
+  - O relógio de bolso do marido na mesa de cabeceira (`relogio_bolso`): "Ao meu Tonico. Lurdes, 1960." Pode servir de troca para o mascate.
+
+**Testes:**
+- `test_vilarejo.gd` `cida_tests`:
+  - a tarefa e as pegadas, que somem no seco;
+  - a fuga em pé e a volta escondida;
+  - a conversa agachado e a escolha no Bento, incluindo o desconto;
+  - as quatro rodadas, o mapa e a lata;
+  - a chave, o cadeado e a porta.
+- `test_professora.gd`: a casa e o relógio.
+- Capturas `v63` a `v67`, com uma das pegadas vistas de cima.

@@ -18,6 +18,12 @@ const NOTES := [
 	{"id": "carta_mae", "scene": "", "at": Vector2.ZERO, "yaw": 0.0, "paper": "caderno",
 		"title": "Carta da mãe (1974)",
 		"text": "Meu filho,\nlembra do parlatório? Eu disse que ia te buscar. Não consegui. A você disseram que eu morri, a mim, que você tinha morrido. Era mentira.\nEstou viva. O doutor não deixa ninguém sair e dá injeção toda semana. O Bento da venda põe esta no correio.\nAgora é você que tem que vir. Antes do fim de março.\ntua mãe"},
+	# Cida's map (../tools/texturas/mapa_cida.py): she gives it at the end of the hide-and-seek (vilarejo.gd _cida)
+	{"id": "mapa_cida", "scene": "", "at": Vector2.ZERO, "yaw": 0.0, "paper": "mapa_cida", "title": "O mapa da Cida", "text": ""},
+	# Dona Lurdes's house (../docs/CONTEUDO_VILAREJO.md "As casas acorrentadas"): on her desk
+	{"id": "diario_classe", "scene": "professora", "at": Vector2(0.65, -1.95), "yaw": 10.0, "from": 1.5, "paper": "caderno",
+		"title": "Diário de classe (1974)",
+		"text": "3ª série · Escola Isolada da Vila de Santa Clara\n\nRosinha ........ presente\nJoãozinho ...... subiu\nTiãozinho ...... subiu\nMaria do Carmo . subiu\nCida ........... presente\nZezinho ........ subiu\n\nSubiram em março, com os pais, \"para o tratamento\". Ninguém escreveu de lá.\nQuem desce agora não é mais criança.\n— L."},
 	{"id": "mala", "scene": "vilarejo", "at": Vector2(2.5, 41.8), "yaw": 30.0, "paper": "caderno",
 		"title": "Bilhete na mala",
 		"text": "Lurdes,\na ponte caiu. Caiu de noite, sem chuva, sem nada. O Juca jura que ouviu serrarem as vigas.\nVou pela trilha do rio. Se eu não voltar até domingo, não vem atrás. Fica na venda com o Bento, de porta trancada.\nDeixei a boneca da menina. Pesa demais para carregar.\n— Tonho"},
