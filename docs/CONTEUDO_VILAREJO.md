@@ -1,7 +1,7 @@
 # O vilarejo vivo: conteúdo secundário (plano)
 
 *Data: 2026-11-11. Continua [TUTORIAL_VILAREJO.md](TUTORIAL_VILAREJO.md) e [CHAVE_DO_PORTAO.md](CHAVE_DO_PORTAO.md).
-Fases 1 a 5 feitas (ver "Fase N, feita" no fim); o resto é plano. Coordenadas em Godot (x, z).*
+Fases 1 a 6 feitas (ver "Fase N, feita" no fim); o resto é plano. Coordenadas em Godot (x, z).*
 
 ## O problema
 
@@ -532,3 +532,59 @@ dela (`cartas_celina`) e as falas do Bastião foram ajustadas.
   - o cadeado do motorista.
 - `test_motorista.gd`: a casa e a medalha.
 - Capturas `v72` a `v75` e `motorista_*`.
+
+## Fase 6, feita: o rádio, o túmulo sem nome e a noite
+
+**A sintonia do rádio** (`scripts/ui/sintonia.gd`, `venda.gd`; "E · mexer no rádio" na venda):
+- A faixa AM na tela, de 540 a 1600 kHz, com a agulha vermelha. A/D ou a roda do mouse giram o dial; E solta. O jogo
+  não pausa: ele fica parado diante do rádio, e o som do rádio da venda cala enquanto isso.
+- As estações entram conforme a agulha chega perto (28 kHz), e o chiado (`radio_chiado`) preenche o resto:
+  - 750: a música da venda ("Uma moda de viola, longe.");
+  - 1010: a Voz do Brasil, só das 19h às 20h.
+- **1180, a rádio da Colônia** (`radio_colonia`: um zumbido, bipes contando, uma sirene longe; sem voz gravada):
+  - **Quando aparece:** só de madrugada (até as 5h) e só depois das três tarefas do sino (Firmina), do pão (Bento) e das galinhas (Tenório).
+  - **O que se ouve:** parado ali, ele distingue no texto uma voz lendo números: 0412 (o Bastião), 0231 (a Celina), 0587,
+    0612... e 0187, o número da mãe no ofício de óbito.
+  - **O que fica:** a transcrição vai para o caderno (nota `radio_colonia`: "Ninguém lê o número de quem morreu.").
+
+**O túmulo sem nome** (`vilarejo.gd` `_grave`, a cova 2,1 do cemitério, onde a Firmina se ajoelha à tarde):
+- **O túmulo:** flores do mato frescas na cova. "E · olhar o túmulo": "Uma cruz sem nome. Flores frescas, do mato: alguém
+  vem aqui toda tarde." (Story "tumulo:visto")
+- **A Firmina** ("Perguntar do túmulo sem nome"):
+  - "Não é o meu Antero." O Antero era capataz da Colônia e pegava quem fugia: "O doutor pagava por cabeça, e era com isso que a gente comia".
+  - Esse é um menino que o Antero trouxe do rio, frio. Ela o enterrou sem saber o nome.
+  - Depois disso, a fala dela no cemitério muda.
+- **A caderneta do Antero**, debaixo da cruz (nota `caderneta_antero`), traz as fugas e as recapturas:
+  - o menino 0398;
+  - "1959 · nº 112, menor, 6 anos, do preventório. Fugiu procurando a mãe (nº 0187). Achado no portão. Devolvido." O
+    jogador é o menor nº 112 do ofício: foi o Antero quem o devolveu.
+
+**A voz que imita** (`_voice_tick`, `start_voice`):
+- **Quando:** uma vez por noite, entre 20h e 3h, perto de uma casa fechada sem ninguém (casas 3, 5, 6, 9, 12, 13). De
+  dentro vem uma voz de mulher abafada, sem palavras (`voz_chama`): "Parece a voz da mãe."
+- **A porta:** durante 45 s, "E · abrir a porta".
+  - **Aberta:** um grito (o guincho da Bruxa), um ferimento que o bloqueio não segura, e "Não tinha ninguém. Tinha
+    alguma coisa, e ela sabia o seu nome." (Story "voz:abriu")
+  - **Fechada:** a voz para (Story "voz:resistiu").
+- **A Cida sabe:** "Você abriu. Eu sei que você abriu." / "Você não abriu. ...O pai devia ter feito igual."
+
+**A manhã depois** (`_morning_tick`, das 6h ao meio-dia, uma coisa diferente a cada manhã):
+- **Dia par:** arranhões até a altura de um homem na porta de uma casa fechada (decal `arranhoes`). O Bento, varrendo:
+  "Arranhão até a altura de um homem. De noite tava tudo quieto. Quieto demais."
+- **Dia ímpar:** uma galinha do Tenório aberta junto do galinheiro, com penas espalhadas. O Tenório, no portão: "Essa
+  não foi gente: foi aberta como carta."
+- Ao meio-dia tudo some, e as marcas `manha:*` também.
+
+**Sons novos (ElevenLabs, 100 créditos):** `radio_chiado`, `radio_colonia` e `voz_chama` (loops).
+
+**Mudou do plano:**
+- O rádio da Colônia não tem voz gravada, porque o jogo não usa dublagem: a voz lendo os números vem no texto, sobre o som.
+- A procissão ficou de fora, como estava em aberto, e espera a decisão do autor.
+
+**Testes:**
+- `test_venda.gd` `sintonia_tests`: o dial, a música, o chiado, o 1180 vazio de dia e cheio de madrugada, e o 0187.
+- `test_vilarejo.gd` `noite_tests`:
+  - o túmulo, a Firmina e a caderneta com o nº 112;
+  - a voz aberta (ferimento, a Cida sabe) e a voz fechada;
+  - os arranhões e a galinha, com as falas, e o meio-dia.
+- Capturas `v76` a `v79` e `venda_6/7`.

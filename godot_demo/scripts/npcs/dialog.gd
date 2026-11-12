@@ -111,7 +111,7 @@ func holds(c: Dictionary) -> bool:
 			"tem", "tem_tambem": ok = Inventory.has(v)
 			"nao_tem": ok = not Inventory.has(v)
 			"marca": ok = Story.has(v)
-			"sem_marca": ok = not Story.has(v)
+			"sem_marca", "sem_marca_2": ok = not Story.has(v)
 			"tarefa": ok = (v as Array).all(func(t): return Story.task(t[0]) == t[1]) if v[0] is Array else Story.task(v[0]) == v[1]
 			"noite": ok = WorldTime.is_night() == v
 			"lugar": ok = NpcCatalog.slot(who).get("lugar", "") == v

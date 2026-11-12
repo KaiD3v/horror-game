@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bnwnksotcu46s"
-path="res://.godot/imported/npc_mascate_grime_72.png-147ca3a50598642353a458d63821bcfb.ctex"
+path.s3tc="res://.godot/imported/npc_mascate_grime_72.png-147ca3a50598642353a458d63821bcfb.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "0aea4d1d7adfb75d975e802a2074bb63"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/characters/npc_mascate_grime_72.png"
-dest_files=["res://.godot/imported/npc_mascate_grime_72.png-147ca3a50598642353a458d63821bcfb.ctex"]
+dest_files=["res://.godot/imported/npc_mascate_grime_72.png-147ca3a50598642353a458d63821bcfb.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

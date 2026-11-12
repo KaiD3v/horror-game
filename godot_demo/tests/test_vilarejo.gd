@@ -1398,3 +1398,60 @@ func mascate_tests() -> void:
 	await tap("interact"); await until(func(): return Story.has("aberta:motorista"), 5.0)
 	check(Story.has("aberta:motorista"), "the driver's key opens his padlock")
 	_hour(16.5); Story.reset(); Inventory.reset(); Inventory.give_tools()
+
+
+# --- the night's story (../docs/CONTEUDO_VILAREJO.md fase 6): the nameless grave and Firmina's truth (Antero's book);
+# the voice that imitates (opened: hurt; left shut: it stops); the morning after (the scratches, the hen) and its talk
+func noite_tests() -> void:
+	L.night_watch = false
+	Story.mark("firmina_conheceu"); Story.mark("bento_conheceu"); Story.mark("tenorio_conheceu")
+	_hour(10.0); await wait(0.3)
+	var g: Vector3 = L.ground(L.GRAVE.x, L.GRAVE.z)
+	put(player, g + Vector3(1.2, 0, 0.9), atan2(1.2, 0.9)); await wait(0.4)
+	check(L.hud.prompt.text == "E · olhar o túmulo", "at the grave Dona Firmina tends: \"%s\"" % L.hud.prompt.text)
+	await tap("interact"); await wait(0.3)
+	put(player, g + Vector3(2.4, 0, 1.6), atan2(2.4, 1.6) + 0.3); player.pitch.rotation.x = -0.5; await wait(0.6)
+	await shot("v76_tumulo"); player.pitch.rotation.x = -0.25
+	var d := Dialog.new("benzedeira", player); d.enter("oi")
+	var ask: Array = d.options().filter(func(o): return o.texto == "Perguntar do túmulo sem nome")
+	check(ask.size() == 1, "looked at: she can be asked about it")
+	if ask:
+		d.pick(ask[0])
+	await wait(0.3)
+	check(Story.has("tumulo:contou") and L.grave_note != null, "\"Não é o meu Antero\": his book under the cross")
+	check("nº 112" in NotesData.note("caderneta_antero").text, "...and in it, the boy who ran looking for his mother: nº 112")
+	# the voice: opened
+	L.night = true; _hour(22.0); var house: Node3D = L.village.find_child("casa_05", false, false)
+	put(player, house.global_position + house.global_basis.z * 6.0, atan2(house.global_basis.z.x, house.global_basis.z.z))
+	await wait(0.5)
+	check(L.voice != null and "voz_chama" in Audio.heard, "22h near a shut house: a woman's voice calls him from inside")
+	put(player, L.voice_door.global_position + house.global_basis.z * 0.6, atan2(house.global_basis.z.x, house.global_basis.z.z)); await wait(0.4)
+	check(L.hud.prompt.text == "E · abrir a porta", "\"%s\"" % L.hud.prompt.text)
+	await shot("v77_voz")
+	player.health = 3.0
+	await tap("interact"); await wait(0.5)
+	check(Story.has("voz:abriu") and player.health < 3.0 and L.voice == null, "opened: nothing human; a scream, a wound")
+	var c := Dialog.new("cida", player); Story.mark("cida_conheceu"); c.begin()
+	check(c.at == "abriu", "Cida knows: \"Você abriu\"")
+	# the voice: left shut
+	Story.marks.erase("voz:abriu"); L.voice_night = -1; L.start_voice(house); L.voice_left = 0.5; await wait(1.0)
+	check(Story.has("voz:resistiu") and L.voice == null, "left shut, it stops")
+	L.night = false
+	# the morning after: an even day the scratches, an odd day a hen
+	put(player, Vector3(0, L.ground(0, 40).y, 40), PI)
+	WorldTime.minutes = 2 * 1440.0 + 7 * 60.0; await wait(0.4)
+	check(Story.has("manha:arranhoes") and L.morning.size() == 1, "an even morning: claw marks up a shut house's door")
+	var scr: Node3D = L.morning[0]
+	var hz: Vector3 = (L.village.find_child("casa_%02d" % [3, 5, 6, 9, 12, 13][2 % 6], false, false) as Node3D).global_basis.z
+	put(player, L.ground(scr.global_position.x + hz.x * 3.5, scr.global_position.z + hz.z * 3.5), atan2(hz.x, hz.z)); await wait(0.6)
+	await shot("v79_arranhoes")
+	var dv := Dialog.new("vendeiro", player)
+	check(dv.pick_start() == "manha_arranhoes", "Bento, sweeping: the marks on the door")
+	WorldTime.minutes = 3 * 1440.0 + 7 * 60.0; await wait(0.4)
+	check(Story.has("manha:galinha") and not Story.has("manha:arranhoes") and L.morning.size() > 5, "an odd morning: a hen torn open by Tenório's coop")
+	put(player, L.ground(L.COOP.x - 3.2, L.COOP.z - 1.2, 3.0), atan2(-1.8, -1.8)); player.pitch.rotation.x = -0.45; await wait(0.6)
+	await shot("v78_galinha"); player.pitch.rotation.x = -0.25
+	check(Dialog.new("armeiro", player).pick_start() == "manha_galinha", "Tenório at the gate: \"Mais uma galinha\"")
+	WorldTime.minutes = 3 * 1440.0 + 13 * 60.0; await wait(0.3)
+	check(L.morning.is_empty() and not Story.has("manha:galinha"), "gone by noon")
+	_hour(16.5); Story.reset()

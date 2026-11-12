@@ -37,9 +37,10 @@ PEAK = {"vento": 0.7, "casa": 0.5, "fogo": 0.6, "velas": 0.35, "relogio": 0.5, "
         "chefe_tensao": 0.8, "chefe_impacto": 0.98, "lampiao_acender": 0.6,
         "bater_porta": 0.8, "voz_do_brasil": 0.45,
         "galinhas": 0.5, "palitos": 0.7,
-        "mula": 0.55, "tronco_cair": 0.95}  # the peddler's mule, the log across the ravine (fase 5)  # Tenório's yard and his palitinho (docs/CONTEUDO_VILAREJO.md fase 4)  # the routines (docs/CONTEUDO_VILAREJO.md): a shut door, Bento's radio at 19h
+        "mula": 0.55, "tronco_cair": 0.95,
+        "radio_chiado": 0.4, "radio_colonia": 0.5, "voz_chama": 0.6}  # the radio's dial, the voice that imitates (fase 6)  # the peddler's mule, the log across the ravine (fase 5)  # Tenório's yard and his palitinho (docs/CONTEUDO_VILAREJO.md fase 4)  # the routines (docs/CONTEUDO_VILAREJO.md): a shut door, Bento's radio at 19h
 LOOPS = ("ambiente_hospital", "cidade_madrugada", "onibus", "vento", "casa", "fogo", "velas", "relogio", "coro", "reza", "musica", "chuva", "coracao",
-         "bruxa_asas", "poceiro_balde", "carpideira_choro", "morcegos", "voz_do_brasil", "galinhas", "mula")  # generated seamless
+         "bruxa_asas", "poceiro_balde", "carpideira_choro", "morcegos", "voz_do_brasil", "galinhas", "mula", "radio_chiado", "radio_colonia", "voz_chama")  # generated seamless
 
 
 def load(path):

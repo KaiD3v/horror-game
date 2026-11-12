@@ -77,6 +77,16 @@ var camp: Array[Node3D] = []                   # the mule, the cart, the tarp, h
 var log_pivot: Node3D                          # the log, turning on its foot
 var log_rope: Target
 var down_rope: Interactable
+const GRAVE := Vector3(-27.6, 0, -5.5)         # the nameless grave Dona Firmina tends (her "Antero": cemetery grave 2,1)
+const VOICE_HOUSES := ["casa_03", "casa_05", "casa_06", "casa_09", "casa_12", "casa_13"]  # shut houses, nobody in them
+const VOICE_FOR := 45.0                        # how long it calls
+var grave_note: NotePaper
+var voice: AudioStreamPlayer3D                 # the voice that imitates, calling from inside a shut house
+var voice_door: Interactable
+var voice_left := 0.0
+var voice_night := -1                          # the night it came last (once a night)
+var morning: Array[Node3D] = []                # what the night left, shown in the morning
+var morning_day := -1
 var up_rope: Interactable
 var creakers: Array[Vector3] = []
 const BRUXAS := 2             # perched on the roofs each night (one, before he has the machete: roster())
@@ -160,6 +170,10 @@ func _process(delta: float) -> void:
 	_cida_tick(delta)
 	_bottles_tick(delta)
 	_dito_tick()
+	_voice_tick(delta)
+	_morning_tick()
+	if Story.has("tumulo:contou") and grave_note == null and "caderneta_antero" not in NotesReader.read:
+		grave_note = NotePaper.make(self, NotesData.note("caderneta_antero"))
 	# (not before the navigation map has synced: the night's places come from it. Arriving at night, up the well's rope
 	# or out of a door, the first frames have none yet)
 	if night_watch and WorldTime.is_night() != night and NavigationServer3D.map_get_iteration_id(get_world_3d().navigation_map) > 0:
@@ -532,6 +546,7 @@ func _belfry() -> void:
 		_tenorio_yard()
 		_mascate()
 		_ravine()
+		_grave()
 		if not Story.has("bastiao:expulso"):
 			_smoke(ground(RUIN_SMOKE.x, RUIN_SMOKE.z), 6.0, true)
 		_smoke(ground(QUARRY_SMOKE.x, QUARRY_SMOKE.z), 14.0, false)).call_deferred()  # (on the ground: once it is in)
@@ -862,6 +877,135 @@ func _hanging_rope(top: Vector3, bottom: Vector3) -> void:
 
 func _put_player(at: Vector3, yaw: float) -> void:
 	player.global_position = at; player.velocity = Vector3.ZERO; player.rotation.y = yaw
+
+
+# --- the nameless grave (../docs/CONTEUDO_VILAREJO.md "O túmulo sem nome"): the one Dona Firmina kneels at in the
+# afternoons, calling it her Antero's. A cross with no name, fresh wild flowers on the mound. Looked at (Story
+# "tumulo:visto"), she can be asked; told (her talk), Antero's little book lies under the cross (NotesData).
+func _grave() -> void:
+	var g := ground(GRAVE.x, GRAVE.z)
+	var colours := [Color(0.85, 0.75, 0.25), Color(0.9, 0.9, 0.85), Color(0.6, 0.3, 0.55), Color(0.85, 0.45, 0.2)]
+	for k in 9:  # wild flowers, a small bunch
+		var f := MeshInstance3D.new(); add_child(f); var m := BoxMesh.new(); m.size = Vector3(0.1, 0.07, 0.1)
+		var mat := StandardMaterial3D.new(); mat.albedo_color = colours[k % colours.size()]; m.material = mat; f.mesh = m
+		f.position = g + Vector3(randf_range(-0.22, 0.22), 0.42 + randf_range(0, 0.08), randf_range(0.3, 0.6))
+		mat.emission_enabled = true; mat.emission = mat.albedo_color; mat.emission_energy_multiplier = 0.25  # (they catch the eye)
+		var stem := MeshInstance3D.new(); add_child(stem); var sm := BoxMesh.new(); sm.size = Vector3(0.015, 0.34, 0.015)
+		var green := StandardMaterial3D.new(); green.albedo_color = Color(0.25, 0.4, 0.2); sm.material = green; stem.mesh = sm
+		stem.position = f.position - Vector3(0, 0.18, 0)
+	var look := Interactable.new(); add_child(look); look.position = g; look.radius = 1.6; look.prompt = "E · olhar o túmulo"
+	look.used.connect(func(_by):
+		Story.mark("tumulo:visto")
+		player.notice.emit("Uma cruz sem nome. Flores frescas, do mato: alguém vem aqui toda tarde."))
+
+
+# --- the voice that imitates (../docs/CONTEUDO_VILAREJO.md "A noite"): once a night, between 20h and 3h, near a shut
+# house with nobody in it, a woman's voice calls him from inside (voz_chama, muffled), and the door can be opened for
+# VOICE_FOR seconds. Opened: nothing human in there; a scream, a wound (Story "voz:abriu"). Left shut: it stops
+# (Story "voz:resistiu"). Cida said it: never open.
+func _voice_tick(delta: float) -> void:
+	if voice:
+		voice_left -= delta
+		if voice_left <= 0.0:
+			Story.mark("voz:resistiu"); _voice_end()
+		return
+	var h := WorldTime.hour()
+	var night_n := int((WorldTime.minutes - 12 * 60) / 1440.0)  # (a night runs from noon to noon)
+	if not night or night_n == voice_night or not (h >= 20.0 or h < 3.0) or player == null or player.busy:
+		return
+	var best: Node3D = null; var bd := 22.0
+	for n in VOICE_HOUSES:
+		var house := village.find_child(n, false, false) as Node3D
+		if house and house.global_position.distance_to(player.global_position) < bd:
+			best = house; bd = house.global_position.distance_to(player.global_position)
+	if best:
+		start_voice(best)
+
+
+func start_voice(house: Node3D) -> void:
+	voice_night = int((WorldTime.minutes - 12 * 60) / 1440.0)  # (once a night)
+	var front := house.global_basis.z.normalized()
+	var from := house.global_position + Vector3(0, 1.2, 0) + front * 8.0
+	var hit := get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(from, from - front * 8.0, 1))
+	var wall: Vector3 = hit.position if hit else house.global_position + front * 3.0
+	voice = Audio.play3d(self, "voz_chama", wall - front * 0.6, -2.0, true, 3.0, 24.0)
+	voice.attenuation_filter_cutoff_hz = 1600.0
+	voice_door = Interactable.new(); add_child(voice_door); voice_door.position = Vector3(wall.x, ground(wall.x, wall.z).y, wall.z) + front * 0.4
+	voice_door.radius = 1.6; voice_door.height = 2.5; voice_door.prompt = "E · abrir a porta"
+	voice_door.used.connect(func(_by): _voice_opened())
+	voice_left = VOICE_FOR
+	player.notice.emit("De dentro da casa fechada, uma voz de mulher. Chama devagar. Parece a voz da mãe.")
+
+
+func _voice_opened() -> void:
+	Story.mark("voz:abriu")
+	var at := voice_door.global_position
+	_voice_end()
+	Audio.play3d(self, "porta", at, 0.0, false, 3.0, 20.0)
+	Audio.play3d(self, "bruxa_guincho", at + Vector3(0, 1.5, 0), 6.0, false, 6.0, 60.0)
+	player.take_damage(1.0, null, true)
+	player.notice.emit("Não tinha ninguém. Tinha alguma coisa, e ela sabia o seu nome.")
+
+
+func _voice_end() -> void:
+	if voice:
+		voice.queue_free(); voice = null
+	if voice_door:
+		voice_door.queue_free(); voice_door = null
+
+
+# --- the morning after (../docs/CONTEUDO_VILAREJO.md "A noite"): from 6h to 12h what the night left is there, a
+# different thing each morning: scratches up a shut house's door (day even), or one of Tenório's hens torn open by his
+# coop (day odd), and Bento or Tenório say so (Story "manha:arranhoes" / "manha:galinha", gone at noon).
+func _morning_tick() -> void:
+	var day := int(WorldTime.minutes / 1440.0)
+	var h := WorldTime.hour()
+	var on := day >= 1 and h >= 6.0 and h < 12.0
+	if on and morning_day != day:
+		_morning_clear(); morning_day = day
+		var kind := "arranhoes" if day % 2 == 0 else "galinha"
+		Story.mark("manha:" + kind)
+		if kind == "arranhoes":
+			_scratches(village.find_child(VOICE_HOUSES[day % VOICE_HOUSES.size()], false, false) as Node3D)
+		else:
+			_dead_hen()
+	elif not on and morning_day >= 0:
+		_morning_clear(); morning_day = -1
+
+
+func _morning_clear() -> void:
+	for n in morning:
+		if is_instance_valid(n):
+			n.queue_free()
+	morning.clear()
+	Story.marks.erase("manha:arranhoes"); Story.marks.erase("manha:galinha")
+
+
+func _scratches(house: Node3D) -> void:
+	if house == null:
+		return
+	var front := house.global_basis.z.normalized()
+	var from := house.global_position + Vector3(0, 1.3, 0) + front * 8.0
+	var hit := get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(from, from - front * 8.0, 1))
+	if not hit:
+		return
+	var d := Decal.new(); add_child(d); morning.append(d)
+	d.texture_albedo = load(Paths.TEXTURE % "arranhoes"); d.size = Vector3(1.0, 0.6, 1.6)
+	d.global_transform = Transform3D(Basis.looking_at(-front, Vector3.UP) * Basis(Vector3.RIGHT, PI / 2), hit.position)
+
+
+func _dead_hen() -> void:
+	var c := ground(COOP.x - 1.4, COOP.z + 0.6)
+	var white := StandardMaterial3D.new(); white.albedo_color = Color(0.85, 0.82, 0.76)
+	var red := StandardMaterial3D.new(); red.albedo_color = Color(0.45, 0.06, 0.04)
+	var body := MeshInstance3D.new(); add_child(body); morning.append(body); var bm := BoxMesh.new()
+	bm.size = Vector3(0.4, 0.18, 0.28); bm.material = white; body.mesh = bm; body.position = c + Vector3(0, 0.07, 0); body.rotation.y = 0.6
+	var blood := MeshInstance3D.new(); add_child(blood); morning.append(blood); var pm := PlaneMesh.new()
+	pm.size = Vector2(0.7, 0.5); pm.material = red; blood.mesh = pm; blood.position = c + Vector3(0.1, 0.01, 0.05)
+	for k in 10:  # feathers all round
+		var f := MeshInstance3D.new(); add_child(f); morning.append(f); var fm := PlaneMesh.new()
+		fm.size = Vector2(0.06, 0.03); fm.material = white; f.mesh = fm
+		f.position = c + Vector3(randf_range(-1.2, 1.2), 0.02, randf_range(-1.0, 1.0)); f.rotation.y = randf() * TAU
 
 
 ## A game started from a talk (Dialog "jogo"): Tenório's palitinho on the porch, or his bottles out the back.

@@ -20,6 +20,7 @@ func tour() -> void:
 func run() -> void:
 	await super()
 	await rotina_tests()
+	await sintonia_tests()
 
 
 # --- the routine in here (NpcCatalog "rotina"): out sweeping at dawn, back at nine; the radio's hour -----------------
@@ -35,3 +36,31 @@ func rotina_tests() -> void:
 	check(L.on_air == "voz_do_brasil" and L.radio.playing, "19:00 the radio: the Voz do Brasil")
 	WorldTime.reset(20 * 60 + 5); await wait(0.4)
 	check(L.on_air == "musica_venda", "20:00 back to music")
+
+
+# --- the radio's dial (Sintonia, ../docs/CONTEUDO_VILAREJO.md "A sintonia do rádio"): the stations come through near
+# them, the static between; in the small hours, with the three tasks done, the Colônia at 1180 and his mother's number
+func sintonia_tests() -> void:
+	WorldTime.reset(10 * 60); await wait(0.3)
+	var m: Node3D = L.room.get_node("som_musica_venda")
+	put(player, Vector3(m.position.x + 0.6, 0.02, m.position.z), PI / 2); await wait(0.4)
+	check(L.hud.prompt.text == "E · mexer no rádio", "at the radio: \"%s\"" % L.hud.prompt.text)
+	await tap("interact"); await wait(0.3)
+	var s: Sintonia = L.tuning
+	check(s != null and player.busy, "he takes the dial")
+	s.freq = 750.0; await wait(0.2)
+	check(s.strength(750.0).musica_venda > 0.9 and "viola" in s.heard.text, "750: music")
+	s.freq = 900.0; await wait(0.2)
+	check(s.heard.text == "" and s.players.radio_chiado.volume_db > -10.0, "between stations: static")
+	s.freq = 1180.0; await wait(0.3)
+	check(s.strength(1180.0).radio_colonia == 0.0, "1180 by day, or before the three tasks: nothing there")
+	await shot("venda_6_radio")
+	s.close(); await wait(0.2)
+	Story.set_task("sino", "feita"); Story.set_task("pao", "feita"); Story.set_task("galinhas", "feita")
+	WorldTime.reset(2 * 60 + 30)
+	s = L.tune(); s.freq = 1180.0
+	await until(func(): return Story.has("radio:colonia"), 14.0)
+	check(Story.has("radio:colonia") and "radio_colonia" in NotesReader.read and "0187" in s.heard.text,
+		"2:30, the tasks done: the Colônia at 1180, a voice reading numbers; the last is his mother's (0187)")
+	await shot("venda_7_colonia")
+	s.close(); Story.reset(); WorldTime.reset(16 * 60 + 30)

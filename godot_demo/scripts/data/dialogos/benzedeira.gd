@@ -7,12 +7,14 @@ extends RefCounted
 const ENTRADA := [
 	{"se": {"sem_marca": "firmina_conheceu"}, "vai": "primeira"},
 	{"se": {"noite": true}, "vai": "noite"},
+	{"se": {"lugar": "cemiterio", "marca": "tumulo:contou"}, "vai": "cemiterio_depois"},
 	{"se": {"lugar": "cemiterio"}, "vai": "cemiterio"},
 	{"se": {"lugar": "sino"}, "vai": "sino_tocando"},
 	{"vai": "oi"},
 ]
 
 const MENU := [
+	{"texto": "Perguntar do túmulo sem nome", "vai": "tumulo", "se": {"marca": "tumulo:visto", "sem_marca": "tumulo:contou"}},
 	{"texto": "Perguntar o que se fala por aí", "vai": "rumores"},
 	{"texto": "Perguntar sobre ela", "vai": "ela"},
 	{"texto": "Perguntar sobre a Colônia", "vai": "colonia"},
@@ -46,6 +48,14 @@ const NOS := {
 		"...Aquela fumaça não é de bicho, menino. Bicho não acende fogo. Tem gente vivendo lá.",
 	]},
 	"sino_tocando": {"fala": ["Agora não, menino. O Ângelus não espera, e a noite também não."]},
+	"tumulo": {"faz": [{"marca": "tumulo:contou"}], "fala": [
+		"...Você olhou a cruz. Não tem nome, não é?",
+		"Não é o meu Antero. O Antero tá lá em cima, no cemitério da Colônia. Morreu de febre, eu digo. Eu digo isso faz vinte anos.",
+		"O Antero era capataz de lá. Pegava quem fugia. O doutor pagava por cabeça, e era com isso que a gente comia.",
+		"Esse aqui era um menino. O Antero trouxe ele do rio, frio, e não quis levar pra cima. Eu enterrei sem saber o nome.",
+		"Debaixo da cruz tem a caderneta dele. Eu nunca abri. Abre você, que eu já não tenho olho pra isso.",
+	]},
+	"cemiterio_depois": {"fala": ["Eu limpo o túmulo de um menino que eu não sei o nome. É o que dá pra fazer. Não me olha assim."]},
 	"cemiterio": {"falas": [
 		["É o meu Antero. Eu limpo, a terra suja de novo. Trinta anos assim, a gente se entende."],
 		["De tarde eu venho aqui. De manhã e de noite é da Senhora, no cruzeiro. A tarde é dele."],

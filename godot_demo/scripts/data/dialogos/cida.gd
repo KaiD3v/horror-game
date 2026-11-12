@@ -8,6 +8,8 @@ const ENTRADA := [
 	{"se": {"sem_marca": "cida_conheceu"}, "vai": "primeira"},
 	{"se": {"marca": "cida:mapa", "sem_marca": "cida:chave"}, "vai": "chave"},
 	{"se": {"marca": "cida:contou", "sem_marca": "cida:cobertor"}, "vai": "cobertor"},
+	{"se": {"marca": "voz:abriu", "sem_marca": "cida:soube_abriu"}, "vai": "abriu"},
+	{"se": {"marca": "voz:resistiu", "sem_marca": "voz:abriu", "sem_marca_2": "cida:soube_resistiu"}, "vai": "resistiu"},
 	{"vai": "oi"},
 ]
 
@@ -31,6 +33,14 @@ const NOS := {
 	"cobertor": {"faz": [{"marca": "cida:cobertor"}], "fala": [
 		"O Seu Bento deixou um cobertor no forno. E pão com manteiga. Foi você que contou, né?",
 		"...Tá bom. Tá quentinho.",
+	]},
+	"abriu": {"faz": [{"marca": "cida:soube_abriu"}], "fala": [
+		"Você abriu. Eu sei que você abriu. Tá com cheiro deles.",
+		"Eu falei. Eu falei pra não abrir. ...Ainda bem que você tá aqui.",
+	]},
+	"resistiu": {"faz": [{"marca": "cida:soube_resistiu"}], "fala": [
+		"Ontem chamaram você, né? Eu ouvi daqui do forno. Você não abriu.",
+		"O pai devia ter feito igual.",
 	]},
 	"voz": {"fala": [
 		"De noite eles chamam a gente pelo nome. Com a voz de quem a gente gosta.",

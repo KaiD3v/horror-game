@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b3voet1sv5ehc"
-path="res://.godot/imported/mascate_cloth.png-84543006b8b69d62b7c2aceb9316d670.ctex"
+path.s3tc="res://.godot/imported/mascate_cloth.png-84543006b8b69d62b7c2aceb9316d670.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "a7b5c6b4e87467cc5ce3e465d602580e"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/props/mascate_cloth.png"
-dest_files=["res://.godot/imported/mascate_cloth.png-84543006b8b69d62b7c2aceb9316d670.ctex"]
+dest_files=["res://.godot/imported/mascate_cloth.png-84543006b8b69d62b7c2aceb9316d670.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

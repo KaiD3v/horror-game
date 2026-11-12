@@ -4,6 +4,7 @@ extends RefCounted
 
 const ENTRADA := [
 	{"se": {"sem_marca": "tenorio_conheceu"}, "vai": "primeira"},
+	{"se": {"lugar": "portao", "marca": "manha:galinha"}, "vai": "manha_galinha"},
 	{"se": {"lugar": "portao"}, "vai": "portao"},
 	{"se": {"lugar": "varanda"}, "vai": "varanda"},
 	{"se": {"lugar": "garrafas"}, "vai": "garrafas"},
@@ -55,6 +56,7 @@ const NOS := {
 		"Deixa comigo. Dois tiros pro alto e ele some pro mato. Ninguém precisa sujar a mão.",
 		"Toma, pelo serviço.",
 	]},
+	"manha_galinha": {"fala": ["Mais uma galinha. Essa não foi gente: foi aberta como carta. Eles tão descendo mais cedo, rapaz."]},
 	"portao": {"falas": [
 		["...Hm? Nada. Vim ver se o portão continua fechado. Continua."],
 		["Todo dia de manhã. Não pergunta. Desce comigo, que daqui a pouco eu abro a armaria."],

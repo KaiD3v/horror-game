@@ -32,6 +32,14 @@ const NOTES := [
 	{"id": "livro_viagens", "scene": "motorista", "at": Vector2(-0.35, -0.6), "yaw": 6.0, "from": 1.5, "paper": "caderno",
 		"title": "Livro de viagens do Abílio",
 		"text": "Colônia × Vila × Capital\n\n03/03 · subida: 6 internos novos, 2 crianças. Descida: roupa suja.\n17/03 · subida: caixas do doutor (vidro, frágil). Descida: nada.\n02/04 · subida: 4 da vila, \"para o tratamento\". Descida: nada.\n09/04 · subida: cartucho do Tenório, 6 caixas. O doutor pagou em dobro.\n16/04 · noite da sirene. O doutor mandou subir a vila inteira. Eu subo. O caminhão tá cheio.\n\n(daqui pra baixo, em branco)"},
+	# what he wrote down off Bento's radio in the small hours (Sintonia): scene "", noted, never lying anywhere
+	{"id": "radio_colonia", "scene": "", "at": Vector2.ZERO, "yaw": 0.0, "paper": "caderno",
+		"title": "Anotado do rádio (madrugada)",
+		"text": "1180 no dial, entre duas estações. Não devia ter nada ali.\nUm zumbido, uns bipes contando, uma sirene muito longe. E uma voz de homem, devagar, lendo números:\n\n0412... 0231... 0587... 0612... 0187.\n\n0187. O número do ofício.\nNinguém lê o número de quem morreu."},
+	# Antero's little book, under the nameless cross (../docs/CONTEUDO_VILAREJO.md "O túmulo sem nome")
+	{"id": "caderneta_antero", "scene": "", "at": Vector2(-27.6, -5.2), "yaw": 15.0, "paper": "ficha",
+		"title": "Caderneta do capataz Antero",
+		"text": "COLÔNIA SANTA CLARA · Vigilância\nFugas e recapturas\n\n1956 · nº 0233, mulher, pela mata. Recapturada.\n1958 · nº 0398, menor, 11 anos. Achado no rio, frio. Enterrado na vila, sem nome. (Firmina não sabe.)\n1959 · nº 112, menor, 6 anos, do preventório. Fugiu procurando a mãe (nº 0187). Achado no portão. Devolvido.\n\nO doutor paga por cabeça."},
 	# the nurse's house (../docs/CONTEUDO_VILAREJO.md "As casas acorrentadas"): her letters on the table, never sent
 	{"id": "cartas_celina", "scene": "enfermeira", "at": Vector2(0.45, -1.95), "yaw": -15.0, "from": 1.5, "paper": "caderno",
 		"title": "Cartas da Celina à mãe (1974)",
