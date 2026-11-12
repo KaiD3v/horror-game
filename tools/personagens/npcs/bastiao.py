@@ -1,7 +1,9 @@
 # Bastião, the ex-interno (docs/CONTEUDO_VILAREJO.md "Bastião, o ex-interno"): let out of the Colônia by the 1962 law
-# with nowhere to go, he lives in the ruin by the gate, by his fire. Old, thin, stooped; Hansen's disease on him the
-# way it was in those years: hands wrapped in strips of cloth, the eyebrows gone, pale patches on the face. A brown hood
-# round his head and a patched burlap vest over a light long-sleeved shirt, dark trousers, feet wrapped. Not a monster: a man.
+# with nowhere to go, he lives in the ruin by the gate, by his fire. Built after the author's reference model
+# (2026-11-12): upright and lean; a brown hood standing up over the head, its point falling back, the face looking out of
+# it; the hood's cloth spread over the shoulders as a short cape, longer down the back; a vest, brown above, a paler
+# patched panel below; long pale shirt sleeves; dark trousers; pale cloth-wrapped shoes. Hansen's disease the way it was
+# in those years, quietly: no eyebrows, pale patches on the face, strips of cloth round the wrists. Not a monster: a man.
 # Run alone: blender -b --factory-startup --python tools/personagens/npcs/bastiao.py (or all: npcs_build.py)
 #   -> blender/npcs/bastiao.blend, godot_demo/models/characters/npc_bastiao.glb, renders/npcs/npc_bastiao_{front,34}.png
 import os, sys
@@ -9,49 +11,51 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 from npc_kit import *
 
 lp.clear_scene()
-SKIN = (0.55, 0.40, 0.31)
+SKIN = (0.70, 0.54, 0.43)
 fc = Face(SKIN, 13)
-for cx, cy, r in ((16, 40, 6), (45, 22, 5), (30, 46, 4)):              # pale patches
-    fc.blend(cx, cy, r, r * 0.8, (0.70, 0.56, 0.47), 0.45)
-fc.eyes((0.28, 0.24, 0.20), open_=2.0, bags=0.9)                     # tired eyes; no brows (madarosis)
-fc.nose((0.52, 0.36, 0.30), 0.25)
-fc.mouth((0.30, 0.18, 0.15), (0.42, 0.28, 0.24), down=1, w=3)
-for x in range(18, 47, 3):                                            # a grey stubble
-    for y in range(3, 11, 3):
-        fc.px(x + (y % 2), y, (0.42, 0.40, 0.38))
+for cx, cy, r in ((17, 41, 5), (46, 21, 4)):                          # two pale patches
+    fc.blend(cx, cy, r, r * 0.8, (0.80, 0.66, 0.57), 0.35)
+for cx in (15, 48):
+    fc.blend(cx, 24, 6, 6, (0.62, 0.46, 0.38), 0.25)                 # hollow cheeks
+fc.eyes((0.26, 0.20, 0.16), open_=2.2, bags=0.7)                     # tired eyes; no brows (madarosis)
+fc.nose((0.64, 0.46, 0.38), 0.25)
+fc.mouth((0.36, 0.22, 0.19), (0.52, 0.36, 0.31), down=1, w=3)
 FACE = fc.image("bastiao_face_64")
 G = grime(61, 0.72)
 M = dict(skin=lp.mat("bs_skin", SKIN, tex=G), face=lp.mat("bs_face", SKIN, face=FACE),
-         shirt=lp.mat("bs_shirt", (0.66, 0.62, 0.52), tex=grime(62, 0.6)), pants=lp.mat("bs_pants", (0.30, 0.27, 0.22), tex=G),
-         hood=lp.mat("bs_hood", (0.36, 0.25, 0.15), tex=grime(63, 0.65)), patch=lp.mat("bs_patch", (0.55, 0.45, 0.32), tex=G),
-         wrap=lp.mat("bs_wrap", (0.70, 0.66, 0.56), tex=G))
-J = {"pelvis": (0, 0.02, 0.88), "spine": (0, 0.0, 1.08), "chest": (0, -0.07, 1.28), "neck": (0, -0.12, 1.36),
-     "skull": (0, -0.17, 1.55)}  # stooped
-sides(J, {"hip": (0.09, 0.02, 0.87), "knee": (0.09, -0.01, 0.48), "ank": (0.09, 0.02, 0.08), "toe": (0.09, -0.1, 0.03),
-          "sh": (0.17, -0.06, 1.27), "el": (0.2, -0.1, 1.02), "wr": (0.13, -0.24, 0.92), "tip": (0.1, -0.28, 0.85)})
+         shirt=lp.mat("bs_shirt", (0.66, 0.63, 0.55), tex=grime(62, 0.62)),
+         pants=lp.mat("bs_pants", (0.20, 0.18, 0.15), tex=G),
+         hood=lp.mat("bs_hood", (0.29, 0.19, 0.11), tex=grime(63, 0.78)),
+         vest=lp.mat("bs_vest", (0.45, 0.36, 0.25), tex=grime(64, 0.7)),
+         panel=lp.mat("bs_panel", (0.58, 0.51, 0.40), tex=grime(65, 0.6)),
+         wrap=lp.mat("bs_wrap", (0.68, 0.66, 0.60), tex=G))
+J = {"pelvis": (0, 0.0, 0.92), "spine": (0, 0.0, 1.12), "chest": (0, -0.01, 1.33), "neck": (0, -0.02, 1.41),
+     "skull": (0, -0.03, 1.60)}
+sides(J, {"hip": (0.09, 0.0, 0.91), "knee": (0.095, -0.01, 0.50), "ank": (0.095, 0.02, 0.08), "toe": (0.095, -0.10, 0.03),
+          "sh": (0.18, 0.0, 1.33), "el": (0.21, 0.02, 1.07), "wr": (0.17, -0.13, 0.90), "tip": (0.15, -0.19, 0.83)})
 K = lp.Kit()
-K.tube("hips", M["pants"], "hips", J["pelvis"], J["spine"], [(0, 0.15, 0.12), (1, 0.14, 0.11)], n=8)
-K.tube("shirt", M["shirt"], "chest", (0, 0.0, 0.95), J["chest"], [(0, 0.16, 0.12, -0.01), (0.5, 0.155, 0.115), (1, 0.12, 0.10)], n=8)
-# the vest over it, burlap, open at the neck, patched (the drawing he was redone from: a hood and a vest, 2026-11-12)
-K.tube("vest", M["hood"], "chest", (0, 0.0, 0.9), V(J, "spine", "chest", 0.95), [(0, 0.175, 0.135, -0.01), (0.5, 0.17, 0.13), (1, 0.15, 0.115)], n=8)
-for x, z, w, h in ((-0.07, 1.0, 0.09, 0.08), (0.08, 1.16, 0.07, 0.06), (0.1, 0.96, 0.06, 0.07)):
-    K.box("patch", M["patch"], "chest", (x, -0.142 if z < 1.1 else -0.152, z), (w, 0.012, h))
+K.tube("hips", M["pants"], "hips", J["pelvis"], J["spine"], [(0, 0.15, 0.115), (1, 0.145, 0.11)], n=8)
+# the vest over the shirt: brown, a paler patched panel low on the front
+K.tube("vest", M["vest"], "chest", (0, 0.0, 0.86), (0, -0.01, 1.31),
+       [(0, 0.185, 0.135), (0.45, 0.18, 0.13), (0.8, 0.17, 0.125), (1, 0.14, 0.11)], n=10)
+K.box("panel", M["panel"], "hips", (0, -0.136, 0.97), (0.32, 0.012, 0.2))
+K.box("patch", M["panel"], "chest", (0.07, -0.135, 1.15), (0.08, 0.012, 0.07), rot=(0, 0.1, 0))
 K.seg("neck", M["skin"], "neck", J["chest"], J["neck"], 0.045, 0.04)
 head(K, J, M["skin"], M["face"], [(0, 0.06, 0.065), (0.15, 0.08, 0.085), (0.5, 0.09, 0.098), (0.85, 0.085, 0.092), (1, 0.045, 0.05)])
 ears(K, J, M["skin"])
-# the hood: a loose shell round the whole head, set back so the face looks out of its opening, a peak falling back at
-# the crown; its lower edge spreads over the shoulders (the cowl)
-K.tube("hood", M["hood"], "head", V(J, "neck", "skull", -0.2), V(J, "neck", "skull", 1.18),
-       [(0, 0.13, 0.11, 0.08), (0.2, 0.125, 0.12, 0.078), (0.55, 0.13, 0.13, 0.075), (0.85, 0.12, 0.12, 0.07),
-        (1, 0.05, 0.06, 0.07)], n=12)
-crown = V(J, "neck", "skull", 1.0) + Vector((0, 0.07, 0))
-K.spike("peak", M["hood"], "head", crown, crown + Vector((0, 0.12, -0.08)), 0.06, n=6)
-K.tube("cowl", M["hood"], "chest", V(J, "chest", "neck", 0.2), V(J, "chest", "neck", 1.0),
-       [(0, 0.2, 0.15, 0.02), (0.6, 0.16, 0.13, 0.025), (1, 0.12, 0.11, 0.03)], n=10)
-limbs(K, J, M, M["shirt"], M["shirt"], M["pants"], M["wrap"], upper_r=0.045, thigh_r=0.08)  # long light sleeves
-for s in (".L", ".R"):                                               # the hands wrapped in strips of cloth
-    K.seg("wrap", M["wrap"], "hand" + s, V(J, "wr" + s), V(J, "wr" + s, "tip" + s, 0.9), 0.04, 0.035)
-    K.seg("cuff", M["shirt"], "forearm" + s, V(J, "el" + s, "wr" + s, 0.85), V(J, "wr" + s), 0.04, 0.038)
+# the hood: loose round the head and well above it, set back so the whole face looks out; its top drawn back to a point
+K.tube("hood", M["hood"], "head", V(J, "neck", "skull", 0.05), V(J, "neck", "skull", 1.7),
+       [(0, 0.13, 0.11, 0.105), (0.18, 0.132, 0.13, 0.085), (0.345, 0.14, 0.14, 0.07), (0.485, 0.142, 0.145, 0.025),
+        (0.636, 0.13, 0.14, 0.04), (0.788, 0.09, 0.1, 0.07), (0.909, 0.05, 0.055, 0.1), (1, 0.015, 0.015, 0.13)], n=12)
+# (its edge comes down to the brow and stands open round the cheeks; its point rises well over the head)  # (open under the chin: the face framed, no beard)
+# the hood's cloth over the shoulders: a short cape, the arms coming out under it, longer down the back
+K.tube("cape", M["hood"], "chest", (0, 0.03, 1.16), (0, -0.01, 1.44),
+       [(0, 0.28, 0.16, 0.1), (0.5, 0.27, 0.15, 0.09), (0.82, 0.2, 0.125, 0.07), (1, 0.1, 0.08, 0.05)], n=12)
+# (set back: over the shoulders and the back only, the vest open in front)
+K.box("back", M["hood"], "chest", (0, 0.17, 1.02), (0.4, 0.03, 0.3), rot=(-0.12, 0, 0))
+limbs(K, J, M, M["shirt"], M["shirt"], M["pants"], M["wrap"], upper_r=0.045, thigh_r=0.085)
+for s in (".L", ".R"):                                               # strips of cloth round the wrists
+    K.seg("wrist", M["wrap"], "forearm" + s, V(J, "el" + s, "wr" + s, 0.8), V(J, "wr" + s), 0.041, 0.039)
 finish("bastiao", K, J, [
-    (f, [("chest", "X", 2.5 * b), ("head", "X", 4 * b), ("head", "Z", -8 * lk)])
+    (f, [("chest", "X", 1.5 * b), ("head", "X", 3 * b), ("head", "Z", -7 * lk)])
     for f, b, lk in ((1, 0, 0), (16, 1, 0.3), (31, 0.2, 1), (46, 1, 0.5), (61, 0, 0))], head_scale=1.15)
