@@ -467,10 +467,10 @@ func use_cure() -> void:
 
 
 ## A blow (from = who struck it). Blocking with it in front, the machete takes it: only BLOCK_CHIP gets through.
-func take_damage(n: float, from: Node3D = null) -> void:
+func take_damage(n: float, from: Node3D = null, pierce := false) -> void:  # pierce: no block holds it (O Porteiro's smash)
 	if mode == Mode.DEAD:
 		return
-	if blocking and from and (-global_basis.z).dot((from.global_position - global_position).normalized()) > BLOCK_ARC:
+	if blocking and from and not pierce and (-global_basis.z).dot((from.global_position - global_position).normalized()) > BLOCK_ARC:
 		health -= n * BLOCK_CHIP
 		shake = 0.12
 		sfx("bloqueio", -2.0)

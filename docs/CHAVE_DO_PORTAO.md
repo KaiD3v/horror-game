@@ -1,6 +1,6 @@
 # A chave do portão: o chefe do vilarejo e as melhorias (plano)
 
-*Data: 2026-11-11. Plano. Feito: fases 1 e 2 (ver as seções "Fase N, feita" no fim). Continua [TUTORIAL_VILAREJO.md](TUTORIAL_VILAREJO.md). Coordenadas em
+*Data: 2026-11-11. Plano. Feito: fases 1 a 3 (ver as seções "Fase N, feita" no fim). Continua [TUTORIAL_VILAREJO.md](TUTORIAL_VILAREJO.md). Coordenadas em
 Godot (x, z).*
 
 ## A ideia
@@ -130,3 +130,40 @@ fundos, que já está meio caída.
   centro; 6 virotes numa caixa ao pé da escada. Marcadores para o chefe: `porteiro`, `altar`, `caixao`, `escada`.
 - Ainda sem o chefe: é a fase 3.
 - Testes: `test_vilarejo.gd` `jazigo_tests`, `test_jazigo.gd`.
+
+## Fase 3, feita: O Porteiro
+
+- **O modelo** (`tools/personagens/porteiro_build.py`, mesmo kit dos mutantes; renders em `renders/porteiro/`): 2,3 m,
+  curvado, uniforme de brim azul com botões de latão, a cara enfaixada com um olho à mostra, o quepe de porteiro, os
+  antebraços enfaixados, o molho de chaves de ferro na mão direita e o lampião aceso no peito (material `o_lampiao`). 1.464
+  triângulos, 16 ossos. Animações: `Idle`, `Walk`, `Attack` (golpe lateral), `Smash` (golpe de cima, preso no chão do
+  quadro 28 ao 56), `Throw`, `Roar`, `Jump`, `Hit`, `Death`.
+- **O comportamento** (`scripts/enemies/porteiro.gd`), 30 de vida:
+
+  | Fase | O que ele faz |
+  |---|---|
+  | 0 | espera junto ao caixão; acorda quando você pisa no chão da cripta (ou se apanhar) |
+  | 1 (30 a 20) | anda até você; a cada três golpes, ou quando você bloqueia demais, o golpe de cima: as chaves tilintam antes, ele atravessa o bloqueio (2 de dano) e depois fica 1 s preso no chão. O lateral se bloqueia (só passa a lasca). |
+  | 2 (20 a 10) | salta para o altar e arremessa uma pedra a cada 3 s. As colunas param as pedras. Lá em cima o facão não alcança ("Lá em cima o facão não alcança."); só o virote, que acerta o lampião e o faz cambalear. |
+  | 3 (10 a 0) | o lampião quebra, ele desce e a sala apaga. Corre (2,1 m/s) para a lamparina na mão; no escuro ele ouve, como o Poceiro. Golpe pelas costas tira o triplo. |
+
+  - O facão não o faz cambalear: só o virote e o golpe pelas costas.
+  - **Nenhum golpe pula uma fase:** a vida para no limite da próxima, e ele só morre na última.
+- **A arena** (`jazigo.gd`):
+  - ao acordar: um desabamento fecha a escada atrás de você, aparece o nome e a vida dele no alto, e toca a música da luta
+    (`music/chefe.mp3`, se existir);
+  - na fase 2 aparece uma segunda caixa de 6 virotes, se a primeira já foi pega;
+  - na fase 3 os círios se apagam um a um.
+- **A morte:** a escada abre e os círios voltam. No chão fica o molho de chaves com a chave do portão (a tarefa termina ao
+  pegar). No caixão, um coração de lata girando e brilhando: "Você encontrou · Coração de ex-voto", um coração a mais. Depois
+  disso a cripta fica quieta (Story `morto:porteiro`).
+- `Player.take_damage(n, de, pierce)`: um golpe que atravessa o bloqueio.
+- Sons novos (ElevenLabs, 43 créditos): `porteiro_chaves`, `porteiro_golpe`, `porteiro_gemido`, `porteiro_rugido`,
+  `porteiro_queda`, `lampiao_quebrar`, `pedra_quebrar`.
+- Teste: `test_jazigo.gd` `boss_tests`. Cobre:
+  - o lateral bloqueado e o golpe de cima atravessando;
+  - o golpe pelas costas e nenhuma fase pulada;
+  - o altar: facão inútil, virote, pedra parada na coluna e pedra que acerta no aberto;
+  - o escuro: ele não acha quem está agachado com a lamparina no gancho, e vai atrás da lamparina na mão;
+  - a morte, a chave e o coração.
+- **Falta:** a música da luta (o prompt vem na fase 4, para você gerar).
