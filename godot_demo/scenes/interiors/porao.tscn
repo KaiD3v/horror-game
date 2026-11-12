@@ -1,0 +1,15 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/porao.gd" id="1"]
+
+[node name="Porao" type="Node3D"]
+script = ExtResource("1")
+title = "Porão da venda"
+floor_kind = "terra"
+model = "porao"
+door = "porao"
+out_to = "res://scenes/interiors/venda.tscn"
+exit_prompt = "E · subir pela escada"
+cutaway = Vector3(0, 6, 4.5)
+ambient = 0.1
+dim = 0.7

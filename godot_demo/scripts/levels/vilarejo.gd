@@ -77,6 +77,7 @@ var camp: Array[Node3D] = []                   # the mule, the cart, the tarp, h
 var log_pivot: Node3D                          # the log, turning on its foot
 var log_rope: Target
 var down_rope: Interactable
+const QUARRY := Vector3(47.4, 0, -28.0)        # the gallery's mouth at the foot of the east bank (the pickaxe)
 const GRAVE := Vector3(-27.6, 0, -5.5)         # the nameless grave Dona Firmina tends (her "Antero": cemetery grave 2,1)
 const VOICE_HOUSES := ["casa_03", "casa_05", "casa_06", "casa_09", "casa_12", "casa_13"]  # shut houses, nobody in them
 const VOICE_FOR := 45.0                        # how long it calls
@@ -142,6 +143,10 @@ func _build() -> void:
 func _player_start() -> Transform3D:
 	# back out of a door (any porta_<arriving>): in front of it, back to the door; otherwise at the road's end, facing
 	# north up it
+	if SceneRouter.arriving == "pedreira":  # out of the quarry's gallery: before its mouth, facing west
+		SceneRouter.arriving = ""
+		var g := ground(QUARRY.x - 1.6, QUARRY.z, 40.0)
+		return Transform3D(Basis(Vector3.UP, PI / 2), g + Vector3(0, 0.3, 0))
 	if SceneRouter.arriving == "campanario":  # up the tower's trapdoor: in the belfry, looking out over the square
 		SceneRouter.arriving = ""
 		return Transform3D(Basis(Vector3.UP, belfry.basis.get_euler().y + PI), belfry * Vector3(-0.55, 0.1, 0.8))
@@ -547,6 +552,7 @@ func _belfry() -> void:
 		_mascate()
 		_ravine()
 		_grave()
+		_quarry()
 		if not Story.has("bastiao:expulso"):
 			_smoke(ground(RUIN_SMOKE.x, RUIN_SMOKE.z), 6.0, true)
 		_smoke(ground(QUARRY_SMOKE.x, QUARRY_SMOKE.z), 14.0, false)).call_deferred()  # (on the ground: once it is in)
@@ -877,6 +883,31 @@ func _hanging_rope(top: Vector3, bottom: Vector3) -> void:
 
 func _put_player(at: Vector3, yaw: float) -> void:
 	player.global_position = at; player.velocity = Vector3.ZERO; player.rotation.y = yaw
+
+
+# --- the quarry (../docs/CONTEUDO_VILAREJO.md "A pedreira"): at the foot of the east bank, under the smoke seen from the
+# belfry, a gallery's mouth in a rock face, its timber frame, a quarry cart on its side; rubble fills it (Breakable
+# "entulho": the pickaxe, which comes later). Cleared, the gallery (pedreira).
+func _quarry() -> void:
+	var g := ground(QUARRY.x, QUARRY.z, 40.0)
+	var rock := Looks.triplanar("rock", 1.0, Color(0.6, 0.57, 0.53))
+	Looks.box(self, g + Vector3(1.4, 2.0, 0), Vector3(1.6, 5.0, 6.0), rock)              # the quarried face
+	var planks := Looks.triplanar("planks", 1.0, Color(0.6, 0.5, 0.4))
+	for dz in [-1.0, 1.0]:                                                                 # the mouth's timber frame
+		Looks.box(self, g + Vector3(0.45, 1.2, dz), Vector3(0.22, 2.4, 0.22), planks)
+	Looks.box(self, g + Vector3(0.45, 2.45, 0), Vector3(0.26, 0.26, 2.5), planks)
+	var dark := MeshInstance3D.new(); add_child(dark); var dm := BoxMesh.new(); dm.size = Vector3(0.05, 2.3, 1.8)
+	var black := StandardMaterial3D.new(); black.albedo_color = Color(0.02, 0.02, 0.02); dm.material = black; dark.mesh = dm
+	dark.position = g + Vector3(0.58, 1.15, 0)
+	var all: Node = load(Paths.PROP % "mascate").instantiate()
+	var cart: Node3D = all.find_child("vagonete", false); all.remove_child(cart); cart.owner = null; all.free()
+	add_child(cart); cart.position = ground(QUARRY.x - 1.6, QUARRY.z + 2.4, 40.0); cart.rotation.y = 0.6; Looks.n64(cart)
+	var heap := Breakable.make(self, g + Vector3(0.2, 0, 0), PI / 2, "pedreira_entulho", "entulho")
+	var spot := Node3D.new(); add_child(spot); spot.position = g + Vector3(-0.2, 0, 0)
+	var into := Door.make(spot, "E · entrar na galeria", Paths.interior("pedreira"), "pedreira", 1.4)
+	into.enabled = Story.has("quebrado:pedreira_entulho")
+	if is_instance_valid(heap):
+		heap.broken.connect(func(): into.enabled = true)
 
 
 # --- the nameless grave (../docs/CONTEUDO_VILAREJO.md "O túmulo sem nome"): the one Dona Firmina kneels at in the

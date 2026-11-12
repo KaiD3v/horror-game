@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/pedreira.gd" id="1"]
+
+[node name="Pedreira" type="Node3D"]
+script = ExtResource("1")
+title = "Galeria da pedreira"
+floor_kind = "terra"
+model = "pedreira"
+door = "pedreira"
+exit_prompt = "E · sair da galeria"
+cutaway = Vector3(0, 9, 6)
+ambient = 0.08
+dim = 0.8

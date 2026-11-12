@@ -97,6 +97,22 @@ kbx((0, 2.02, 0.45), (1.6, 0.08, 0.12), "cromo"); kbx((0, -2.15, 0.36), (1.4, 0.
 kbx((1.1, 0.2, 0.75), (0.05, 1.0, 0.6), "carro_tinta", rot=(0, 0, -0.9))                     # the driver's door, open
 obj(k, "carro")
 
+# --- a quarry cart on its side by the gallery's mouth (the quarry, docs/CONTEUDO_VILAREJO.md fase 7) ----------------------
+v = B()
+TIP = Matrix.Rotation(math.radians(80), 4, "Y")
+def vbx(cn, size, m_):
+    v.box(TIP @ Matrix.LocRotScale(Vector(cn), None, Vector(size)), m_)
+vbx((0, 0, 0.55), (0.8, 1.1, 0.06), "iron")
+for sx in (-1, 1):
+    vbx((sx * 0.4, 0, 0.75), (0.04, 1.1, 0.4), "iron"); vbx((0, sx * 0.55, 0.75), (0.8, 0.04, 0.4), "iron")
+for sx in (-1, 1):
+    for sy in (-1, 1):
+        a_ = TIP @ Vector((sx * 0.42, sy * 0.35, 0.3)); b_ = TIP @ Vector((sx * 0.48, sy * 0.35, 0.3))
+        frustum(v, tuple(a_), tuple(b_), 0.16, 0.16, 8, "iron", caps=True)
+for k in range(5):
+    bx(v, (rng.uniform(-0.6, 0.6), rng.uniform(-0.7, 0.7) - 0.9, 0.1), (0.25, 0.22, 0.18), "stone", rot=(0, 0, rng.uniform(0, 3)))
+obj(v, "vagonete")
+
 bpy.ops.wm.save_as_mainfile(filepath=paths.blend("cenarios", "mascate"))
 bpy.ops.export_scene.gltf(filepath=paths.prop("mascate"), export_format="GLB", export_yup=True)
 print("MASCATE ok")

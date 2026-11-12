@@ -40,6 +40,14 @@ const NOTES := [
 	{"id": "caderneta_antero", "scene": "", "at": Vector2(-27.6, -5.2), "yaw": 15.0, "paper": "ficha",
 		"title": "Caderneta do capataz Antero",
 		"text": "COLÔNIA SANTA CLARA · Vigilância\nFugas e recapturas\n\n1956 · nº 0233, mulher, pela mata. Recapturada.\n1958 · nº 0398, menor, 11 anos. Achado no rio, frio. Enterrado na vila, sem nome. (Firmina não sabe.)\n1959 · nº 112, menor, 6 anos, do preventório. Fugiu procurando a mãe (nº 0187). Achado no portão. Devolvido.\n\nO doutor paga por cabeça."},
+	# the venda's cellar: Odete's letter on her trunk, never opened (../docs/CONTEUDO_VILAREJO.md "O porão da venda")
+	{"id": "carta_odete", "scene": "porao", "at": Vector2(-1.75, -1.0), "yaw": -10.0, "from": 1.0, "paper": "caderno",
+		"title": "Carta da Odete (1969)",
+		"text": "Bento,\nnão sobe. Eles dizem que aqui a gente sara. Eu não saro, mas eu como, e tem cama.\nMe deram um número: 0612. Você vai querer saber.\nO doutor começou um remédio novo nas mulheres do pavilhão. Depois dele a gente não sente mais a mão, nem o frio, nem saudade.\nSe um dia bater na tua porta de noite e for a minha voz, não abre. Eu não vou descer, Bento. Não do jeito que você quer.\nTua Odete"},
+	# the quarry's gallery: the Colônia's store (../docs/CONTEUDO_VILAREJO.md "A pedreira")
+	{"id": "inventario_soro", "scene": "pedreira", "at": Vector2(0.95, -2.65), "yaw": 8.0, "from": 1.5, "paper": "oficio",
+		"title": "Inventário do depósito",
+		"text": "COLÔNIA SANTA CLARA · Depósito da pedreira\nLonge da vista da vila, fresco e escuro.\n\nSoro R-4 ........ 40 caixas de 12 ampolas\nEntregues ao pavilhão B ..... 22\nAo Severino, \"para a noite\" ..... 1\nRestam ............. 17\n\nO frio conserva o soro. O soro conserva o resto.\nE. M."},
 	# the nurse's house (../docs/CONTEUDO_VILAREJO.md "As casas acorrentadas"): her letters on the table, never sent
 	{"id": "cartas_celina", "scene": "enfermeira", "at": Vector2(0.45, -1.95), "yaw": -15.0, "from": 1.5, "paper": "caderno",
 		"title": "Cartas da Celina à mãe (1974)",

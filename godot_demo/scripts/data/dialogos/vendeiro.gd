@@ -24,6 +24,8 @@ const MENU := [
 	{"texto": "Falar do pão", "vai": "pao_lembrete", "se": {"tarefa": ["pao", "ativa"], "sem_marca": "cida_conheceu"}},
 	{"texto": "Contar da menina no forno", "vai": "pao_contou", "se": {"tarefa": ["pao", "ativa"], "marca": "cida_conheceu"}},
 	{"texto": "Dizer que foi um gato", "vai": "pao_gato", "se": {"tarefa": ["pao", "ativa"], "marca": "cida_conheceu"}},
+	{"texto": "Contar do porão", "vai": "porao_leu", "se": {"marca": "aberta:porao", "leu": "carta_odete", "sem_marca": "bento:porao"}},
+	{"texto": "Contar do porão", "vai": "porao", "se": {"marca": "aberta:porao", "sem_marca": "bento:porao"}},
 	{"texto": "Falar do Juca", "vai": "lembrete", "se": {"tarefa": ["alambique", "ativa"], "nao_tem": "facao"}},
 	{"texto": "Contar do alambique", "vai": "noticia", "se": {"tarefa": ["alambique", "ativa"], "tem": "facao"}},
 	{"texto": "Ir embora", "vai": "fim"},
@@ -88,6 +90,15 @@ const NOS := {
 	"pao_gato": {"faz": [{"marca": "cida:segredo"}, {"tarefa": ["pao", "feita"]}], "fala": [
 		"Um gato? ...Gato que come pão e deixa pegada de gente.",
 		"Tá bom. Foi um gato. Eu vou deixar o balaio destampado pro gato, então. Gato precisa comer.",
+	]},
+	"porao": {"faz": [{"marca": "bento:porao"}], "fala": [
+		"...Você abriu. O número dela. Eu risquei no balcão pra não esquecer, e depois não tive coragem de abrir mais.",
+		"As coisas da Odete estão lá. A carta também. Eu nunca abri. Fica fechada, freguês. Fica.",
+	]},
+	"porao_leu": {"faz": [{"marca": "bento:porao"}], "fala": [
+		"...Você leu. Não me conta o que diz. Me diz só uma coisa: ela tava com medo?",
+		"Não? ...Então é a Odete mesmo.",
+		"Ela pediu pra eu não abrir a porta de noite, não pediu? Eu sabia. Eu nunca abri. Eu nunca entendi por quê, e nunca abri.",
 	]},
 	"fiado": {"fala": [
 		"O caderno? Está tudo anotado. O Zé me deve um quilo de sal. A Dita, querosene. O padre, vinho de missa.",

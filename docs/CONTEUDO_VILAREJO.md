@@ -1,7 +1,7 @@
 # O vilarejo vivo: conteúdo secundário (plano)
 
 *Data: 2026-11-11. Continua [TUTORIAL_VILAREJO.md](TUTORIAL_VILAREJO.md) e [CHAVE_DO_PORTAO.md](CHAVE_DO_PORTAO.md).
-Fases 1 a 6 feitas (ver "Fase N, feita" no fim); o resto é plano. Coordenadas em Godot (x, z).*
+As sete fases estão feitas (ver "Fase N, feita" no fim). Ficou em aberto a procissão, que depende do autor. Coordenadas em Godot (x, z).*
 
 ## O problema
 
@@ -588,3 +588,55 @@ dela (`cartas_celina`) e as falas do Bastião foram ajustadas.
   - a voz aberta (ferimento, a Cida sabe) e a voz fechada;
   - os arranhões e a galinha, com as falas, e o meio-dia.
 - Capturas `v76` a `v79` e `venda_6/7`.
+
+## Fase 7, feita: os lugares do depois
+
+**O porão da venda** (`venda.gd`, `porao_build.py`, `porao.tscn`, `porao.gd`):
+- **O número:** no canto esquerdo do balcão, riscado na madeira com a ponta de uma faca: um coração, "O." e **0612**
+  ("E · olhar o balcão"). É o número da Odete, a mulher do Bento, na Colônia. A rádio da Colônia também lê o 0612 na
+  fase 6, e quem presta atenção já conhece o número.
+- **O cadeado:** um alçapão de ferro no chão da venda, com um cadeado de segredo de latão (`scripts/ui/segredo.gd`):
+  - quatro rodas de 0 a 9: A/D escolhem a roda, W/S giram, E puxa, Esc larga;
+  - com o número errado, "O cadeado não cede."; com 0612, ele abre (Story "aberta:porao") e o alçapão leva ao porão.
+- **O porão:**
+  - baixo, de pedra, com prateleiras de conserva e sacos de farinha;
+  - no canto, as coisas da Odete: o baú aberto, o vestido dobrado, o espelho de mão, a foto num prego;
+  - em cima do baú, **a carta da Odete** (nota `carta_odete`, de 1969, nunca aberta): o número 0612, o remédio novo nas mulheres
+    do pavilhão, e "Se um dia bater na tua porta de noite e for a minha voz, não abre."
+  - duas ataduras na prateleira;
+  - a escada de mão sobe de volta para a venda.
+- **O Bento** ("Contar do porão"): se o jogador não leu a carta, "Fica fechada, freguês. Fica." Se leu, "Me diz só uma
+  coisa: ela tava com medo?... Ela pediu pra eu não abrir a porta de noite, não pediu? Eu nunca abri." A condição nova
+  `leu` do `Dialog` diz se a nota foi lida.
+- **Mudou do plano:** o porão abre agora, pelo número, e não pela picareta. É o único lugar da fase que não espera a Colônia.
+
+**A pedreira** (`vilarejo.gd` `_quarry`, `pedreira_build.py`, `pedreira.tscn`, `pedreira.gd`):
+- **A boca:** fica no pé do barranco leste, embaixo da fumaça que se vê do campanário. Tem uma face de rocha cortada,
+  a boca da galeria escorada com madeira e um carrinho de mina tombado ao lado (`vagonete`, em `props/mascate.glb`).
+- **O entulho:** a boca está cheia de entulho (`Breakable` "entulho"): "Pedra demais para tirar com as mãos."
+  - **A picareta** ainda não existe no jogo: ela vem da Colônia. Com ela, o entulho cai e "E · entrar na galeria" leva para dentro.
+- **A galeria:**
+  - uma passagem curta escorada que termina no depósito da Colônia: caixas marcadas FRÁGIL, uma estante de
+    ampolas vermelhas na mesa e um braseiro com brasa ainda quente;
+  - "Brasa ainda quente, e um cobertor dobrado do lado. Alguém dorme aqui. Não é o doutor." Quem é fica para a Colônia;
+  - o **inventário do depósito** (nota `inventario_soro`): 40 caixas de soro R-4, 22 para o pavilhão B, 1 "ao Severino, para a noite";
+  - uma caixa com 6 virotes.
+- Dá para chegar a pé do largo até a boca, como os testes conferem.
+
+**O túnel do ossuário:** já existia (`Breakable` no ossuário, a picareta). O Bastião agora conta para onde ele leva.
+
+**Testes:**
+- `test_venda.gd` `porao_tests`: o número no balcão, o cadeado (1234 não abre, 0612 abre) e a descida.
+- `test_porao.gd`: o porão, a carta (a nota dele) e as ataduras.
+- `test_pedreira.gd`: a galeria, o inventário, o braseiro e os virotes.
+- `test_vilarejo.gd` `pedreira_tests`: a boca alcançável, o entulho sem picareta, a picareta derrubando o entulho e a entrada.
+- Capturas `v80`, `venda_8/9`, `porao_*` e `pedreira_*`.
+- O teste geral dos interiores aceita agora salas sem janela (o porão e a galeria).
+
+## O que ficou
+
+- **A procissão** (seção 7): uma noite, depois do Porteiro, uma fila de luzes desce do portão ao cemitério. Falta decidir
+  quem são: a Carpideira com outras, ou os da Colônia.
+- **A casa de farinha** (seção 6, "abertos agora"): não entrou nas sete fases.
+- **A picareta:** vem com o capítulo da Colônia e abre o túnel do ossuário e a pedreira.
+- **Arte para melhorar:** a galinha morta (um bloco), o pneu na casa do motorista e a luz no fundo da ravina.

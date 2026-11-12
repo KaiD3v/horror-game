@@ -1455,3 +1455,31 @@ func noite_tests() -> void:
 	WorldTime.minutes = 3 * 1440.0 + 13 * 60.0; await wait(0.3)
 	check(L.morning.is_empty() and not Story.has("manha:galinha"), "gone by noon")
 	_hour(16.5); Story.reset()
+
+
+# --- the places for later (../docs/CONTEUDO_VILAREJO.md fase 7): the quarry's mouth in the east bank, rubble in it (no
+# pickaxe: "Pedra demais"); with the pickaxe it comes down and the gallery opens; reachable from the road
+func pedreira_tests() -> void:
+	L.night_watch = false
+	await wait(1.0)  # (the navigation map syncs a few frames in)
+	var g: Vector3 = L.ground(L.QUARRY.x, L.QUARRY.z, 40.0)
+	check(L.reachable(L.ground(0, -6), L.ground(L.QUARRY.x - 1.6, L.QUARRY.z, 40.0)), "the quarry's mouth: walkable to from the square")
+	Inventory.items.erase("picareta")
+	put(player, g + Vector3(-1.2, 0, 0), -PI / 2); await wait(0.5)
+	await shot("v80_pedreira")
+	await tap("interact"); await wait(0.4)
+	check(not Story.has("quebrado:pedreira_entulho"), "without the pickaxe the rubble stays")
+	Inventory.add("picareta")
+	await tap("interact"); await wait(1.3)
+	for i in 10:
+		if Story.has("quebrado:pedreira_entulho"):
+			break
+		await tap("attack"); await wait(0.9)
+	check(Story.has("quebrado:pedreira_entulho"), "the pickaxe brings the rubble down")
+	await tap("draw"); await wait(1.0)
+	put(player, g + Vector3(-0.6, 0, 0), -PI / 2); await wait(0.4)
+	SceneRouter.requested = ""
+	await tap("interact")
+	check(SceneRouter.requested == Paths.interior("pedreira"), "E: into the gallery")
+	SceneRouter.requested = ""; SceneRouter.arriving = ""
+	Story.reset(); Inventory.reset(); Inventory.give_tools()

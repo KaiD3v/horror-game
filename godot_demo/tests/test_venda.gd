@@ -21,6 +21,7 @@ func run() -> void:
 	await super()
 	await rotina_tests()
 	await sintonia_tests()
+	await porao_tests()
 
 
 # --- the routine in here (NpcCatalog "rotina"): out sweeping at dawn, back at nine; the radio's hour -----------------
@@ -64,3 +65,28 @@ func sintonia_tests() -> void:
 		"2:30, the tasks done: the Colônia at 1180, a voice reading numbers; the last is his mother's (0187)")
 	await shot("venda_7_colonia")
 	s.close(); Story.reset(); WorldTime.reset(16 * 60 + 30)
+
+
+# --- the cellar (../docs/CONTEUDO_VILAREJO.md "O porão da venda"): the number scratched on the counter, the combination
+# padlock on the trapdoor (wrong, then 0612), down the ladder
+func porao_tests() -> void:
+	var s: Vector3 = L.SCRATCH
+	put(player, Vector3(s.x, 0.02, s.z + 0.6), 0.0); await wait(0.4)
+	check(L.hud.prompt.text == "E · olhar o balcão", "the counter's end: \"%s\"" % L.hud.prompt.text)
+	await tap("interact"); await wait(0.3)
+	check(Story.has("porao:numero"), "scratched into it: a heart, an O., 0612")
+	await shot("venda_8_balcao")
+	put(player, L.TRAPDOOR + Vector3(0, 0.02, 0.7), 0.0); await wait(0.4)
+	check(L.hud.prompt.text == "E · abrir o cadeado de segredo", "the iron trapdoor: \"%s\"" % L.hud.prompt.text)
+	await tap("interact"); await wait(0.3)
+	var lock: Segredo = L.cracking
+	check(lock != null and player.busy, "its combination padlock: four wheels")
+	lock.set_code("1234"); check(not lock.pull(), "1234: it does not give")
+	await shot("venda_9_segredo")
+	lock.set_code("0612"); lock.pull(); await wait(0.3)
+	check(Story.has("aberta:porao") and L.down.enabled and not player.busy, "0612: open")
+	put(player, L.TRAPDOOR + Vector3(0, 0.02, 0.4), 0.0); await wait(0.4)
+	SceneRouter.requested = ""
+	await tap("interact")
+	check(SceneRouter.requested == Paths.interior("porao") and SceneRouter.arriving == "porao", "E: down to the cellar")
+	SceneRouter.requested = ""; SceneRouter.arriving = ""; Story.reset()

@@ -115,6 +115,7 @@ func holds(c: Dictionary) -> bool:
 			"tarefa": ok = (v as Array).all(func(t): return Story.task(t[0]) == t[1]) if v[0] is Array else Story.task(v[0]) == v[1]
 			"noite": ok = WorldTime.is_night() == v
 			"lugar": ok = NpcCatalog.slot(who).get("lugar", "") == v
+			"leu": ok = v in NotesReader.read
 			_: push_error("Dialog %s: unknown condition %s" % [who, k]); ok = false
 		if not ok:
 			return false
