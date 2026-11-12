@@ -7,7 +7,7 @@
 # An option: {"texto": "...", "vai": node | "fim" (closes) | "" (stays), "se": condition, "faz": [actions],
 #             "uma_vez": true (gone once picked)}.
 # A condition (every key must hold): "tem" / "nao_tem": an item; "marca" / "sem_marca": a Story mark;
-#   "tarefa": [id, "nova" | "ativa" | "feita"]; "noite": true / false (WorldTime); "lugar": where their routine has
+#   "tarefa": [id, "nova" | "ativa" | "feita"] (or a list of them, all); "noite": true / false (WorldTime); "lugar": where their routine has
 #   them now (NpcCatalog "rotina": "varrendo", "almoco", "portao", "varanda", "cemiterio", "cruzeiro").
 # An action: "marca": name; "loja": shop id (the shop opens over the talk); "da" / "toma": item (+ "qtd");
 #   "dinheiro": n; "cura": true (his wounds closed); "tarefa": [id, state] (the HUD tells it).
@@ -112,7 +112,7 @@ func holds(c: Dictionary) -> bool:
 			"nao_tem": ok = not Inventory.has(v)
 			"marca": ok = Story.has(v)
 			"sem_marca": ok = not Story.has(v)
-			"tarefa": ok = Story.task(v[0]) == v[1]
+			"tarefa": ok = (v as Array).all(func(t): return Story.task(t[0]) == t[1]) if v[0] is Array else Story.task(v[0]) == v[1]
 			"noite": ok = WorldTime.is_night() == v
 			"lugar": ok = NpcCatalog.slot(who).get("lugar", "") == v
 			_: push_error("Dialog %s: unknown condition %s" % [who, k]); ok = false

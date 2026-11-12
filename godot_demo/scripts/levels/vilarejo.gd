@@ -41,6 +41,13 @@ var sun: DirectionalLight3D
 var haze: Array[ShaderMaterial] = []  # the far shapes' materials (DayCycle moves their fog with the sky)
 var wind: AudioStreamPlayer
 var bell_at: Vector3          # up in the chapel tower
+const CAM_BELFRY := {"height": 1.55, "side": 0.3, "length": 0.9, "fov": 72.0}  # up there: the view, not the roof
+const BELFRY := 8.4           # the belfry's floor over the chapel's ground (construcoes.chapel(): the tower's top)
+const RUIN_SMOKE := Vector3(9.0, 0, -46.0)    # Bastião's fire in the ruin by the gate (../docs/CONTEUDO_VILAREJO.md)
+const QUARRY_SMOKE := Vector3(52.0, 0, -28.0)  # the quarry up on the east bank (opened later: the pickaxe)
+var belfry: Transform3D       # the belfry: its middle on its floor, +z out over the square
+var bell: Interactable        # the bell up there: the new rope tied, then rung
+var up_top := false           # he is up in the belfry (the fog lies below)
 var creakers: Array[Vector3] = []
 const BRUXAS := 2             # perched on the roofs each night (one, before he has the machete: roster())
 var bruxas: Array[Bruxa] = []
@@ -68,6 +75,8 @@ func _build() -> void:
 	_finish(village)
 	_bounds()
 	spawn_npcs(village)
+	belfry = _belfry_at()
+	_belfry()
 	_classroom()
 	var g := marker(GATE)
 	Gate.make(self, g.position, g.rotation.y, GATE, "chave_portao", Paths.COLONIA, "E · entrar na Colônia")  # before the navmesh: its leaves cut it
@@ -90,6 +99,9 @@ func _build() -> void:
 func _player_start() -> Transform3D:
 	# back out of a door (any porta_<arriving>): in front of it, back to the door; otherwise at the road's end, facing
 	# north up it
+	if SceneRouter.arriving == "campanario":  # up the tower's trapdoor: in the belfry, looking out over the square
+		SceneRouter.arriving = ""
+		return Transform3D(Basis(Vector3.UP, belfry.basis.get_euler().y + PI), belfry * Vector3(-0.55, 0.1, 0.8))
 	var out := SceneRouter.arriving != "" and village.has_node("porta_" + SceneRouter.arriving)
 	var at := marker("porta_" + SceneRouter.arriving) if out else marker("spawn_jogador")
 	var yaw := at.rotation.y + PI if out else 0.0
@@ -109,8 +121,9 @@ func _started() -> void:
 		(func(): marker("ponte_viga_solta").global_transform = Intro.fallen(self)).call_deferred()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	_radio()
+	_view(delta)
 	# (not before the navigation map has synced: the night's places come from it. Arriving at night, up the well's rope
 	# or out of a door, the first frames have none yet)
 	if night_watch and WorldTime.is_night() != night and NavigationServer3D.map_get_iteration_id(get_world_3d().navigation_map) > 0:
@@ -447,6 +460,93 @@ func _bell() -> AudioStreamPlayer3D:  # three tolls, four seconds apart; O Pocei
 	for i in [1, 2]:
 		get_tree().create_timer(4.0 * i).timeout.connect(func(): Audio.play3d(self, "sino", bell_at, 8.0, false, 25.0, 220.0))
 	return Audio.play3d(self, "sino", bell_at, 8.0, false, 25.0, 220.0)
+
+
+## One stroke of the bell in its tower (the Angelus: Level.angelus).
+func toll() -> void:
+	Audio.play3d(self, "sino", bell_at, 8.0, false, 25.0, 220.0)
+
+
+# --- the belfry (../docs/CONTEUDO_VILAREJO.md "O sino da capela"): up the tower from inside the chapel (torre.gd), out
+# of its trapdoor onto the tower top: open on four sides (invisible walls: a fall of 8 m), the bell, the trapdoor back
+# down. Up there the fog lies below (DayCycle.clear) and two smokes show what the village hides: Bastião's fire in the
+# ruin by the gate, the quarry on the east bank.
+func _belfry_at() -> Transform3D:
+	var door := marker("porta_capela")
+	var chapel := village.find_child("capela*", false, false) as Node3D
+	var c := door.position - door.basis.z * 2.5
+	c.y = (chapel.global_position.y if chapel else door.position.y) + BELFRY
+	return Transform3D(door.basis.orthonormalized(), c)
+
+
+func _belfry() -> void:
+	for w in [[Vector3(1.45, 1.0, 0), Vector3(0.12, 2.0, 3.0)], [Vector3(-1.45, 1.0, 0), Vector3(0.12, 2.0, 3.0)],
+			[Vector3(0, 1.0, 1.45), Vector3(3.0, 2.0, 0.12)], [Vector3(0, 1.0, -1.45), Vector3(3.0, 2.0, 0.12)]]:
+		var body := StaticBody3D.new(); add_child(body); body.transform = belfry * Transform3D(Basis(), w[0])
+		var cs := CollisionShape3D.new(); var box := BoxShape3D.new(); box.size = w[1]; cs.shape = box; body.add_child(cs)
+	var hatch := Node3D.new(); add_child(hatch); hatch.transform = belfry * Transform3D(Basis(), Vector3(-0.85, 0, 0.85))
+	Door.make(hatch, "E · descer pelo alçapão", Paths.interior("torre"), "campanario", 0.6)
+	bell = Interactable.new(); bell.radius = 1.2; bell.height = 1.8; add_child(bell)
+	bell.position = belfry * Vector3(0, 0.9, 0)
+	bell.used.connect(_ring)
+	_bell_prompt()
+	(func():
+		_smoke(ground(RUIN_SMOKE.x, RUIN_SMOKE.z), 6.0, true)
+		_smoke(ground(QUARRY_SMOKE.x, QUARRY_SMOKE.z), 14.0, false)).call_deferred()  # (on the ground: once it is in)
+
+
+func _bell_prompt() -> void:
+	var tied := Story.has("sino:corda")
+	bell.requires = "" if tied else "corda_sino"
+	bell.refusal = "A corda apodreceu e caiu. Sem uma corda nova o sino não toca."
+	bell.prompt = "E · tocar o sino" if tied else "E · amarrar a corda nova no sino"
+
+
+func _ring(_by: Node3D) -> void:
+	if not Story.has("sino:corda"):  # (the key-like rope is spent on it: Interactable)
+		Story.mark("sino:corda")
+		Audio.play3d(self, "corda_amarrar", bell.position, 0.0, false, 3.0, 20.0)
+		player.notice.emit("A corda nova no sino. Agora a Dona Firmina pode tocar o Ângelus lá de baixo.")
+		_bell_prompt()
+		await get_tree().create_timer(1.2).timeout
+	_bell()
+
+
+## Up in the belfry the fog thins to a lid over the roofs; the first time, what he sees from there.
+func _view(delta: float) -> void:
+	up_top = player != null and player.global_position.y > belfry.origin.y - 1.0
+	if day:
+		day.clear = move_toward(day.clear, 1.0 if up_top else 0.0, delta / 2.5)
+	if player and up_top and player.cam_override.is_empty():  # close over his shoulder, under the tower's roof
+		player.cam_override = CAM_BELFRY
+	elif player and not up_top and player.cam_override == CAM_BELFRY:
+		player.cam_override = {}
+	if up_top and not Story.has("vista:campanario"):
+		Story.mark("vista:campanario")
+		player.notice.emit("Daqui de cima a neblina fica embaixo. Uma fumaça na ruína perto do portão... e outra lá no morro, a leste.")
+
+
+## A thread of smoke going up out of the fog (seen from afar: not fogged), and a fire's glow at its foot (`fire`).
+func _smoke(at: Vector3, tall: float, fire: bool) -> void:
+	var p := GPUParticles3D.new(); add_child(p); p.position = at + Vector3(0, 0.5, 0)
+	p.amount = 40; p.lifetime = 9.0; p.preprocess = 9.0
+	p.visibility_aabb = AABB(Vector3(-6, -1, -6), Vector3(12, tall + 6, 12))
+	var m := ParticleProcessMaterial.new()
+	m.direction = Vector3.UP; m.spread = 6.0; m.initial_velocity_min = tall / 9.0; m.initial_velocity_max = tall / 7.0
+	m.gravity = Vector3(0.25, 0, 0.1)  # (the wind leans it)
+	m.scale_min = 0.8; m.scale_max = 1.2
+	var grow := Curve.new(); grow.add_point(Vector2(0, 0.4)); grow.add_point(Vector2(1, 2.6)); var gt := CurveTexture.new(); gt.curve = grow
+	m.scale_curve = gt
+	var fade := Gradient.new(); fade.set_color(0, Color(1, 1, 1, 0.0)); fade.set_color(1, Color(1, 1, 1, 0.0))
+	fade.add_point(0.15, Color(1, 1, 1, 0.5)); var ft := GradientTexture1D.new(); ft.gradient = fade; m.color_ramp = ft
+	p.process_material = m
+	var q := QuadMesh.new(); q.size = Vector2.ONE * maxf(1.2, tall / 5.0)
+	var mat := StandardMaterial3D.new(); mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA; mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	mat.vertex_color_use_as_albedo = true; mat.albedo_color = Color(0.22, 0.22, 0.24, 0.75); mat.disable_fog = true  # (dark: it reads against the fog)
+	q.material = mat; p.draw_pass_1 = q
+	if fire:
+		Looks.omni(self, at + Vector3(0, 0.6, 0), Color(1.0, 0.5, 0.2), 1.6, 6.0)
 
 
 ## At 19h the Voz do Brasil through the venda's door, muffled by the boards; gone at 20h.

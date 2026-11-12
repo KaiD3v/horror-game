@@ -169,7 +169,9 @@ def day_actions(P):
       Walk    a slow village walk, 32 frames (the stride is printed: Godot's NpcCatalog "passo")
       Sit     on a bench, hands where they were; Kneel  on both knees, bent forward a little
       LookUp  standing, looking up at something high (Tenório at the gate); Sweep  the arms down in front, a broom
-              (Godot hangs it on hand.R) swept side to side"""
+              (Godot hangs it on hand.R) swept side to side
+      Pull    both hands up on a rope over the head, hauling it down to the chest and letting it rise: the bell
+              (Firmina at 18h, docs/CONTEUDO_VILAREJO.md "O sino da capela")"""
     P.action("Walk", 33, loop=True)
     for fr, fo, kind, sg in ((1, ".L", "contact", 1), (9, ".L", "pass", 1), (17, ".R", "contact", -1),
                              (25, ".R", "pass", -1), (33, ".L", "contact", 1)):
@@ -187,6 +189,14 @@ def day_actions(P):
     P.action("LookUp", 61, loop=True)
     for f, b in ((1, 0), (31, 1), (61, 0)):
         P.pose(f, [("chest", "X", -4 - 1.5 * b), ("neck", "X", -10), ("head", "X", -20 - 4 * b), ("head", "Z", 6 * b)])
+    P.action("Pull", 41, loop=True)
+    UP = [("upper_arm.R", (-0.15, -0.25, 0.95)), ("forearm.R", (-0.1, -0.1, 1.0)), ("hand.R", (0, 0, 1)),
+          ("upper_arm.L", (0.15, -0.25, 0.95)), ("forearm.L", (0.1, -0.1, 1.0)), ("hand.L", (0, 0, 1))]
+    DOWN = [("upper_arm.R", (-0.25, -0.5, 0.1)), ("forearm.R", (0.3, -0.55, 0.75)), ("hand.R", (0.1, -0.3, 0.95)),
+            ("upper_arm.L", (0.25, -0.5, 0.1)), ("forearm.L", (-0.3, -0.55, 0.75)), ("hand.L", (-0.1, -0.3, 0.95))]
+    for f, arms, b in ((1, UP, 0), (17, DOWN, 1), (41, UP, 0)):
+        P.pose(f, [("chest", "X", 4 + 10 * b), ("thigh.L", "X", -8 * b), ("thigh.R", "X", -8 * b),
+                   ("shin.L", "X", 14 * b), ("shin.R", "X", 14 * b), ("head", "X", -8 + 6 * b)], aims=arms)
     P.action("Sweep", 31, loop=True)
     ARMS = [("upper_arm.R", (0.15, -0.45, -0.88)), ("forearm.R", (-0.25, -0.75, -0.6)), ("hand.R", (-0.2, -0.6, -0.78)),
             ("upper_arm.L", (-0.15, -0.45, -0.88)), ("forearm.L", (0.3, -0.75, -0.55)), ("hand.L", (0.25, -0.6, -0.75))]

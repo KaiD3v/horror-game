@@ -23,6 +23,7 @@ var menu: GameMenu                 # Esc: the pause menu; dying: the death menu
 var env: Environment
 var nav: NavigationRegion3D
 var npcs := {}                     # who -> Npc
+@export var bell_db := -18.0       # the chapel bell from here (the Angelus, toll()): far off; the chapel and tower louder
 var day: DayCycle                  # the hour and the weather (levels that have them: vilarejo, interiors)
 const FALL_Y := -60.0              # below every level's floor: whoever gets here fell out of the world
 var last_floor := Vector3.ZERO     # where he last stood on something (put back there if he falls out)
@@ -70,6 +71,7 @@ func _physics_process(_delta: float) -> void:
 	if player == null:
 		return
 	_routine()
+	_bells()
 	if player.global_position.y > FALL_Y:
 		if player.is_on_floor():  # (this frame's floor is last frame's: a teleport down there is not ground)
 			last_floor = player.global_position
@@ -122,9 +124,8 @@ func _come(who: String, s: Dictionary, at: Transform3D) -> Npc:
 	var n := Npc.spawn(self, who, at); npcs[who] = n
 	n.gone.connect(func(): npcs.erase(who))
 	if NpcCatalog.info(who).get("luz", {}).get("fica", false):
-		var home := npc_root.find_child("npc_" + who, true, false)
-		if home:
-			n.leave_behind((home as Node3D).global_transform)
+		var home := npc_root.find_child("npc_" + who, true, false) as Node3D
+		n.leave_behind(home.global_transform if home else Transform3D(), home != null)  # (not here: they stayed there)
 	n.pose(s)
 	return n
 
@@ -160,6 +161,33 @@ func _spot(s: Dictionary) -> Transform3D:
 	elif s.has("pos"):
 		at = ground(at.x, at.z)
 	return Transform3D(Basis(Vector3.UP, base.basis.get_euler().y + s.rumo), at)
+
+
+## The Angelus (../docs/CONTEUDO_VILAREJO.md "O sino da capela"), once the bell has its rope again (Story "sino:corda"):
+## at 6h and 18h, three tolls three times and then nine.
+const ANGELUS := [0.0, 2.5, 5.0, 10.0, 12.5, 15.0, 20.0, 22.5, 25.0, 30.0, 32.5, 35.0, 37.5, 40.0, 42.5, 45.0, 47.5, 50.0]
+var _bell_hour := -1.0
+
+
+func _bells() -> void:
+	var h := WorldTime.hour()
+	if Story.has("sino:corda") and _bell_hour >= 0.0:
+		for at in [6.0, 18.0]:
+			if _bell_hour < at and h >= at and h - at < 0.5:
+				angelus()
+	_bell_hour = h
+
+
+func angelus() -> void:
+	var tw := create_tween()
+	var last := 0.0
+	for t: float in ANGELUS:
+		tw.tween_interval(t - last); tw.tween_callback(toll); last = t
+
+
+## One stroke of the bell, as heard here (the village: up in its tower).
+func toll() -> void:
+	Audio.play2d(self, "sino", bell_db)
 
 
 ## Where you go in or out to `scene`: the village's porta_<scene>, a room's porta.

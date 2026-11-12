@@ -185,6 +185,9 @@ frustum(t, (1.3, -5.6, HT), (1.3, -5.6, 1.0), 0.015, 0.015, 4, "burlap")        
 bx(t, (1.3, -5.6, 0.98), (0.06, 0.06, 0.1), "burlap")
 obj(t, "objetos")
 
+# the tower's little door, in the front wall right of the way in (docs/CONTEUDO_VILAREJO.md "O sino"): up the tower (torre)
+tw_door = B(); R_.quad(tw_door, "front", -2.85, -1.95, 0, 2.05, "door", e=0.035); obj(tw_door, "porta_torre_folha")
+
 # --- markers for capela.gd (interior.gd) ------------------------------------------------------------------------
 sac = B()  # the sacristy's door, in the left wall by the altar (docs/TUTORIAL_VILAREJO.md "Dungeon 2"): down to the ossuary
 R_.quad(sac, "left", 4.85, 5.75, 0.25, 2.3, "door", e=0.035)  # (in front of the painted band: a 2 cm box at 0.012)
@@ -195,7 +198,8 @@ for name, loc, yaw in (("porta_sacristia", (-WX, 5.3, 0.25), 90), ("entrada_sacr
 for name, loc in (("entrada", (0, -5.6, 0)), ("porta", (0, -WY, 0)), ("luz_altar", (0, 5.4, 1.9)),
                   ("luz_vela_a", (0.55, COFFIN_Y - 1.0, 1.5)), ("luz_vela_b", (-0.55, COFFIN_Y + 1.0, 1.5)),
                   ("luz_velario", (-2.6, 3.3, 1.3)), ("luz_janela_a", (-3.0, -3.0, 2.8)), ("luz_janela_b", (3.0, 0.0, 2.8)),
-                  ("luz_janela_c", (-3.0, 3.0, 2.8))):
+                  ("luz_janela_c", (-3.0, 3.0, 2.8)), ("porta_torre", (2.4, -WY, 0)), ("entrada_torre", (2.4, -5.7, 0)),
+                  ("corda_sino", (1.3, -5.25, 0))):
     e = bpy.data.objects.new(name, None); bpy.context.collection.objects.link(e); e.location = loc
 
 tris = sum(len(p.vertices) - 2 for o in bpy.data.objects if o.type == "MESH" for p in o.data.polygons)

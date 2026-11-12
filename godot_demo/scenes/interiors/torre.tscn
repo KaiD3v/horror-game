@@ -1,0 +1,15 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/torre.gd" id="1"]
+
+[node name="Torre" type="Node3D"]
+script = ExtResource("1")
+title = "Torre da capela"
+floor_kind = "madeira"
+model = "torre"
+door = "torre"
+out_to = "res://scenes/interiors/capela.tscn"
+exit_prompt = "E · voltar para a capela"
+cutaway = Vector3(0, 12, 6)
+ambient = 0.2
+bell_db = 2.0

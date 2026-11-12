@@ -17,6 +17,8 @@ const MENU := [
 	{"texto": "Perguntar sobre ele", "vai": "ele"},
 	{"texto": "Perguntar sobre o caderno de fiado", "vai": "fiado", "se": {"marca": "bento_conheceu"}},
 	{"texto": "Perguntar se precisa de alguma coisa", "vai": "pedido", "se": {"tarefa": ["alambique", "nova"]}},
+	{"texto": "Pedir uma corda grossa", "vai": "corda", "uma_vez": true,
+		"se": {"tarefa": ["sino", "ativa"], "nao_tem": "corda_sino", "sem_marca": "sino:corda"}},
 	{"texto": "Falar do Juca", "vai": "lembrete", "se": {"tarefa": ["alambique", "ativa"], "nao_tem": "facao"}},
 	{"texto": "Contar do alambique", "vai": "noticia", "se": {"tarefa": ["alambique", "ativa"], "tem": "facao"}},
 	{"texto": "Ir embora", "vai": "fim"},
@@ -60,6 +62,10 @@ const NOS := {
 		"Não estava? Só a cama e o caderno dele... Nossa Senhora.",
 		"Ele dizia que eram de branco. Eu ri dele. Eu ri, freguês.",
 		"Toma. É pouco, mas é o que tem. Fica com o pé de cabra também, que aqui ninguém mais vai precisar.",
+	]},
+	"corda": {"faz": [{"da": "corda_sino"}], "fala": [
+		"Corda? Pro sino? Tenho sisal de amarrar carga, desse grosso. Ninguém mais amarra carga nenhuma.",
+		"Leva, leva. Fiado eu anoto no nome do santo. Se ele pagar, ótimo.",
 	]},
 	"fiado": {"fala": [
 		"O caderno? Está tudo anotado. O Zé me deve um quilo de sal. A Dita, querosene. O padre, vinho de missa.",

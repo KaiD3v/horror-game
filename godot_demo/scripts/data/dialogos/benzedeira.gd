@@ -8,6 +8,7 @@ const ENTRADA := [
 	{"se": {"sem_marca": "firmina_conheceu"}, "vai": "primeira"},
 	{"se": {"noite": true}, "vai": "noite"},
 	{"se": {"lugar": "cemiterio"}, "vai": "cemiterio"},
+	{"se": {"lugar": "sino"}, "vai": "sino_tocando"},
 	{"vai": "oi"},
 ]
 
@@ -16,6 +17,9 @@ const MENU := [
 	{"texto": "Perguntar sobre ela", "vai": "ela"},
 	{"texto": "Perguntar sobre a Colônia", "vai": "colonia"},
 	{"texto": "Perguntar se precisa de alguma coisa", "vai": "pedido", "se": {"tarefa": ["garrafada", "nova"]}},
+	{"texto": "Perguntar pelo sino", "vai": "sino_pedido", "se": {"tarefa": [["garrafada", "feita"], ["sino", "nova"]]}},
+	{"texto": "Falar do sino", "vai": "sino_lembrete", "se": {"tarefa": ["sino", "ativa"], "sem_marca": "sino:corda"}},
+	{"texto": "Contar do sino", "vai": "sino_feito", "se": {"tarefa": ["sino", "ativa"], "marca": "sino:corda"}},
 	{"texto": "Falar da garrafada", "vai": "lembrete", "se": {"tarefa": ["garrafada", "ativa"], "nao_tem": "garrafada"}},
 	{"texto": "Entregar a garrafada", "vai": "entrega", "se": {"tarefa": ["garrafada", "ativa"], "tem": "garrafada"}},
 	{"texto": "Mostrar o escapulário", "vai": "escapulario", "se": {"tem": "escapulario"}},
@@ -30,6 +34,18 @@ const NOS := {
 		"Eu sou a Firmina. Benzo cobreiro, quebranto, espinhela caída. Hoje em dia benzo é o vilarejo inteiro.",
 	]},
 	"oi": {"fala": ["Ainda de pé, menino? Deus seja louvado. Diz o que quer, que a vela não espera."]},
+	"sino_pedido": {"faz": [{"tarefa": ["sino", "ativa"]}], "fala": [
+		"Ouviu o sino essas noites? Não é ninguém. É o vento batendo o badalo. A corda apodreceu lá em cima.",
+		"Desde a noite da sirene ninguém toca o Ângelus. Sem o Ângelus a gente não sabe quando a noite chega. Ela chega igual.",
+		"Sobe lá, menino. Corda grossa o Bento tem. A torre se sobe pela portinha, dentro da capela, do lado da porta.",
+	]},
+	"sino_lembrete": {"fala": ["A corda, menino. O Bento tem. E a torre é pela portinha, do lado da porta da capela."]},
+	"sino_feito": {"faz": [{"tarefa": ["sino", "feita"]}], "fala": [
+		"Eu ouvi. Deus seja louvado, eu ouvi. Agora quem toca sou eu, às seis e às seis. Mão de velha ainda puxa corda.",
+		"Lá de cima se vê tudo, não é? Até a fumaça na ruína do portão.",
+		"...Aquela fumaça não é de bicho, menino. Bicho não acende fogo. Tem gente vivendo lá.",
+	]},
+	"sino_tocando": {"fala": ["Agora não, menino. O Ângelus não espera, e a noite também não."]},
 	"cemiterio": {"falas": [
 		["É o meu Antero. Eu limpo, a terra suja de novo. Trinta anos assim, a gente se entende."],
 		["De tarde eu venho aqui. De manhã e de noite é da Senhora, no cruzeiro. A tarde é dele."],

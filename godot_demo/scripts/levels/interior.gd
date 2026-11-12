@@ -18,6 +18,7 @@ extends Level
 @export var ambient := 0.28             # ambient light energy (the chapel's whitewash wants less)
 @export var dim := 1.0                  # scales every lamp's energy
 @export var drone := ""                 # a quiet 2D loop under the room tone (the chapel: coro)
+@export var exit_prompt := ""           # E at the way out (default: out to the street, or up)
 
 const LOOP_AT := {"fogao": "fogo", "velario": "velas", "vela": "velas"}
 const LIGHT := {  # kind: colour, energy, range
@@ -49,7 +50,8 @@ func _build() -> void:
 		if m.name.get_slice("_", 1) == "janela":
 			windows.append(lights[-1])
 	spawn_npcs(room)
-	Door.make(room.get_node("porta"), "E · sair para a rua" if out_to == Paths.VILAREJO else "E · subir", out_to, door, 1.6)
+	var out := exit_prompt if exit_prompt != "" else ("E · sair para a rua" if out_to == Paths.VILAREJO else "E · subir")
+	Door.make(room.get_node("porta"), out, out_to, door, 1.6)
 
 
 func _player_start() -> Transform3D:

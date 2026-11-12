@@ -11,6 +11,8 @@ const QUESTS := {
 		"descricao": "O Tenório largou a besta no ossuário, embaixo da capela. Desce pela sacristia (a chave é com a Dona Firmina). Lá embaixo tem uma coisa cega que ouve tudo: não correr."},
 	"chave": {"titulo": "A chave do portão",
 		"descricao": "O Severino, porteiro da Colônia, desceu com o molho de chaves e se trancou no jazigo dos Moura, no fundo do cemitério. A corrente da grade está podre: o pé de cabra arrebenta. Leva tudo que tiver."},
+	"sino": {"titulo": "O sino da capela",
+		"descricao": "O sino está mudo desde a noite da sirene: a corda apodreceu. Dona Firmina quer o Ângelus de volta, para avisar a noite. Corda tem na venda do Bento; a torre se sobe pela portinha dentro da capela."},
 	"garrafada": {"titulo": "A garrafada do altar",
 		"descricao": "Dona Firmina quer a garrafada que o padre guardava no baú ao lado do altar da capela."},
 }

@@ -1081,3 +1081,61 @@ func _see(n: Npc, name: String) -> void:  # stand 4 m in front of them, looking 
 	var d := n.global_position - f
 	put(player, Vector3(f.x, L.ground(f.x, f.z, n.global_position.y + 3.0).y, f.z), atan2(-d.x, -d.z))
 	await wait(0.8); await shot(name)
+
+
+# --- the chapel bell (../docs/CONTEUDO_VILAREJO.md "O sino da capela"): Dona Firmina's task, Bento's rope, the belfry
+# up the tower (the fog below, the two smokes), the rope tied, the bell rung, the Angelus at 18h; walled in up there
+func sino_tests() -> void:
+	L.night_watch = false
+	Story.mark("firmina_conheceu"); Story.mark("bento_conheceu")
+	_hour(10.0)
+	var d := Dialog.new("benzedeira", player); d.enter("oi")
+	check(not d.options().any(func(o): return o.texto == "Perguntar pelo sino"), "before the garrafada: no word of the bell")
+	Story.set_task("garrafada", "feita")
+	d.enter("oi")
+	var ask: Array = d.options().filter(func(o): return o.texto == "Perguntar pelo sino")
+	if ask:
+		d.pick(ask[0])
+	check(Story.task("sino") == "ativa", "the garrafada done: she asks for the bell (the task on)")
+	var b := Dialog.new("vendeiro", player); b.enter("oi")
+	var rope: Array = b.options().filter(func(o): return o.texto == "Pedir uma corda grossa")
+	if rope:
+		b.pick(rope[0])
+	check(Inventory.has("corda_sino"), "Bento gives the rope")
+	# up in the belfry (as arriving by the tower's trapdoor)
+	var start: Transform3D = L.belfry * Transform3D(Basis(Vector3.UP, PI), Vector3(-0.55, 0.1, 0.8))
+	put(player, start.origin, L.belfry.basis.get_euler().y + PI); await wait(0.6)
+	check(player.is_on_floor() and absf(player.global_position.y - L.belfry.origin.y) < 0.2,
+		"on the belfry's floor (%.2f, floor %.2f)" % [player.global_position.y, L.belfry.origin.y])
+	check(L.hud.prompt.text == "E · descer pelo alçapão", "at the trapdoor: \"%s\"" % L.hud.prompt.text)
+	await wait(3.0)
+	check(L.day.clear > 0.9 and Story.has("vista:campanario"), "up there the fog lies below (clear %.2f), and he says what he sees" % L.day.clear)
+	await shot("v60_campanario_praca")
+	put(player, start.origin, 0.0); await wait(1.0); await shot("v61_campanario_norte")  # (yaw 0: north) the ruin's smoke
+	put(player, L.belfry * Vector3(0.0, 0.1, 0.95), -PI / 2 + 0.45); await wait(1.0); await shot("v62_campanario_leste")  # (east-north-east) the quarry
+	# walled in: walking out of the arch gets him nowhere
+	put(player, L.belfry * Vector3(0.6, 0.1, 0.8), L.belfry.basis.get_euler().y + PI); await wait(0.3)
+	await walk(1.5)
+	check(player.global_position.y > L.belfry.origin.y - 0.3, "the arches are walled in: no fall off the tower")
+	put(player, L.belfry * Vector3(0.65, 0.1, 0.75), L.belfry.basis.get_euler().y); await wait(0.4)
+	check(L.hud.prompt.text == "E · amarrar a corda nova no sino", "at the bell: \"%s\"" % L.hud.prompt.text)
+	Audio.heard.clear()
+	await tap("interact"); await wait(2.0)
+	check(Story.has("sino:corda") and not Inventory.has("corda_sino") and "sino" in Audio.heard,
+		"E: the new rope tied (spent), and the bell rings")
+	check(L.hud.prompt.text == "E · tocar o sino", "...then: \"%s\"" % L.hud.prompt.text)
+	put(player, Vector3(0, L.ground(0, 40).y, 40), PI); await wait(4.0)
+	check(L.day.clear < 0.2, "down off the tower the fog comes back (%.2f)" % L.day.clear)
+	# the Angelus at 18h, Dona Firmina gone in to the rope; she is glad of it, and says what she knows
+	_hour(17.97); await wait(0.5)
+	Audio.heard.clear()
+	await wait(3.5)
+	check(Audio.heard.count("sino") >= 2, "18:00 the Angelus (%d tolls so far)" % Audio.heard.count("sino"))
+	await until(func(): return not L.npcs.has("benzedeira"), 15.0)
+	check(not L.npcs.has("benzedeira") and NpcCatalog.slot("benzedeira").lugar == "sino", "...Dona Firmina gone into the chapel to ring it")
+	d = Dialog.new("benzedeira", player); d.enter("oi")
+	var told: Array = d.options().filter(func(o): return o.texto == "Contar do sino")
+	if told:
+		d.pick(told[0])
+	check(Story.task("sino") == "feita", "telling her: the task done")
+	_hour(16.5); Story.reset(); Inventory.reset(); Inventory.give_tools()

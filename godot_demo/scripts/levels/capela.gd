@@ -15,3 +15,4 @@ func _build() -> void:
 	down = Door.make(spot, "E · descer pela sacristia", Paths.interior("ossuario"), "sacristia", 1.2)
 	down.enabled = Story.has("aberta:sacristia")
 	sacristy.opened.connect(func(): down.enabled = true)
+	Door.make(room.get_node("porta_torre"), "E · subir à torre", Paths.interior("torre"), "", 1.0)  # (docs/CONTEUDO_VILAREJO.md)

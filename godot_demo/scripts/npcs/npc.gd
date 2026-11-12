@@ -55,10 +55,17 @@ func _ready() -> void:
 		voice = Audio.play3d(self, s.nome, s.at, s.db, true, s.size, s.far)
 
 
-## What stays where they stand at `home` when they walk off (Firmina's candles and their light at the cross).
-func leave_behind(home: Transform3D) -> void:
-	var stay := Node3D.new(); stay.name = who + "_fica"; get_parent().add_child(stay); stay.global_transform = home
+## What stays where they stand at `home` when they walk off (Firmina's candles and their light at the cross); in
+## another scene (`here` false) it is not with them at all.
+func leave_behind(home: Transform3D, here := true) -> void:
 	var candles := model.find_child("velas", true, false)
+	if not here:
+		if candles:
+			candles.queue_free()
+		if light and info.luz.get("fica", false):
+			light.queue_free(); light = null
+		return
+	var stay := Node3D.new(); stay.name = who + "_fica"; get_parent().add_child(stay); stay.global_transform = home
 	if candles:
 		var t: Transform3D = global_transform.affine_inverse() * candles.global_transform
 		candles.get_parent().remove_child(candles); stay.add_child(candles); candles.transform = t

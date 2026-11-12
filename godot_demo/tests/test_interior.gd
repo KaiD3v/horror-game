@@ -25,8 +25,8 @@ func run() -> void:
 	put(player, entry + Vector3(0, 0.02, 0), 0.0); await wait(0.4)
 	check(L.hud.prompt.visible, "at the door: \"%s\"" % L.hud.prompt.text)
 	await tap("interact")
-	check(SceneRouter.requested == Paths.VILAREJO and SceneRouter.arriving == L.door,
-		"E at the door goes back out to the village (%s)" % SceneRouter.requested)
+	check(SceneRouter.requested == L.out_to and SceneRouter.arriving == L.door,
+		"E at the door goes back out (%s)" % SceneRouter.requested)
 	await cutaway()
 	# the windows by the hour: daylight by day, nearly dark at night
 	WorldTime.reset(13 * 60); L.day._step(0.0)

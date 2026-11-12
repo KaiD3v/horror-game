@@ -1,7 +1,7 @@
 # O vilarejo vivo: conteúdo secundário (plano)
 
 *Data: 2026-11-11. Continua [TUTORIAL_VILAREJO.md](TUTORIAL_VILAREJO.md) e [CHAVE_DO_PORTAO.md](CHAVE_DO_PORTAO.md).
-Fase 1 feita (ver "Fase 1, feita" no fim); o resto é plano. Coordenadas em Godot (x, z).*
+Fases 1 e 2 feitas (ver "Fase N, feita" no fim); o resto é plano. Coordenadas em Godot (x, z).*
 
 ## O problema
 
@@ -203,7 +203,7 @@ São o motivo para voltar ao vilarejo com as ferramentas do capítulo seguinte, 
 | Lugar | A trava | O sinal no mundo (a língua do lugar) | O que tem |
 |---|---|---|---|
 | **O túnel do ossuário** | entulho (picareta) | já existe ("Pedra demais para tirar com as mãos.") | o segundo caminho para a Colônia |
-| **A pedreira, no barranco oeste** | entulho na boca da galeria (picareta) | a fumaça vista da torre; um carrinho de mina tombado | uma galeria curta; no fundo, o depósito onde o doutor guardava o soro (lore do Porteiro) e um coração de ex-voto em pedaços, se o jogo quiser uma segunda melhoria de vida |
+| **A pedreira, no barranco leste** | entulho na boca da galeria (picareta) | a fumaça vista da torre; um carrinho de mina tombado | uma galeria curta; no fundo, o depósito onde o doutor guardava o soro (lore do Porteiro) e um coração de ex-voto em pedaços, se o jogo quiser uma segunda melhoria de vida |
 | **O fundo da ravina** | a corda (do mascate) ou a ponte do tronco | a ponte caída, um brilho lá embaixo | o carro do Dr. Euclides, caído da ponte na noite da sirene, com a pasta dele: ele estava fugindo. A pergunta "quem derrubou a ponte" fica para a Colônia |
 | **O porão da venda** | uma tampa de ferro com cadeado de segredo | números riscados no balcão | o que o Bento escondia: as coisas da mulher dele, internada na Colônia (a história que ele conta se o jogador contar da Cida), e uma carta dela, que ele nunca abriu |
 
@@ -297,3 +297,54 @@ ele leva na mão):
     saindo pela porta e andando até o banco, as velas no cruzeiro, a varanda, o rádio e as duas portas, com seis capturas
     `v50` a `v55`;
   - `test_venda.gd` `rotina_tests`: o balcão vazio às 7h, ele de volta às 9h30 e o rádio às 19h.
+
+## Fase 2, feita: o sino da capela
+
+**A tarefa** (`QuestData` "sino"):
+- **Quem pede:** a Dona Firmina, depois da garrafada ("Perguntar pelo sino"). O sino que se ouve às vezes é o vento batendo o
+  badalo: a corda apodreceu na noite da sirene, e sem o Ângelus ninguém sabe quando a noite chega.
+- **A corda:** o Bento dá uma corda grossa ("Pedir uma corda grossa", `corda_sino`, gasta no sino como uma chave).
+- **A subida:** pela portinha ao lado da porta, dentro da capela.
+- **Contando a ela:** ela fecha a tarefa e diz o que sabe da fumaça na ruína do portão: "Bicho não acende fogo. Tem
+  gente vivendo lá." Isso prepara o Bastião.
+
+**A torre por dentro** (`torre_build.py`, `torre.tscn`, `torre.gd`): um poço de 4,4 m de lado e 8,4 m de altura, com a
+escada caída no chão.
+1. A pedra de contrapeso (`Pushable`) é empurrada uma vez para o norte, até o patamar com a borda de cal (2,4 m).
+2. Ele sobe na pedra e dali no patamar.
+3. Escala o muro de pedras salientes (3,5 m) até o andar de cima.
+4. Uma escadinha leva ao alçapão: "E · subir ao campanário".
+- A corda podre pende do alçapão, arrebentada no meio.
+- Correções de colisão: o patamar e o alto do muro ganharam caixas sólidas no Godot, porque os colisores do GLB são
+  ocos (a pedra atravessava o patamar e ele caía do alto do muro).
+
+**O campanário** (no vilarejo, `vilarejo.gd` `_belfry`):
+- **A chegada:** ele sai do alçapão no alto da torre real da capela, a 8,4 m. Os quatro vãos têm paredes invisíveis (cair
+  dali mataria).
+- **A câmera:** fica perto, por cima do ombro, por baixo do telhado da torre.
+- **A neblina abre** (`DayCycle.clear`): lá em cima ela fica embaixo, como uma tampa sobre os telhados, e volta quando ele
+  desce.
+- **O que se vê:** na primeira vez, ele pensa: "Uma fumaça na ruína perto do portão... e outra lá no morro, a leste."
+  - A fumaça da ruína tem o brilho de um fogo embaixo (o Bastião, fase 4).
+  - A outra sai da pedreira no barranco leste (fase 7).
+  - As fumaças não são cobertas pela neblina e se veem de longe.
+- **O sino:** "E · amarrar a corda nova no sino" gasta a corda, e o sino toca. Depois disso, "E · tocar o sino".
+
+**O Ângelus** (`Level.angelus`, Story "sino:corda"):
+- Às 6h e às 18h: três badaladas três vezes, e depois nove (cerca de 50 s).
+- Soa alto no vilarejo, na torre e na capela, e longe nos outros interiores.
+- A Firmina vai para a capela às 6h e às 18h e puxa a corda da nave (animação `Pull`). Volta ao cruzeiro às 6h45 e às 18h45.
+- As velas dela continuam no cruzeiro. A rotina ganhou horários com condição (`se` / `sem` uma marca).
+
+**Mudou do plano:** a pedreira foi para o barranco **leste**. Do campanário só se alcança a metade da frente: a viga do
+sino corta o meio, e a oeste o telhado da nave tapa a vista. A fumaça da pedreira aparece logo acima do beiral do
+campanário: é preciso erguer um pouco o olhar.
+
+**Testes:**
+- `test_torre.gd`: a pedra, o patamar, o muro, o alçapão e a volta à capela.
+- `test_capela.gd` `sino_tests`: a portinha, a Firmina na corda e o Ângelus.
+- `test_vilarejo.gd` `sino_tests`:
+  - as falas e a corda do Bento;
+  - o campanário: o piso, o alçapão, a neblina, as paredes e o sino;
+  - o Ângelus às 18h e a tarefa cumprida;
+  - quatro capturas (`v60` a `v62` e `torre_*`).

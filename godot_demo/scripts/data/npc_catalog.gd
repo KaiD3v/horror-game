@@ -15,6 +15,7 @@
 #                           off    an offset in that node's frame; rumo: a turn (added to the node's)
 #                           faz    their animation (Idle); lugar: what Dialog's "lugar" condition reads
 #                           leva   a prop in hand or by them (vassoura, lamparina)
+#                           se     only with this Story mark (sem: only without it)
 #                         A level puts each one where their slot is when it opens; when the hour moves on they walk
 #                         there, or out by the door to another scene, or in by it (Level._routine, Npc.go).
 # What they say: scripts/data/dialogos/<who>.gd (Dialog). With none they still greet you, sell and say goodbye.
@@ -43,10 +44,14 @@ const NPCS := {
 	"benzedeira": {"nome": "Dona Firmina", "papel": "benzedeira, dá tarefas, no cruzeiro em frente à capela",
 		"passo": 0.97, "casa": "vilarejo", "rotina": [
 			{"de": 0, "faz": "Kneel", "lugar": "cruzeiro"},  # on her knees at the cross all night
-			{"de": 6},
+			{"de": 6, "sem": "sino:corda"},
+			{"de": 6, "cena": "capela", "em": "corda_sino", "faz": "Pull", "lugar": "sino", "se": "sino:corda"},  # the Angelus
+			{"de": 6.75},
 			{"de": 14, "pos": Vector3(-27.0, 0, -5.8), "rumo": -PI / 2, "faz": "Kneel", "lugar": "cemiterio"},  # her husband's grave
 			{"de": 16},
-			{"de": 18, "faz": "Kneel", "lugar": "cruzeiro"}],
+			{"de": 18, "faz": "Kneel", "lugar": "cruzeiro", "sem": "sino:corda"},
+			{"de": 18, "cena": "capela", "em": "corda_sino", "faz": "Pull", "lugar": "sino", "se": "sino:corda"},
+			{"de": 18.75, "faz": "Kneel", "lugar": "cruzeiro"}],
 		"luz": {"at": Vector3(0, 0.35, 0.5), "cor": Color(1.0, 0.68, 0.35), "energia": 1.3, "alcance": 4.5, "fica": true},  # candles at her feet
 		"som": {"nome": "reza", "at": Vector3(0, 1.3, 0), "db": -6.0, "size": 1.2, "far": 9.0}},  # praying under her breath
 }
@@ -65,7 +70,7 @@ static func slot(who: String, hour := WorldTime.hour()) -> Dictionary:
 	if r.is_empty():
 		return {}
 	var i := r.size() - 1
-	while i > 0 and r[i].de > hour:
+	while i > 0 and (r[i].de > hour or (r[i].has("se") and not Story.has(r[i].se)) or (r[i].has("sem") and Story.has(r[i].sem))):
 		i -= 1
 	var s := {"cena": d.get("casa", ""), "em": "npc_" + who, "off": Vector3.ZERO, "rumo": 0.0, "faz": "Idle", "lugar": "",
 		"leva": ""}

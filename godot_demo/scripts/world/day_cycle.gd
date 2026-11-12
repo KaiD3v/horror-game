@@ -19,6 +19,7 @@ var window_energy: Array[float] = []
 var panes: Array[BaseMaterial3D] = []     # ...and the panes themselves
 var roof_rain: AudioStreamPlayer          # the rain on the roof, muffled
 var now := {}                             # what was applied last (DayData.sample + fog colour): read by tests
+var clear := 0.0                          # 0..1: how far the fog thins (up in the belfry, the fog lies below)
 
 
 static func outdoors(lvl: Level, e: Environment, s: DirectionalLight3D, haze_mats: Array[ShaderMaterial], c: Clima) -> DayCycle:
@@ -70,8 +71,8 @@ func _outdoors() -> void:
 	sky = sky.darkened(0.18 * rain)                     # rain: a heavier, darker sky
 	k["sky"] = sky
 	env.background_color = sky; env.fog_light_color = sky
-	env.fog_density = 0.028 + 0.047 * fog + 0.012 * rain
-	env.fog_height_density = 0.04 + 0.12 * fog
+	env.fog_density = (0.028 + 0.047 * fog + 0.012 * rain) * (1.0 - 0.72 * clear)
+	env.fog_height_density = (0.04 + 0.12 * fog) * (1.0 - 0.5 * clear)
 	env.ambient_light_color = k.amb; env.ambient_light_energy = k.amb_e * (1.0 - 0.25 * rain)
 	# one light for the sun and the moon: the sun's while it is up, the moon's at night
 	var w: float = k.sun_e / maxf(k.sun_e + k.moon_e, 0.001)
