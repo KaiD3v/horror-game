@@ -6,6 +6,7 @@ const ENTRADA := [
 	{"se": {"sem_marca": "tenorio_conheceu"}, "vai": "primeira"},
 	{"se": {"lugar": "portao"}, "vai": "portao"},
 	{"se": {"lugar": "varanda"}, "vai": "varanda"},
+	{"se": {"lugar": "garrafas"}, "vai": "garrafas"},
 	{"vai": "oi"},
 ]
 
@@ -18,6 +19,11 @@ const MENU := [
 	{"texto": "Perguntar por uma besta", "vai": "besta_conta", "se": {"tem": "facao", "nao_tem": "besta", "tarefa": ["besta", "nova"]}},
 	{"texto": "Falar da besta", "vai": "besta_lembrete", "se": {"nao_tem": "besta", "tarefa": ["besta", "ativa"]}},
 	{"texto": "Mostrar a besta", "vai": "besta_achou", "se": {"tem": "besta", "sem_marca": "tenorio_besta"}},
+	{"texto": "Jogar palitinho (Cr$ 5)", "faz": [{"jogo": "palitinho"}], "se": {"lugar": "varanda"}},
+	{"texto": "Atirar nas garrafas", "faz": [{"jogo": "garrafas"}], "se": {"lugar": "garrafas", "tem": "besta"}},
+	{"texto": "Perguntar das galinhas", "vai": "galinhas_pedido", "se": {"tarefa": [["besta", "feita"], ["galinhas", "nova"]]}},
+	{"texto": "Dizer que não achou bicho nenhum", "vai": "galinhas_mentiu", "se": {"tarefa": ["galinhas", "ativa"], "marca": "bastiao_conheceu"}},
+	{"texto": "Contar do homem na ruína", "vai": "galinhas_contou", "se": {"tarefa": ["galinhas", "ativa"], "marca": "bastiao_conheceu"}},
 	{"texto": "Contar do Severino", "vai": "severino", "se": {"marca": "morto:porteiro", "sem_marca": "tenorio_severino"}},
 	{"texto": "Perguntar pela chave do portão", "vai": "chave_lembrete", "se": {"tarefa": ["chave", "ativa"], "nao_tem": "chave_portao"}},
 	{"texto": "Ir embora", "vai": "fim"},
@@ -30,6 +36,25 @@ const NOS := {
 		"Tenório. Armas e munição. Fiado não, que aqui não tem amanhã.",
 	]},
 	"oi": {"fala": ["Hm. Vivo ainda. O que vai ser?"]},
+	"garrafas": {"falas": [
+		["Seis garrafas no mourão. O meu tempo é dezoito segundos. Bate, e a aljava é tua."],
+		["Mira no gargalo. Garrafa não corre, mas o que vem de noite corre."],
+	]},
+	"galinhas_pedido": {"faz": [{"tarefa": ["galinhas", "ativa"]}], "fala": [
+		"Some galinha do meu galinheiro. De noite. Uma, depois outra. Sem pena, sem sangue.",
+		"O rastro vai pro norte, pra ruína perto do portão. E de lá sobe fumaça. Bicho que acende fogo eu nunca vi.",
+		"Vai lá e resolve. Leva a besta.",
+	]},
+	"galinhas_mentiu": {"faz": [{"marca": "tenorio_galinhas_mentiu"}, {"tarefa": ["galinhas", "feita"]}], "fala": [
+		"Não achou nada? ...Hm.",
+		"Engraçado. A fumaça continua lá. E as galinhas continuam sumindo.",
+		"Tá bom, rapaz. Cada um sabe o que carrega.",
+	]},
+	"galinhas_contou": {"faz": [{"marca": "bastiao:expulso"}, {"dinheiro": 15}, {"tarefa": ["galinhas", "feita"]}], "fala": [
+		"Gente? Lá na ruína? ...Leproso. Daqueles que soltaram em sessenta e dois.",
+		"Deixa comigo. Dois tiros pro alto e ele some pro mato. Ninguém precisa sujar a mão.",
+		"Toma, pelo serviço.",
+	]},
 	"portao": {"falas": [
 		["...Hm? Nada. Vim ver se o portão continua fechado. Continua."],
 		["Todo dia de manhã. Não pergunta. Desce comigo, que daqui a pouco eu abro a armaria."],

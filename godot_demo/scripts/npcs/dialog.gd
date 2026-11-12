@@ -128,6 +128,7 @@ func _do(actions: Array) -> String:
 			match k:
 				"marca": Story.mark(a.marca)
 				"loja": ui = "loja:" + a.loja
+				"jogo": ui = "jogo:" + a.jogo
 				"da": Inventory.add(a.da, a.get("qtd", 1))
 				"toma": Inventory.take(a.toma, a.get("qtd", 1))
 				"dinheiro": Inventory.money += a.dinheiro

@@ -58,6 +58,15 @@ var oven_seat: Transform3D    # where she sits, on the oven's ledge by its mouth
 var prints: Node3D            # her footprints (after the rain, while the bread's task is on)
 var hide_left := 0.0          # she ducked into the oven: back out after this, unseen
 var seek := -1                # the hide-and-seek: the round, -1 when not playing
+const BASTIAO_AT := Vector3(9.0, 0, -44.9)     # by his fire in the ruin by the gate (RUIN_SMOKE), facing it
+const COOP := Vector3(30.6, 0, -17.6)          # Tenório's hen coop, out the back of the armaria
+const RANGE_Z := -28.0                         # ...and his bottles on the rail, 10 m north of where he stands
+const BOTTLE_TIME := 18.0                      # his time for the six
+var bastiao: Npc
+var bottles: Array[Target] = []
+var bottle_t := -1.0                           # the bottles' clock, -1 when not shooting
+var bottle_bolts := 0                          # bolts in the quiver when it started (the spent ones come back)
+var bottle_label: Label
 var creakers: Array[Vector3] = []
 const BRUXAS := 2             # perched on the roofs each night (one, before he has the machete: roster())
 var bruxas: Array[Bruxa] = []
@@ -100,7 +109,8 @@ func _build() -> void:
 	var ze := marker("parede_casa_ze")  # Zé's house, nailed up after they took him
 	_nailed(ze.position, ze.rotation.y, marker("porta_casa_ze"), "casa_ze", "E · entrar na casa do Zé", Paths.interior("casa_ze"))
 	_jazigo()
-	_professora()
+	_padlocked("professora", "chave_professora", "E · entrar na casa da professora")
+	_padlocked("enfermeira", "chave_enfermeira", "E · entrar na casa da enfermeira")
 	_finds.call_deferred()  # (they stand on the ground: once the colliders are in)
 	var well := marker("porta_poco")  # the ossuary's rope up the well (../docs/TUTORIAL_VILAREJO.md "Dungeon 2"): once
 	var down := Door.make(well, "E · descer pela corda", Paths.interior("ossuario"), "poco", 1.4)  # tied, a way back down
@@ -136,6 +146,7 @@ func _process(delta: float) -> void:
 	_radio()
 	_view(delta)
 	_cida_tick(delta)
+	_bottles_tick(delta)
 	# (not before the navigation map has synced: the night's places come from it. Arriving at night, up the well's rope
 	# or out of a door, the first frames have none yet)
 	if night_watch and WorldTime.is_night() != night and NavigationServer3D.map_get_iteration_id(get_world_3d().navigation_map) > 0:
@@ -504,7 +515,10 @@ func _belfry() -> void:
 	_bell_prompt()
 	(func():
 		_cida()
-		_smoke(ground(RUIN_SMOKE.x, RUIN_SMOKE.z), 6.0, true)
+		_bastiao()
+		_tenorio_yard()
+		if not Story.has("bastiao:expulso"):
+			_smoke(ground(RUIN_SMOKE.x, RUIN_SMOKE.z), 6.0, true)
 		_smoke(ground(QUARRY_SMOKE.x, QUARRY_SMOKE.z), 14.0, false)).call_deferred()  # (on the ground: once it is in)
 
 
@@ -666,13 +680,115 @@ func _blink(then: Callable) -> void:
 	tw.tween_interval(0.8); tw.tween_property(black, "color:a", 0.0, 0.6); tw.tween_callback(layer.queue_free)
 
 
-## Dona Lurdes's house (casa_02, ../docs/CONTEUDO_VILAREJO.md "As casas acorrentadas"): padlocked; Cida's key.
-func _professora() -> void:
-	var w := marker("parede_professora")
-	var lock := BlockedDoor.make(self, w.position, w.rotation.y, "cadeado", "professora", "chave_professora", true)
-	var into := Door.make(marker("porta_professora"), "E · entrar na casa da professora", Paths.interior("professora"), "professora", 1.6)
-	into.enabled = Story.has("aberta:professora")
+## The padlocked houses (../docs/CONTEUDO_VILAREJO.md "As casas acorrentadas"): Dona Lurdes's (casa_02, Cida's key),
+## the nurse's (casa_14, Bastião's). The key opens the padlock, then the door takes you in.
+func _padlocked(id: String, key: String, text: String) -> void:
+	var w := marker("parede_" + id)
+	var lock := BlockedDoor.make(self, w.position, w.rotation.y, "cadeado", id, key, true)
+	var into := Door.make(marker("porta_" + id), text, Paths.interior(id), id, 1.6)
+	into.enabled = Story.has("aberta:" + id)
 	lock.opened.connect(func(): into.enabled = true)
+
+
+# --- Bastião (../docs/CONTEUDO_VILAREJO.md "Bastião, o ex-interno"): by his fire in the ruin by the gate, on a stone,
+# night and day. Told on to Tenório ("bastiao:expulso"), he is gone: the fire out, and if he had not given you the
+# nurse's key, it lies in the ashes.
+func _bastiao() -> void:
+	var at := ground(BASTIAO_AT.x, BASTIAO_AT.z)
+	if Story.has("bastiao:expulso"):
+		if not Story.has("bastiao:ajudou"):
+			var key := Pickup.make(self, ground(RUIN_SMOKE.x, RUIN_SMOKE.z) + Vector3(0.2, 0.03, 0.1), "chave_enfermeira", 1, "bastiao_cinzas")
+			if is_instance_valid(key):
+				key.prompt = "E · pegar o que ficou nas cinzas"
+		return
+	var stone := Looks.box(self, at + Vector3(0, 0.22, 0.12), Vector3(0.5, 0.44, 0.45), Looks.triplanar("stone", 1.0, Color(0.5, 0.48, 0.45)))
+	stone.name = "pedra_bastiao"
+	bastiao = Npc.spawn(self, "bastiao", Transform3D(Basis(Vector3.UP, PI), at)); bastiao.pose({"faz": "Sit", "leva": ""})
+	bastiao.talk.radius = 2.6  # (across his fire: he keeps you at a distance)
+
+
+# --- Tenório's yard, out the back of the armaria: the hen coop (its hens heard), the rail with the bottles
+func _tenorio_yard() -> void:
+	var c := ground(COOP.x, COOP.z)
+	var planks := Looks.triplanar("planks", 1.0, Color(0.6, 0.5, 0.4))
+	Looks.box(self, c + Vector3(0, 0.5, 0), Vector3(1.6, 1.0, 1.2), planks)
+	Looks.box(self, c + Vector3(0, 1.08, 0), Vector3(1.8, 0.12, 1.4), Looks.triplanar("roof_tiles", 1.0, Color(0.9, 0.8, 0.75)))
+	Audio.play3d(self, "galinhas", c + Vector3(0, 0.6, 0), -6.0, true, 2.0, 14.0)
+	for x in [23.4, 28.6]:  # two posts and the rail the bottles stand on
+		var p := ground(x, RANGE_Z)
+		Looks.box(self, p + Vector3(0, 0.5, 0), Vector3(0.12, 1.0, 0.12), planks)
+	var mid := ground(26.0, RANGE_Z)
+	Looks.box(self, mid + Vector3(0, 1.02, 0), Vector3(5.4, 0.08, 0.14), planks)
+
+
+## A game started from a talk (Dialog "jogo"): Tenório's palitinho on the porch, or his bottles out the back.
+func start_game(id: String) -> void:
+	match id:
+		"palitinho":
+			var why := Palitinho.can_play()
+			if why != "":
+				player.notice.emit("Tenório: — " + why)
+			else:
+				add_child(Palitinho.new(player))
+		"garrafas":
+			_bottles_start()
+
+
+func _bottles_start() -> void:
+	if bottle_t >= 0.0:
+		return
+	for b in bottles:
+		if is_instance_valid(b):
+			b.queue_free()
+	bottles.clear()
+	var glass := StandardMaterial3D.new(); glass.albedo_color = Color(0.5, 0.82, 0.45, 0.9)
+	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA; glass.roughness = 0.1
+	var mid := ground(26.0, RANGE_Z)
+	for i in 6:
+		var m := CylinderMesh.new(); m.top_radius = 0.03; m.bottom_radius = 0.055; m.height = 0.36; m.material = glass
+		var t := Target.make(self, Vector3(23.9 + 0.84 * i, mid.y + 1.24, RANGE_Z), Vector3(0.12, 0.36, 0.12), m)
+		t.hit.connect(_bottle_hit.bind(t))
+		bottles.append(t)
+	bottle_t = 0.0; bottle_bolts = Inventory.count("virote")
+	if bottle_label == null:
+		var layer := CanvasLayer.new(); add_child(layer)
+		bottle_label = Label.new(); layer.add_child(bottle_label)
+		bottle_label.anchor_left = 0.5; bottle_label.anchor_right = 0.5; bottle_label.offset_left = -160; bottle_label.offset_right = 160
+		bottle_label.offset_top = 70; bottle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		bottle_label.add_theme_color_override("font_color", Color(0.95, 0.88, 0.7))
+	bottle_label.visible = true
+	player.notice.emit("Tenório: — Seis garrafas. Dezoito segundos. Valendo!")
+
+
+func _bottle_hit(t: Target) -> void:
+	Audio.play3d(self, "garrafa_quebrar", t.global_position, 0.0, false, 3.0, 30.0)
+	for c in t.get_children():
+		if c is MeshInstance3D:
+			c.visible = false
+
+
+func _bottles_tick(delta: float) -> void:
+	if bottle_t < 0.0:
+		return
+	bottle_t += delta
+	var down := bottles.filter(func(b): return b.done).size()
+	bottle_label.text = "Garrafas %d de 6   ·   %.1f s   (o dele: %d s)" % [down, bottle_t, int(BOTTLE_TIME)]
+	if down < 6 and bottle_t < 40.0:
+		return
+	var t := bottle_t; bottle_t = -1.0; bottle_label.visible = false
+	var spent := bottle_bolts - Inventory.count("virote")  # he picks your bolts up off the ground
+	if spent > 0:
+		Inventory.add("virote", spent)
+	if down < 6:
+		player.notice.emit("Tenório: — Acabou o tempo. Os virotes eu junto pra você.")
+	elif t <= BOTTLE_TIME and not Story.has("garrafas:venceu"):
+		Story.mark("garrafas:venceu"); Inventory.add("aljava_couro")
+		player.notice.emit("Tenório: — %.1f segundos. ...Hm. Toma a aljava. Promessa é promessa." % t)
+		FoundBanner.open(self, "aljava_couro")
+	elif t <= BOTTLE_TIME:
+		player.notice.emit("Tenório: — %.1f. Bom. A aljava você já tem." % t)
+	else:
+		player.notice.emit("Tenório: — %.1f segundos. O meu é dezoito. Ainda não, rapaz." % t)
 
 
 ## At 19h the Voz do Brasil through the venda's door, muffled by the boards; gone at 20h.

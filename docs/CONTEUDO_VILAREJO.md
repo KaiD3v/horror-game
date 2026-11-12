@@ -1,7 +1,7 @@
 # O vilarejo vivo: conteúdo secundário (plano)
 
 *Data: 2026-11-11. Continua [TUTORIAL_VILAREJO.md](TUTORIAL_VILAREJO.md) e [CHAVE_DO_PORTAO.md](CHAVE_DO_PORTAO.md).
-Fases 1 a 3 feitas (ver "Fase N, feita" no fim); o resto é plano. Coordenadas em Godot (x, z).*
+Fases 1 a 4 feitas (ver "Fase N, feita" no fim); o resto é plano. Coordenadas em Godot (x, z).*
 
 ## O problema
 
@@ -397,3 +397,69 @@ campanário: é preciso erguer um pouco o olhar.
   - a chave, o cadeado e a porta.
 - `test_professora.gd`: a casa e o relógio.
 - Capturas `v63` a `v67`, com uma das pegadas vistas de cima.
+
+## Fase 4, feita: o Tenório e o Bastião
+
+**O quintal do Tenório** (`vilarejo.gd` `_tenorio_yard`):
+- Atrás da armaria: um galinheiro com as galinhas (som `galinhas`) e um varal de tábuas com as garrafas, a 10 m.
+- A rotina dele ganhou a tarde no quintal, das 14h às 17h ("garrafas").
+
+**Tiro nas garrafas** ("Atirar nas garrafas", com a besta, à tarde):
+- Seis garrafas no varal e o relógio dele na tela: "Garrafas 3 de 6 · 7,4 s (o dele: 18 s)".
+- Em até 18 s: a **aljava de couro** (`aljava_couro`, uma vez, com a faixa "Você encontrou").
+  - Com ela, os virotes não batem no cinto quando ele corre. O Poceiro e o Porteiro o ouvem correndo a 65% da distância (`Player.rattle`).
+- Os virotes gastos voltam no fim ("os virotes eu junto pra você"). Acabou o tempo (40 s), acabou a vez.
+
+**Palitinho** (`scripts/ui/palitinho.gd`, na varanda das 18h às 21h, "Jogar palitinho (Cr$ 5)"):
+- **As regras:**
+  - cada um esconde de 0 a 3 palitos e diz quanto dá a soma, sem repetir o número do outro;
+  - quem acerta leva a rodada, e quem fecha duas leva a partida, valendo Cr$ 5;
+  - quem fala primeiro alterna a cada rodada.
+- **A mania dele:** quando está perdendo, "ele aperta o punho fechado com força", e na mão sempre tem três. Quem presta atenção ganha.
+- **A bolsa dele:** joga com no máximo Cr$ 30 por dia ("Por hoje chega. Você me limpou."). Não dá para enriquecer.
+- **O prêmio de verdade:** a cada partida ganha, ele conta uma lembrança (quatro ao todo):
+  1. a caça para os doutores;
+  2. as caixas de cartucho;
+  3. a noite da sirene, vista da varanda;
+  4. por que ele sobe ao portão todo dia de manhã: "pra ver se tenho coragem de bater".
+- Som `palitos` (os palitos batendo na mesa).
+
+**O Bastião** (`npcs/bastiao.py`):
+- **O modelo:** refeito pelo desenho do autor. Um capuz de verdade, solto em volta da cabeça e com a cara à mostra, com uma ponta atrás e o pano caindo sobre os ombros. Colete de juta remendado sobre camisa clara de manga comprida, mãos enfaixadas, sem sobrancelhas, manchas claras no rosto.
+- **Onde fica:** na ruína do portão, sentado numa pedra junto do fogo, de dia e de noite.
+- **Como conversa:** de longe, do outro lado do fogo: "Não é por mim. É por você. Lá embaixo dizem que pega." Ele foi o 0412 da Colônia e saiu em 62.
+- **O que conta:**
+  - o túnel velho da água embaixo do muro ("com uma picareta, quem sabe");
+  - o pavilhão das crianças: aos filhos diziam que os pais tinham morrido, e aos pais, que os filhos tinham morrido;
+  - a Dalva, a enfermeira ("Se você encontrar ela lá em cima... olha pra ela"). Isso aponta para a lamparina na mão contra a Enfermeira.
+
+**As galinhas do Tenório** (`QuestData` "galinhas", depois da besta):
+- **O pedido:** "Some galinha... Bicho que acende fogo eu nunca vi. Vai lá e resolve. Leva a besta."
+- **O Bastião admite:** "Eu pego uma, às vezes. Ele tem vinte. Eu não tenho nada."
+- **O cobertor** do Zé, que agora fica na cama da casa do Zé (`cobertor`): dado a ele, ele entrega a chave da casa da enfermeira. "Faz trinta anos que ninguém me dá uma coisa sem jogar de longe."
+- **De volta no Tenório, a escolha:**
+  - "Dizer que não achou bicho nenhum": a tarefa fecha e o Bastião fica. O Tenório desconfia: "A fumaça continua lá."
+  - "Contar do homem na ruína": "Leproso... Dois tiros pro alto e ele some pro mato." O Tenório paga Cr$ 15. Na próxima vez no vilarejo, o Bastião sumiu: sem fogo e sem fumaça. Se ele não tinha dado a chave, ela fica nas cinzas.
+
+**A casa da enfermeira** (casa 14, a vermelha junto do portão; `enfermeira_build.py`):
+- **A porta:** a corrente saiu do modelo; agora é um cadeado que a chave do Bastião abre.
+- **Dentro:**
+  - o cabide vazio, sem o uniforme;
+  - a touca na prateleira e o espelho coberto com um pano;
+  - a mala feita e nunca levada;
+  - a seringa de vidro vazia;
+  - as cartas da Dalva à mãe (nota `cartas_dalva`): o pavilhão das crianças, o soro, e "hoje eu tomei também".
+- A casa apresenta a Enfermeira antes da Colônia.
+
+**Sons novos (ElevenLabs, 38 créditos):** `galinhas` (loop) e `palitos`.
+
+**Mudou do plano:** o Bastião pede só o cobertor, não comida e cobertor. A aljava vem das garrafas, não do mascate.
+
+**Testes:**
+- `test_vilarejo.gd` `tenorio_tests`:
+  - o quintal, as garrafas abaixo de 18 s, a aljava, os virotes de volta e o barulho menor;
+  - o palitinho: a mania, a vitória com a lembrança e a bolsa do dia;
+  - a tarefa e o Bastião: o cobertor e a chave, a mentira e a denúncia (a chave nas cinzas);
+  - a porta da enfermeira.
+- `test_enfermeira.gd`: a casa e a nota.
+- Capturas `v68` a `v71` e `enfermeira_*`.

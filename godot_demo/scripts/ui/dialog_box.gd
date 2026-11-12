@@ -140,6 +140,11 @@ func pick(i: int) -> void:
 	var ui := dialog.pick(opts[i])
 	if ui == Dialog.END:
 		close()
+	elif ui.begins_with("jogo:"):  # a game (palitinho, the bottles): the level runs it, the talk closes
+		close()
+		var level := get_tree().get_first_node_in_group("level")
+		if level and level.has_method("start_game"):
+			level.start_game(ui.trim_prefix("jogo:"))
 	elif ui.begins_with("loja:"):  # their shop over the talk; back here when it closes
 		var shop: ShopMenu = get_tree().get_first_node_in_group("shop_menu")
 		visible = false

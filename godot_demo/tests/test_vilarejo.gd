@@ -1225,3 +1225,97 @@ func cida_tests() -> void:
 	check(SceneRouter.requested == Paths.interior("professora"), "E: into Dona Lurdes's house")
 	SceneRouter.requested = ""; SceneRouter.arriving = ""
 	_hour(16.5); Story.reset(); Inventory.reset(); Inventory.give_tools(); Weather.force(1.0, 1.0)
+
+
+# --- Tenório and Bastião (../docs/CONTEUDO_VILAREJO.md fase 4): his yard (the hens, the rail), the bottles against his
+# 18 s (the quiver; the bolts come back), the palitinho on the porch (his habit, a memory a win, his day's purse), the
+# hens' task and Bastião by his fire (the blanket for the nurse's key; lie to Tenório or tell on him), the nurse's door
+func tenorio_tests() -> void:
+	L.night_watch = false
+	Story.mark("tenorio_conheceu")
+	await wait(0.6)
+	check("galinhas" in Audio.heard, "a hen coop out the back of the armaria, the hens heard")
+	# the bottles
+	put(player, Vector3(0, L.ground(0, 40).y, 40), PI); _hour(14.5); await wait(0.5)
+	var ten: Npc = L.npcs.get("armeiro")
+	check(ten != null and Dialog.new("armeiro", player).pick_start() == "garrafas", "14:30 Tenório out back, at his bottles")
+	var stand: Vector3 = L.ground(26.0, -18.6)
+	put(player, stand, 0.0); await wait(0.4)
+	var bolts := Inventory.count("virote")
+	L.start_game("garrafas"); await wait(0.3)
+	check(L.bottles.size() == 6 and L.bottle_t >= 0.0, "six bottles on the rail, his clock running")
+	await shot("v68_garrafas")
+	for b in L.bottles:
+		var from: Vector3 = stand + Vector3(0, 1.5, 0); Inventory.take("virote")
+		Bolt.fire(L, from, (b.global_position - from).normalized(), player.get_rid()); await wait(0.5)
+	await until(func(): return L.bottle_t < 0.0, 3.0); await wait(0.6)
+	check(Story.has("garrafas:venceu") and Inventory.has("aljava_couro"), "under 18 s: Tenório's quiver")
+	check(Inventory.count("virote") == bolts, "the bolts back from the ground (%d of %d)" % [Inventory.count("virote"), bolts])
+	await tap("interact"); await wait(0.6)
+	check(player.rattle() < 1.0, "with the quiver his running is heard less far (%.2f)" % player.rattle())
+	# the palitinho on his porch
+	put(player, Vector3(0, L.ground(0, 40).y, 40), PI); _hour(19.0); await wait(0.5)
+	var porch: Node3D = L.marker("porta_armaria")
+	put(player, porch.position, porch.rotation.y + PI); await wait(0.5)
+	Inventory.money = 20
+	L.start_game("palitinho"); await wait(0.3)
+	var p: Palitinho = L.find_children("*", "Palitinho", true, false)[0] if L.find_children("*", "Palitinho", true, false) else null
+	check(p != null and get_tree().paused, "palitinho: his table, the game paused")
+	if p:
+		await shot("v69_palitinho")
+		p.wins = Vector2i(1, 0); p._round()
+		check(p.his == 3 and "aperta o punho" in p.line.text, "behind, he squeezes his fist: it always holds three")
+		p.wins = Vector2i(2, 0); p.phase = "shown"; p._confirm()
+		check(Inventory.money == 25 and Story.count("palitinho:vitorias") == 1 and Palitinho.MEMORIES[0] in p.line.text,
+			"a match won: Cr$ 5, and something he never told")
+		await shot("v70_palitinho_lembranca")
+		p._confirm(); await wait(0.2)
+		check(not get_tree().paused, "E: back to the porch")
+	Palitinho.lost_day = Palitinho.day(); Palitinho.lost = Palitinho.PURSE
+	check(Palitinho.can_play() != "", "his Cr$ 30 for the day gone: no more today")
+	Palitinho.lost = 0
+	# the hens, and Bastião by his fire
+	_hour(16.5); Story.set_task("besta", "feita")
+	var t := Dialog.new("armeiro", player); t.enter("oi")
+	var ask: Array = t.options().filter(func(o): return o.texto == "Perguntar das galinhas")
+	if ask:
+		t.pick(ask[0])
+	check(Story.task("galinhas") == "ativa", "the hens' task: the trail goes north, to the ruin by the gate")
+	var bas: Npc = L.bastiao
+	check(bas != null and bas.anim.current_animation == "Sit", "in the ruin, by the fire: a man")
+	var front := bas.global_position + bas.global_basis.z * 1.25
+	put(player, front, atan2(bas.global_basis.z.x, bas.global_basis.z.z)); await wait(0.6)
+	check(L.hud.prompt.text == "E · falar com Bastião", "\"%s\"" % L.hud.prompt.text)
+	await shot("v71_bastiao")
+	var d := Dialog.new("bastiao", player); d.begin(); d.begin()
+	check(Story.has("bastiao_conheceu") and d.at == "galinhas", "Bastião, 0412 of the Colônia; then the hens")
+	Inventory.add("cobertor")
+	d.enter("oi")
+	var give: Array = d.options().filter(func(o): return o.texto == "Dar o cobertor")
+	if give:
+		d.pick(give[0])
+	check(Story.has("bastiao:ajudou") and Inventory.has("chave_enfermeira") and not Inventory.has("cobertor"), "the Zé's blanket: the nurse's key")
+	t.enter("oi")
+	var lie: Array = t.options().filter(func(o): return o.texto == "Dizer que não achou bicho nenhum")
+	check(t.options().any(func(o): return o.texto == "Contar do homem na ruína"), "back at Tenório's: lie for him, or tell on him")
+	if lie:
+		t.pick(lie[0])
+	check(Story.task("galinhas") == "feita" and not Story.has("bastiao:expulso"), "a lie: Bastião stays by his fire")
+	# told on: gone, and the key in the ashes if he had not given it
+	Story.marks.erase("bastiao:ajudou"); Story.mark("bastiao:expulso"); L._bastiao(); await wait(0.2)
+	check(L.find_children("*", "Pickup", true, false).any(func(k): return k.id == "bastiao_cinzas"), "told on, he is gone: his key in the ashes")
+	# the nurse's door
+	var w: Node3D = L.marker("parede_enfermeira")
+	put(player, w.position + w.basis.z * 1.0, w.rotation.y + PI); await wait(0.4)
+	check(L.hud.prompt.text == "E · abrir o cadeado", "the nurse's house, by the gate: \"%s\"" % L.hud.prompt.text)
+	await tap("interact"); await until(func(): return Story.has("aberta:enfermeira"), 5.0); await wait(0.5)
+	put(player, L.marker("porta_enfermeira").position, L.marker("porta_enfermeira").rotation.y + PI); await wait(0.4)
+	await until(func(): return L.hud.prompt.text == "E · entrar na casa da enfermeira", 3.0)
+	SceneRouter.requested = ""
+	await tap("interact")
+	if SceneRouter.requested == "":  # (a hitch can swallow a one-frame tap)
+		await wait(0.3); await tap("interact")
+	check(Story.has("aberta:enfermeira") and SceneRouter.requested == Paths.interior("enfermeira"),
+		"her key: in (%s, \"%s\", %s)" % [Story.has("aberta:enfermeira"), L.hud.prompt.text, SceneRouter.requested])
+	SceneRouter.requested = ""; SceneRouter.arriving = ""
+	_hour(16.5); Story.reset(); Inventory.reset(); Inventory.give_tools()

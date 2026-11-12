@@ -35,7 +35,8 @@ HOUSES = [
     (-26, -7, 180, 6.5, 5.0, "wood", {"siding": "grey", "shutter": "oxblood", "burnt": True}),
     (-10, 26, 90, 6.5, 5.5, "taipa", {"barra": "green", "shutter": "green", "chimney": True}),
     (9.5, 31, -92, 6.0, 5.0, "wood", {"siding": "brown", "shutter": "green", "porch": True}),
-    (-9, 43, 85, 7.0, 5.5, "taipa", {"barra": "oxblood", "shutter": "blue", "chained": True}),
+    (-9, 43, 85, 7.0, 5.5, "taipa", {"barra": "oxblood", "shutter": "blue", "porta": "enfermeira"}),  # the Colônia's nurse's:
+                                                          # padlocked (Godot: BlockedDoor, Bastião's key, docs/CONTEUDO_VILAREJO.md)
     (9, 46, -90, 6.0, 5.0, "ruin", {}),
     (43.5, -11, -90, 7.0, 6.0, "taipa", {"barra": "ochre", "shutter": "green", "chimney": True,  # Juca's still: the first
                                         "porta": "alambique", "lado": 0.8}),  # dungeon (TUTORIAL_VILAREJO.md); a side door

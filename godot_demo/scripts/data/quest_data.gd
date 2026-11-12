@@ -17,6 +17,8 @@ const QUESTS := {
 		"descricao": "Some pão do balaio do Bento, toda noite. Depois da chuva fica pegada pequena no barro, nos fundos da venda."},
 	"esconde": {"titulo": "Esconde-esconde",
 		"descricao": "A Cida se esconde e diz onde, do jeito dela: onde a água dorme e ninguém bebe; onde o homem de palha vigia a estrada; onde a casa ainda cheira a fumaça."},
+	"galinhas": {"titulo": "As galinhas do Tenório",
+		"descricao": "Some galinha do galinheiro do Tenório, de noite. O rastro vai para o norte, para a ruína perto do portão. \"Bicho que acende fogo eu nunca vi. Vai lá e resolve.\""},
 	"garrafada": {"titulo": "A garrafada do altar",
 		"descricao": "Dona Firmina quer a garrafada que o padre guardava no baú ao lado do altar da capela."},
 }

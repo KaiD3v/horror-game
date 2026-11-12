@@ -20,6 +20,10 @@ const NOTES := [
 		"text": "Meu filho,\nlembra do parlatório? Eu disse que ia te buscar. Não consegui. A você disseram que eu morri, a mim, que você tinha morrido. Era mentira.\nEstou viva. O doutor não deixa ninguém sair e dá injeção toda semana. O Bento da venda põe esta no correio.\nAgora é você que tem que vir. Antes do fim de março.\ntua mãe"},
 	# Cida's map (../tools/texturas/mapa_cida.py): she gives it at the end of the hide-and-seek (vilarejo.gd _cida)
 	{"id": "mapa_cida", "scene": "", "at": Vector2.ZERO, "yaw": 0.0, "paper": "mapa_cida", "title": "O mapa da Cida", "text": ""},
+	# the nurse's house (../docs/CONTEUDO_VILAREJO.md "As casas acorrentadas"): her letters on the table, never sent
+	{"id": "cartas_dalva", "scene": "enfermeira", "at": Vector2(0.45, -1.95), "yaw": -15.0, "from": 1.5, "paper": "caderno",
+		"title": "Cartas da Dalva à mãe (1974)",
+		"text": "Mãe,\no pavilhão das crianças agora são quarenta. Elas perguntam pelos pais, e o doutor manda dizer que os pais morreram. Os pais estão no pavilhão do lado.\n\nMãe,\no doutor começou o soro. Diz que tira a doença do sangue. Eu aplico de noite. Eles não dormem mais.\n\nMãe,\nhoje eu tomei também. Pra ver. Não conta pra ninguém. Não vou mais poder escrever direito, a mão já não para."},
 	# Dona Lurdes's house (../docs/CONTEUDO_VILAREJO.md "As casas acorrentadas"): on her desk
 	{"id": "diario_classe", "scene": "professora", "at": Vector2(0.65, -1.95), "yaw": 10.0, "from": 1.5, "paper": "caderno",
 		"title": "Diário de classe (1974)",

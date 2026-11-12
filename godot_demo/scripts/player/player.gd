@@ -125,6 +125,11 @@ var flicker := 0.0
 var condition: PlayerCondition  # blood, breathing, panting
 
 
+## How much of a running man's noise is left: his bolts rattle at his belt, unless the leather quiver muffles them.
+func rattle() -> float:
+	return 0.65 if Inventory.has("aljava_couro") else 1.0
+
+
 func _ready() -> void:
 	set_collision_mask_value(Npc.LAYER, true)  # the villagers stop him (not the mutants: they walk where those stand)
 	max_health = Inventory.health_max(); stamina_max = Inventory.breath_max()  # (the upgrades carried)

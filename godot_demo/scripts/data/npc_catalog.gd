@@ -38,6 +38,8 @@ const NPCS := {
 			{"de": 6, "cena": "vilarejo", "em": "portao_colonia", "off": Vector3(0.9, 0, 6.0), "rumo": PI,
 				"faz": "LookUp", "lugar": "portao"},        # at the Colônia's gate at dawn, looking up (why: a later task)
 			{"de": 8},
+			{"de": 14, "cena": "vilarejo", "pos": Vector3(26.0, 0, -17.8), "rumo": PI, "lugar": "garrafas"},  # out back: bottles
+			{"de": 17},
 			{"de": 18, "cena": "vilarejo", "em": "porta_armaria", "off": Vector3(1.4, 0, -1.7), "lugar": "varanda",
 				"leva": "lamparina"},                      # on his porch at nightfall, his lamp lit
 			{"de": 21}]},                                  # in, and the door shut (Door.shut)
@@ -54,6 +56,8 @@ const NPCS := {
 			{"de": 18.75, "faz": "Kneel", "lugar": "cruzeiro"}],
 		"luz": {"at": Vector3(0, 0.35, 0.5), "cor": Color(1.0, 0.68, 0.35), "energia": 1.3, "alcance": 4.5, "fica": true},  # candles at her feet
 		"som": {"nome": "reza", "at": Vector3(0, 1.3, 0), "db": -6.0, "size": 1.2, "far": 9.0}},  # praying under her breath
+	"bastiao": {"nome": "Bastião", "papel": "ex-interno da Colônia, na ruína do portão (vilarejo.gd _bastiao)",
+		"passo": 0.95},
 	"cida": {"nome": "Cida", "papel": "a filha do Zé, escondida no forno atrás da venda (vilarejo.gd _cida)",
 		"raio": 0.22, "altura": 1.15, "passo": 0.71},
 }
