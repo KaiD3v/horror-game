@@ -29,7 +29,7 @@ static func capture(p: Player, scene: String) -> Dictionary:
 		items["virote"] = items.get("virote", 0) + 1
 	return {"versao": VERSION, "cena": scene, "pos": p.global_position, "giro": p.rotation.y,
 		"vida": p.health, "vida_max": p.max_health, "folego_max": p.stamina_max, "lamparina": p.lantern_out,
-		"dinheiro": Inventory.money, "itens": items, "vendido": Shop._sold.duplicate(), "baus": Chest.opened.duplicate(),
+		"dinheiro": Inventory.money, "guardado": Inventory.banked, "querosene": Inventory.fuel, "acesa": Inventory.lit, "itens": items, "vendido": Shop._sold.duplicate(), "baus": Chest.opened.duplicate(),
 		"notas": NotesReader.read.duplicate(), "historia": Story.marks.duplicate(true), "minutos": WorldTime.minutes,
 		"clima": [Weather.rain, Weather.fog, Weather.wet, Weather.rain_from, Weather.rain_until, Weather.fog_goal, Weather._planned]}
 
@@ -57,6 +57,8 @@ static func read() -> Dictionary:
 ## The world as `d` has it; the player's part waits in `pending` for the level.
 static func restore(d: Dictionary) -> void:
 	Inventory.money = d.dinheiro; Inventory.items = d.itens.duplicate()
+	Inventory.banked = d.get("guardado", 0); Inventory.fuel = d.get("querosene", Inventory.LAMP); Inventory.lit = d.get("acesa", true)
+	Inventory.banked = d.get("guardado", 0); Inventory.fuel = d.get("querosene", Inventory.LAMP); Inventory.lit = d.get("acesa", true)
 	Shop._sold = d.vendido.duplicate(); Chest.opened.assign(d.baus); NotesReader.read.assign(d.notas)
 	Story.marks = d.historia.duplicate(true); WorldTime.minutes = d.minutos
 	var c: Array = d.clima

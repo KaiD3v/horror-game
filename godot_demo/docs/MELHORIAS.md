@@ -105,3 +105,48 @@ podem ter um efeito pequeno **enquanto você carrega**, e aí devolver custa alg
 5. **Lampião** e **medalha**, que mexem na percepção dos inimigos e pedem mais testes.
 
 Virotes e curas compartilham o mesmo código: um teto por tipo (`municao`, `cura`), lido do objeto que você carrega.
+
+## Feito
+
+O autor escolheu virotes, curas e dinheiro como propostos, e a lamparina **diferente** do proposto: ela seca e
+precisa ser recarregada; as melhorias aumentam quanto dura, e a última a deixa infinita.
+
+**Tetos** (`Inventory.ROOM`, `cap`, `room`). O maior recipiente que você carrega decide quanto cabe:
+
+| | Começo | 2º | 3º |
+|---|---|---|---|
+| Virotes | pano, 6 | aljava de couro do Tenório, 12 | bolsa de cinto (armeiro, Cr$ 30), 18 |
+| Curas (ataduras + garrafadas) | bolso do paletó, 2 | embornal da Firmina (ao devolver o escapulário), 4 | estojo da Celina (na mala da casa dela), 6 |
+| Dinheiro | bolso da calça, Cr$ 60 | porta-níquel (venda, Cr$ 10), 120 | capanga do Bento (ao contar do porão), 250 |
+
+- **Achado** (`Pickup`): leva o que cabe, o resto fica lá ("Pegou: Virote (2). O resto não cabe."), também
+  depois de sair e voltar (Story `tirado:<id>`).
+- **Baú:** só abre quando cabe tudo.
+- **Loja:** não vende o que não cabe ("Não cabe, freguês. Volta quando gastar."); a ficha diz quantos cabem mais.
+- **Dinheiro dado** (diálogo, `dinheiro`): o que não cabe fica guardado com o Seu Bento.
+- **Na venda:** "Deixar o dinheiro guardado" põe tudo no caderno; "Pegar o dinheiro guardado" devolve o que couber.
+- **Palitinho:** o Tenório não joga com o seu bolso cheio.
+- **Caderno:** "Virote (5 de 12)" e "Dinheiro: Cr$ 40 de 60 · com o Bento: Cr$ 15".
+
+**Lamparina** (`Inventory.fuel`, `lit`, `fuel_max`; `Player.lamp`):
+
+- **Gasto:** o querosene queima enquanto ela está acesa, na mão ou no gancho. A cheia dura 5 min (5 horas do jogo).
+- **Fim:** nos últimos 30 s a chama diminui e falha; seca, apaga.
+- **R** (sem a besta na mão):
+  - acesa: apaga, e no escuro nada a vê (`holds_lantern` exige que ela esteja acesa);
+  - apagada: acende de novo;
+  - seca: enche com uma garrafa de querosene (1,6 s no escuro) e acende. Só enche seca.
+- **Dicas:** "R · apagar a lamparina" aparece de dia ao ar livre; "R · encher a lamparina" aparece quando ela seca e
+  você tem garrafa.
+- **Querosene:**
+  - uma garrafa no começo;
+  - na venda: Cr$ 8, 6 garrafas ("o caminhão não vem desde março");
+  - na moita do alambique.
+- **Melhorias**, cada uma enche e acende a lamparina ao ser pega:
+  - pavio de algodão trançado (venda, Cr$ 12): ×1,5;
+  - tanque de latão (Seu Dito, Cr$ 30): ×2;
+  - azeite do Santíssimo (Firmina, ao contar da procissão): não apaga mais.
+- **Save:** guarda o querosene que resta, se ela está acesa e o dinheiro com o Bento.
+
+**Testes:** suítes `room` e `lamp` do treino, mais a mala no teste da enfermeira. Nos testes antigos a lamparina não
+seca (`Inventory.fuel = INF`) e os recipientes vêm todos (`give_tools`).

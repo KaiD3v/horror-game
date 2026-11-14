@@ -88,6 +88,10 @@ func buy(i: int) -> void:
 			line.text = "\"Isso é %s. Volta quando tiver.\"" % ItemCatalog.price(Shop.price(shop_id, i))
 		Shop.Result.SOLD_OUT:
 			line.text = "\"Acabou. Não vem mais nada lá de baixo.\""
+		Shop.Result.FULL:
+			line.text = "\"Não cabe, freguês. Volta quando gastar.\""
+		Shop.Result.FULL:
+			line.text = "\"Não cabe, freguês. Volta quando gastar.\""
 		Shop.Result.LOCKED:
 			line.text = "\"E vai atirar isso com quê? Arruma uma %s primeiro.\"" % ItemCatalog.item(o.requires).nome.to_lower()
 	_refresh()
@@ -102,13 +106,14 @@ func _refresh() -> void:
 		var owned := ItemCatalog.tool(o.item) and Inventory.has(o.item)
 		rows[i].text = it.nome + (" (%d)" % o.qtd if o.qtd > 1 else "") + ("  · já tem" if owned else "  · esgotado" if left == 0 else "")
 		prices[i].text = ItemCatalog.price(Shop.price(shop_id, i))
-		var col := GONE if left == 0 or Inventory.money < Shop.price(shop_id, i) or not Inventory.has(o.get("requires", "")) else INK
+		var col := GONE if left == 0 or Inventory.money < Shop.price(shop_id, i) or not Inventory.has(o.get("requires", "")) \
+			or Inventory.room(o.item) < o.qtd else INK
 		for s in ["font_color", "font_pressed_color", "font_hover_pressed_color"]:
 			rows[i].add_theme_color_override(s, col)
 		for s in ["font_hover_color", "font_focus_color"]:
 			rows[i].add_theme_color_override(s, PICKED)
 		prices[i].add_theme_color_override("font_color", col)
-	purse.text = "Dinheiro: %s" % ItemCatalog.price(Inventory.money)
+	purse.text = "Dinheiro: %s (cabem %s)" % [ItemCatalog.price(Inventory.money), ItemCatalog.price(Inventory.cap("dinheiro"))]
 
 
 func _show(i: int) -> void:  # the chosen item: what it is, how many you have
@@ -116,7 +121,9 @@ func _show(i: int) -> void:  # the chosen item: what it is, how many you have
 	var it := ItemCatalog.item(o.item)
 	var left := Shop.left(shop_id, i)
 	var need: String = o.get("requires", "")
-	desc.text = "%s\nVocê tem: %d%s%s" % [it.descricao, Inventory.count(o.item), "" if left < 0 else "   ·   restam %d" % left,
+	var fits := Inventory.room(o.item)
+	desc.text = "%s\nVocê tem: %d%s%s%s" % [it.descricao, Inventory.count(o.item), "" if fits > 9999 else "   ·   cabem mais %d" % fits,
+		"" if left < 0 else "   ·   restam %d" % left,
 		"" if Inventory.has(need) else "\nPrecisa de: %s" % ItemCatalog.item(need).nome]
 
 

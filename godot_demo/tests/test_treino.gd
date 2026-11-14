@@ -188,6 +188,8 @@ func run() -> void:
 	sounds_heard()
 	await wound_tests()
 	await inventory_tests()
+	await room_tests()
+	await lamp_tests()
 	await unlock_tests()
 	await chest_tests()
 	await course_tests()
@@ -464,6 +466,115 @@ func inventory_tests() -> void:
 	Inventory.reset(); Inventory.give_tools()
 
 
+# --- how much fits (Inventory.ROOM, ../docs/MELHORIAS.md): bolts, cures, money; what does not fit stays ------------------
+func room_tests() -> void:
+	Inventory.reset(); Inventory.add("besta"); Shop.reset()
+	check(Inventory.cap("municao") == 6 and Inventory.room("virote") == 0, "a new game: the 6 bolts fill the cloth they are tied in")
+	var box := Pickup.make(L, player.global_position, "virote", 4, "teste_caixa")
+	await wait(0.2)
+	await tap("interact"); await wait(0.2)
+	check(Inventory.count("virote") == 6 and is_instance_valid(box) and L.hud.message.text == "Não cabe mais nenhum virote.",
+		"full: the box stays (\"%s\")" % L.hud.message.text)
+	Inventory.items["virote"] = 4
+	await tap("interact"); await wait(0.2)
+	check(Inventory.count("virote") == 6 and is_instance_valid(box) and box.qtd == 2 and Story.count("tirado:teste_caixa") == 2,
+		"room for 2: 2 taken, 2 left in the box (\"%s\")" % L.hud.message.text)
+	Inventory.add("aljava_couro")
+	await tap("interact"); await wait(0.2)
+	check(Inventory.count("virote") == 8 and not is_instance_valid(box) and Story.has("pego:teste_caixa") and Inventory.cap("municao") == 12,
+		"the leather quiver holds 12: the rest taken, the box gone")
+	var again := Pickup.make(L, player.global_position, "virote", 4, "teste_caixa")
+	await wait(0.1)
+	check(not is_instance_valid(again) or again.is_queued_for_deletion(), "...and gone for good")
+	Inventory.money = 100; Inventory.items["virote"] = 10
+	check(Shop.buy("armaria", 0) == Shop.Result.FULL and Inventory.money == 100 and Inventory.count("virote") == 10,
+		"the gunsmith will not sell what does not fit")
+	check(Shop.buy("armaria", 2) == Shop.Result.OK and Inventory.cap("municao") == 18 and Shop.buy("armaria", 1) == Shop.Result.OK
+		and Inventory.count("virote") == 18, "the belt bag (18): then 8 more")
+	var chest := Chest.make(L, {"id": "teste_cheio", "at": Vector2(player.global_position.x + 1.5, player.global_position.z), "yaw": 0.0,
+		"item": "virote", "qtd": 3})
+	chest.use(player); await wait(0.2)
+	check(not player.busy and not ("teste_cheio" in Chest.opened) and L.hud.message.text == "Não cabe mais nenhum virote.",
+		"a trunk stays shut while it does not all fit")
+	chest.queue_free()
+	# the cures: both kinds share the pocket
+	Inventory.items["atadura"] = 1; Inventory.items["garrafada"] = 1
+	check(Inventory.cap("cura") == 2 and Inventory.add("atadura") == 0, "the coat's pocket: 2 cures, a bandage and a bottle fill it")
+	Inventory.add("embornal")
+	check(Inventory.add("atadura", 3) == 2 and Inventory.count("atadura") == 3, "Firmina's bag: 4 (2 of 3 more went in)")
+	Inventory.add("estojo_celina")
+	check(Inventory.cap("cura") == 6 and Inventory.room("garrafada") == 2, "Celina's tin: 6")
+	# the money: the pocket, then what is left with Seu Bento
+	Inventory.items.erase("capanga"); Inventory.items.erase("porta_niquel"); Inventory.money = 55
+	var tin := Pickup.money(L, player.global_position, 10, "teste_lata", "a lata")
+	await wait(0.2)
+	await tap("interact"); await wait(0.2)
+	check(Inventory.money == 60 and is_instance_valid(tin) and tin.qtd == 5, "Cr$ 60 in the pocket: 5 taken, 5 left in the tin (\"%s\")" % L.hud.message.text)
+	tin.queue_free()
+	var line := Inventory.receive(15)
+	check(Inventory.money == 60 and Inventory.banked == 15 and "Bento" in line, "a reward that does not fit is left with Seu Bento: \"%s\"" % line)
+	check(Palitinho.can_play().contains("cheio"), "Tenório will not play into a full pocket")
+	Inventory.add("porta_niquel")
+	check(Inventory.cap("dinheiro") == 120 and Inventory.earn(100) == 60 and Inventory.money == 120, "the coin purse: 120")
+	var d := Dialog.new("vendeiro", player)
+	d._do([{"guarda": true}])
+	check(Inventory.money == 0 and Inventory.banked == 135, "Deixar guardado: all of it in Bento's notebook")
+	Inventory.items.erase("porta_niquel")
+	d._do([{"retira": true}])
+	await wait(0.1)
+	check(Inventory.money == 60 and Inventory.banked == 75 and L.hud.message.text.contains("75"), "Pegar o guardado: what fits (\"%s\")" % L.hud.message.text)
+	var saved := SaveGame.capture(player, L.scene_file_path)
+	Inventory.banked = 0
+	SaveGame.restore(saved); SaveGame.pending = {}
+	check(Inventory.banked == 75, "a save keeps what is with Bento")
+	Story.marks.erase("tirado:teste_caixa"); Story.marks.erase("pego:teste_caixa"); Story.marks.erase("tirado:teste_lata")
+	Inventory.reset(); Inventory.give_tools(); Inventory.fuel = INF; Shop.reset()
+
+
+# --- the lantern's querosene (../docs/MELHORIAS.md): it burns while lit, goes out dry, R fills it -------------------------
+func lamp_tests() -> void:
+	if player.mode != Player.Mode.EXPLORE:
+		await player.free_hands()
+	Inventory.reset(); Inventory.give_tools()
+	check(Inventory.lit and Inventory.fuel == Inventory.LAMP and Inventory.count("querosene") == 1, "a new game: lit, full, a spare bottle")
+	var f0 := Inventory.fuel
+	await wait(1.0)
+	check(Inventory.fuel < f0 - 0.8 and player.lantern.visible, "it burns while lit (%.1f s left)" % Inventory.fuel)
+	await tap("reload"); await wait(0.3)
+	f0 = Inventory.fuel
+	await wait(0.6)
+	check(not Inventory.lit and not player.lantern.visible and not player.holds_lantern() and Inventory.fuel == f0,
+		"R: blown out, dark, nothing sees it, nothing burns")
+	await tap("reload"); await wait(0.3)
+	check(Inventory.lit and player.holds_lantern() and Inventory.count("querosene") == 1, "R: lit again (no bottle spent)")
+	Inventory.fuel = 0.5; await wait(0.8)
+	check(not Inventory.lit and Inventory.fuel == 0.0 and not player.lantern.visible and L.hud.message.text == "A lamparina secou.",
+		"dry: it goes out (\"%s\")" % L.hud.message.text)
+	check(L.hud.prompt.text.contains("R · encher a lamparina") or Hints.learned("querosene"), "the hint: \"%s\"" % L.hud.prompt.text)
+	await tap("reload"); await wait(0.5)
+	check(player.refilling and not Inventory.lit, "R: filling it, a moment in the dark")
+	await wait(Player.REFILL)
+	check(Inventory.lit and Inventory.fuel > Inventory.LAMP - 2.0 and Inventory.count("querosene") == 0 and L.hud.message.text == "Lamparina cheia.",
+		"...full and lit, the bottle spent")
+	Inventory.fuel = 0.0; Inventory.lit = false
+	await tap("reload"); await wait(0.3)
+	check(not Inventory.lit and L.hud.message.text == "Sem querosene.", "no bottle: \"%s\"" % L.hud.message.text)
+	await shot("lamparina_seca")
+	Inventory.add("pavio_algodao")
+	check(Inventory.lit and is_equal_approx(Inventory.fuel, Inventory.LAMP * 1.5), "the braided wick: lasts half again (and comes lit, full)")
+	Inventory.add("tanque_latao")
+	check(is_equal_approx(Inventory.fuel_max(), Inventory.LAMP * 3.0), "the brass tank: twice the querosene")
+	Inventory.add("azeite_santissimo")
+	f0 = Inventory.fuel; await wait(0.5)
+	check(is_inf(Inventory.fuel_max()) and Inventory.fuel == f0 and Inventory.lit and Inventory.lamp_state() == "não apaga",
+		"the Santíssimo's oil: it never goes out")
+	Inventory.reset(); Inventory.give_tools(); Inventory.fuel = 120.0; Inventory.lit = false
+	var saved := SaveGame.capture(player, L.scene_file_path)
+	Inventory.fuel = 3.0; Inventory.lit = true
+	SaveGame.restore(saved); SaveGame.pending = {}
+	check(Inventory.fuel == 120.0 and not Inventory.lit, "a save keeps the querosene left and whether it was lit")
+	Inventory.reset(); Inventory.give_tools(); Inventory.fuel = INF
+
 # --- items that unlock things (ItemCatalog "ferramenta"): a new game has only the lantern -----------------------------
 func unlock_tests() -> void:
 	Inventory.reset()
@@ -485,7 +596,7 @@ func unlock_tests() -> void:
 	door.use(player)
 	check(opened[0] == 0 and L.hud.message.text == "O mato fechou a trilha.", "a locked way says why: \"%s\"" % L.hud.message.text)
 	# the shop: the bolts wait for the crossbow, a tool sells once
-	Inventory.money = 100
+	Inventory.money = 100; Inventory.items["bolsa_cinto"] = 1  # (room for them: Inventory.ROOM)
 	check(Shop.buy("armaria", 0) == Shop.Result.LOCKED and Inventory.count("virote") == 6, "no bolts for sale without the crossbow")
 	check(Shop.offers("armaria").all(func(o): return o.item != "besta"), "the crossbow is not for sale (it is found)")
 	Inventory.add("besta")
@@ -561,6 +672,7 @@ func chest_tests() -> void:
 	m.active = false; m.queue_free()
 	# a weapon out: put away first; three bolts in one go
 	await tap("draw"); await wait(1.3)
+	Inventory.items["virote"] = 0  # (room for them: Inventory.ROOM)
 	var bolts := Chest.make(L, {"id": "teste2", "at": Vector2(at.x - 2.5, at.z), "yaw": 0.0, "item": "virote", "qtd": 3})
 	var had := Inventory.count("virote")
 	bolts.use(player)
@@ -1116,7 +1228,8 @@ func caderno_tests() -> void:
 	check(Caderno.section == 1 and c.head.text.begins_with("Dia ") and ("Dinheiro: Cr$ %d" % Inventory.money) in c.head.text
 		and WorldTime.clock() in c.head.text, "D: Bolso, the day, the hour and the money (%s)" % c.head.text.replace("
 ", " / "))
-	check(names.find("Lamparina") < names.find("Chave da sacristia (1)") and names.find("Chave da sacristia (1)") < names.find("Virote (3)"),
+	check(names.find("Lamparina · " + Inventory.lamp_state()) == 0 and names.find("Chave da sacristia (1)") > 0
+		and names.find("Chave da sacristia (1)") < names.find("Virote (3 de %d)" % Inventory.cap("municao")),
 		"...tools, then keys, then the rest: %s" % ", ".join(names))
 	await tap("back"); await wait(0.1)
 	check(c.title.text == ItemCatalog.item("facao").nome or c.title.text != "", "W/S: the right page tells about it (%s)" % c.title.text)

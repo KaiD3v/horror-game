@@ -8,6 +8,8 @@ const TIMES := 2
 const TEXT := {
 	"bloquear": "Botão direito · bloquear",     # a blow coming, the machete out (Enemy.go)
 	"lamparina": "3 · pendurar a lamparina",    # the light called something (Bruxa)
+	"apagar": "R · apagar a lamparina",         # lit by day, out of doors: querosene wasted (Player)
+	"querosene": "R · encher a lamparina",      # dry, with a bottle (Player)
 	"mirar": "Botão direito · mirar",           # the crossbow out, not aimed (Player)
 	"curativo": "F · curativo",                 # hurt, with something to dress it (Player)
 	"agachar": "C · agachar",                   # a low way through (the level places it)

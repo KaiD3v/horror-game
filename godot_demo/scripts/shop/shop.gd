@@ -2,7 +2,7 @@
 # stock is kept across scenes (static) and comes back with a new game.
 class_name Shop
 
-enum Result { OK, NO_MONEY, SOLD_OUT, LOCKED }
+enum Result { OK, NO_MONEY, SOLD_OUT, LOCKED, FULL }
 
 static var _sold := {}   # "<shop>/<offer index>" -> how many times it was bought
 
@@ -35,6 +35,8 @@ static func buy(shop_id: String, i: int) -> Result:
 		return Result.SOLD_OUT
 	if not Inventory.has(o.get("requires", "")):  # bolts with no crossbow to shoot them
 		return Result.LOCKED
+	if Inventory.room(o.item) < o.qtd:  # no room for it (Inventory.ROOM)
+		return Result.FULL
 	if not Inventory.spend(price(shop_id, i)):
 		return Result.NO_MONEY
 	Inventory.add(o.item, o.qtd)

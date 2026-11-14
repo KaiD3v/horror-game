@@ -1,6 +1,8 @@
 # Something lying about to take with E: `qtd` of an ItemCatalog item into the Inventory, or money (money()). A tool
 # (one of a kind) you already have is not there any more when the scene comes back, nor anything with an `id` once
-# taken (Story "pego:<id>"). Its look is whatever the level hangs under it.
+# taken (Story "pego:<id>"). Its look is whatever the level hangs under it. Only what fits is taken (Inventory.ROOM):
+# the rest stays there (Story "tirado:<id>": how many were). Only what fits is taken (Inventory.ROOM):
+# the rest stays there (Story "tirado:<id>": how many were).
 class_name Pickup
 extends Interactable
 
@@ -40,18 +42,31 @@ func _ready() -> void:
 	if (item != "" and ItemCatalog.tool(item) and Inventory.has(item)) or (id != "" and Story.has("pego:" + id)):
 		queue_free()
 		return
+	if id != "":
+		qtd -= Story.count("tirado:" + id)
 	super()
 
 
 func _use(by: Node3D) -> void:
+	var got := Inventory.earn(qtd) if item == "" else Inventory.add(item, qtd)
+	var kind: String = "dinheiro" if item == "" else ItemCatalog.item(item).tipo
+	if got < qtd and by is Player:
+		by.notice.emit(Inventory.FULL[kind] if got == 0 else "Pegou: %s. O resto não cabe." % (ItemCatalog.price(got) if item == ""
+			else "%s (%d)" % [ItemCatalog.item(item).nome, got]))
+	if got == 0:
+		return
+	if got < qtd:  # the rest waits here
+		qtd -= got
+		if id != "":
+			Story.mark("tirado:" + id, Story.count("tirado:" + id) + got)
+		Audio.play2d(by, "compra", -8.0)
+		return
 	if id != "":
 		Story.mark("pego:" + id)
 	if item == "":
-		Inventory.money += qtd
 		if by is Player:
 			by.notice.emit("Achou: %s" % ItemCatalog.price(qtd))
 	else:
-		Inventory.add(item, qtd)
 		if by is Player:
 			by.notice.emit(Inventory.upgrade_line(item) if ItemCatalog.item(item).tipo == "melhoria"
 				else "Pegou: %s%s" % [ItemCatalog.item(item).nome, " (%d)" % qtd if qtd > 1 else ""])

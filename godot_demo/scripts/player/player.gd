@@ -122,6 +122,9 @@ var lantern_out := true    # in his right hand; false = hung on the belt hook, h
 var hook: LanternHook
 var shake := 0.0
 var flicker := 0.0
+var refilling := false     # filling the lantern from a bottle (R, dry): a moment in the dark
+const REFILL := 1.6        # s it takes
+const LOW := 30.0          # s of querosene left when the flame starts to shrink and gutter
 var condition: PlayerCondition  # blood, breathing, panting
 
 
@@ -194,8 +197,11 @@ func _unhandled_input(e: InputEvent) -> void:
 			dodge()
 		elif e.is_action_pressed("crouch"):
 			crouch()
-		elif e.is_action_pressed("reload"):
-			reload()
+		elif e.is_action_pressed("reload"):  # R: the crossbow's bolt, or (no crossbow out) the lantern
+			if mode == Mode.XBOW:
+				reload()
+			else:
+				lamp()
 		elif e.is_action_pressed("lantern"):  # 3: the lantern on / off its hook (the crossbow needs both hands: away)
 			if mode == Mode.XBOW:
 				_set_lantern(true); equip(Mode.EXPLORE)
@@ -234,9 +240,10 @@ func unarmed() -> bool:
 	return mode == Mode.EXPLORE or mode == Mode.CROUCH
 
 
-## The lantern in his hand (not on its hook): it is never in hand with the crossbow out, both hands are on it.
+## The lantern lit in his hand (not on its hook): it is never in hand with the crossbow out, both hands are on it.
+## Out (blown out or dry), it shows him to nothing.
 func holds_lantern() -> bool:
-	return lantern_out and mode != Mode.XBOW and mode != Mode.CLIMB
+	return lantern_out and Inventory.lit and mode != Mode.XBOW and mode != Mode.CLIMB
 
 
 func set_mode(m: Mode) -> void:
@@ -394,7 +401,7 @@ func toggle_crossbow() -> void:  # unarmed only; holstering = the draw backwards
 	if action != "" or mode == Mode.COMBAT or (unarmed() and not owns(Mode.XBOW)):
 		return
 	if loaded:  # it travels uncocked in the holster; a loaded bolt goes back in the quiver
-		Inventory.add("virote")
+		Inventory.add("virote", 1, true)
 	_set_loaded(false)
 	if unarmed():
 		play("Draw_Crossbow"); set_mode(Mode.XBOW)
@@ -448,6 +455,31 @@ func toggle_lantern() -> void:
 	if not lantern_out:
 		Hints.did("lamparina")
 	sfx("lamparina", -6.0)
+
+
+## R with no crossbow out: the lantern (../docs/MELHORIAS.md). Lit: blown out (dark, and nothing sees it). Out: lit
+## again. Dry: filled with a bottle of querosene first (REFILL s in the dark), if he has one.
+func lamp() -> void:
+	if refilling or mode == Mode.DEAD:
+		return
+	if Inventory.lit:
+		Inventory.lit = false; Hints.did("apagar")
+		sfx("lamparina", -6.0, 0.8)
+	elif Inventory.fuel > 0.0:
+		Inventory.lit = true
+		sfx("lampiao_acender", -6.0)
+	elif Inventory.take("querosene"):
+		refilling = true; Hints.did("querosene")
+		sfx("lata_abrir", -6.0)
+		await get_tree().create_timer(REFILL, false).timeout
+		refilling = false
+		if mode == Mode.DEAD:
+			return
+		Inventory.fuel = Inventory.fuel_max(); Inventory.lit = true
+		sfx("lampiao_acender", -6.0)
+		notice.emit("Lamparina cheia.")
+	else:
+		notice.emit("Sem querosene.")
 
 
 func _set_lantern(out: bool) -> void:
@@ -698,7 +730,19 @@ func _process(delta: float) -> void:
 	cam.v_offset = randf_range(-1, 1) * shake * 0.2
 	flicker = max(0.0, flicker - delta)
 	var t := Time.get_ticks_msec() / 1000.0
-	lantern.light_energy = 3.0 * (0.9 + 0.06 * sin(t * 13.0) + 0.04 * sin(t * 31.0)) * (0.3 if randf() < flicker else 1.0)
+	if Inventory.burn(delta):
+		sfx("lamparina", -8.0, 0.7)
+		notice.emit("A lamparina secou." if Inventory.has("querosene") else "A lamparina secou. Sem querosene.")
+	if not Inventory.lit and Inventory.fuel <= 0.0 and Inventory.has("querosene") and mode != Mode.XBOW:
+		Hints.want(self, "querosene")
+	elif Inventory.lit and not WorldTime.is_night() and not is_inf(Inventory.fuel_max()):  # (out of doors, by day: wasted)
+		var lv := get_tree().get_first_node_in_group("level")
+		if lv is Level and lv.day and lv.day.sun:  # (DayCycle.outdoors)
+			Hints.want(self, "apagar")
+	lantern.visible = Inventory.lit
+	var low := clampf(Inventory.fuel / LOW, 0.0, 1.0)  # its last LOW seconds: smaller, guttering
+	lantern.light_energy = 3.0 * (0.9 + 0.06 * sin(t * 13.0) + 0.04 * sin(t * 31.0)) * (0.3 if randf() < flicker else 1.0) \
+		* (0.4 + 0.6 * low) * (0.5 if low < 1.0 and randf() < 0.1 else 1.0)
 
 
 func _apply_cam() -> void:

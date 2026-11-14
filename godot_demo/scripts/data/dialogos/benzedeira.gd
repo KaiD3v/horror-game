@@ -62,10 +62,12 @@ const NOS := {
 		"As mães, menino. As de lá de cima. A que chora na viela é uma delas. Vêm atrás dos filhos que a Colônia enterrou.",
 		"Se for olhar, vai de noite, depois das nove. Sem luz na mão, abaixado, de longe. Se elas te virem, gritam, e a noite inteira vem.",
 	]},
-	"procissao": {"faz": [{"marca": "firmina_procissao"}], "fala": [
+	"procissao": {"faz": [{"marca": "firmina_procissao"}, {"da": "azeite_santissimo"}], "fala": [
 		"...Benedito. Ela escreveu Benedito?",
 		"Vinte anos eu limpei o túmulo de um menino sem nome. E a mãe dele descia o morro toda noite pra procurar.",
 		"Vou escrever no livro da igreja. Benedito. Pelo menos isso a gente devolve.",
+		"Toma. Azeite da lâmpada do Santíssimo. Vinte anos e ela nunca apagou, nem na noite da sirene.",
+		"Põe na tua lamparina. Onde você vai, menino, não pode faltar luz.",
 	]},
 	"cemiterio_depois": {"fala": ["Eu limpo o túmulo de um menino que eu não sei o nome. É o que dá pra fazer. Não me olha assim."]},
 	"cemiterio": {"falas": [
@@ -100,10 +102,11 @@ const NOS := {
 		"Eu não entro mais lá. Desde que acharam o caixão aberto, aquela porta pesa feito chumbo pra mim.",
 		"Me traz a garrafada. Com ela eu fecho o teu corpo antes da noite. Vai precisar.",
 	]},
-	"escapulario": {"faz": [{"toma": "escapulario"}, {"marca": "firmina_escapulario"}], "fala": [
+	"escapulario": {"faz": [{"toma": "escapulario"}, {"marca": "firmina_escapulario"}, {"da": "embornal"}], "fala": [
 		"Isso... isso é do meu Joaquim. Fui eu que costurei. Onde... embaixo da igreja?",
 		"Então ele passou por lá. Então ele estava vivo quando passou por lá.",
 		"Deixa comigo. Vou acender mais uma vela. Uma pra ele achar o caminho, e outra pra você.",
+		"E leva esse embornal. Era pra ele levar as ervas. Atadura solta no bolso some na primeira corrida.",
 	]},
 	"severino": {"faz": [{"marca": "firmina_severino"}], "fala": [
 		"O Severino... Então era ele batendo lá embaixo. No começo era ele que me trazia notícia do Joaquim.",

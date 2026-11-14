@@ -24,6 +24,8 @@ func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if L is Level:
 		Inventory.reset(); Inventory.give_tools(); Shop.reset(); Chest.reset(); Story.reset()  # the tests hold every weapon (their own test takes them away)
+		Inventory.fuel = INF  # ...and a lantern that does not run dry (the lantern's own test fills it)
+		Story.mark("aprendeu:apagar", Hints.TIMES)  # (its "R · apagar" by day would sit under every prompt checked)
 		WorldTime.reset(16 * 60 + 30); Weather.force(1.0, 1.0)  # the same light every run: late afternoon, fog, drizzle
 		if L.day:
 			L.day._step(0.0)

@@ -14,6 +14,8 @@ const ENTRADA := [
 
 const MENU := [
 	{"texto": "Ver o que tem à venda", "faz": [{"loja": "venda"}]},
+	{"texto": "Deixar o dinheiro guardado", "vai": "guarda", "se": {"com_dinheiro": true}},
+	{"texto": "Pegar o dinheiro guardado", "vai": "retira", "se": {"guardado": true}},
 	{"texto": "Perguntar o que se fala por aí", "vai": "rumores"},
 	{"texto": "Perguntar sobre ele", "vai": "ele"},
 	{"texto": "Perguntar sobre o caderno de fiado", "vai": "fiado", "se": {"marca": "bento_conheceu"}},
@@ -91,14 +93,22 @@ const NOS := {
 		"Um gato? ...Gato que come pão e deixa pegada de gente.",
 		"Tá bom. Foi um gato. Eu vou deixar o balaio destampado pro gato, então. Gato precisa comer.",
 	]},
-	"porao": {"faz": [{"marca": "bento:porao"}], "fala": [
+	"guarda": {"faz": [{"guarda": true}], "fala": [
+		"Guardo, guardo. Vai no caderno, do lado de cá: pela primeira vez sou eu que devo. É só vir buscar.",
+	]},
+	"retira": {"faz": [{"retira": true}], "fala": [
+		"Tá aqui, contado. O que não couber no teu bolso continua anotado.",
+	]},
+	"porao": {"faz": [{"marca": "bento:porao"}, {"da": "capanga"}], "fala": [
 		"...Você abriu. O número dela. Eu risquei no balcão pra não esquecer, e depois não tive coragem de abrir mais.",
 		"As coisas da Odete estão lá. A carta também. Eu nunca abri. Fica fechada, freguês. Fica.",
+		"Toma, leva essa capanga. Era do meu pai. Quem desce num porão daquele merece onde guardar o que acha.",
 	]},
-	"porao_leu": {"faz": [{"marca": "bento:porao"}], "fala": [
+	"porao_leu": {"faz": [{"marca": "bento:porao"}, {"da": "capanga"}], "fala": [
 		"...Você leu. Não me conta o que diz. Me diz só uma coisa: ela tava com medo?",
 		"Não? ...Então é a Odete mesmo.",
 		"Ela pediu pra eu não abrir a porta de noite, não pediu? Eu sabia. Eu nunca abri. Eu nunca entendi por quê, e nunca abri.",
+		"Toma, leva essa capanga. Era do meu pai. Quem desce num porão daquele merece onde guardar o que acha.",
 	]},
 	"fiado": {"fala": [
 		"O caderno? Está tudo anotado. O Zé me deve um quilo de sal. A Dita, querosene. O padre, vinho de missa.",

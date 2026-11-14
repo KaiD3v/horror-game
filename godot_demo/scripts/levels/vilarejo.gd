@@ -335,7 +335,7 @@ func _alambique() -> void:
 const THICKETS := [["moita_queimada", -26.0, 11.6, 0.0, ["", 10]],   # behind the burnt house
 	["moita_cemiterio", -31.0, -18.4, PI, ["virote", 4]],          # behind the cemetery's north wall
 	["moita_casa04", 14.6, 15.0, -PI / 2, ["atadura", 2]],         # behind Zé's house
-	["moita_alambique", 43.5, 16.4, 0.0, ["", 6]]]                 # by the still, on its south side
+	["moita_alambique", 43.5, 16.4, 0.0, ["querosene", 1]]]        # by the still, on its south side
 # [id, where its rope is tied (the thing hangs 0.75 m under), what hangs, [item, how many]]
 const HANGING := [["lata_espantalho", Vector3(30.6, 3.1, 26.6), "lata", ["", 8]],   # a bird-scarer's pole by the scarecrow
 	["trouxa_torre", Vector3.INF, "trouxa", ["atadura", 2]]]                        # (INF: at the chapel tower's window)

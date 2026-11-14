@@ -706,7 +706,7 @@ func finds_tests() -> void:
 			await tap("interact"); await wait(0.2)
 			check(Story.has("pego:" + b.id) and (Inventory.money > money or Inventory.items != items), "%s: taken (%s)" % [b.id, L.hud.message.text])
 		await shot("v80_%s" % b.id)
-	var ropes: Array = L.find_children("*", "Target", true, false)
+	var ropes: Array = L.find_children("*", "Target", true, false).filter(func(r): return r != L.log_rope)  # (not Dito's log)
 	check(ropes.size() == L.HANGING.size(), "%d things hung up high, on ropes" % ropes.size())
 	for r: Target in ropes:
 		var from := r.global_position + Vector3(0.3, -1.4, 0.3)  # from under it (what hangs there stops nothing)

@@ -58,6 +58,9 @@ func _ready() -> void:
 func _use(by: Node3D) -> void:
 	if busy or not by is Player:
 		return
+	if Inventory.room(item) < qtd:  # (it stays shut until there is room for it all)
+		(by as Player).notice.emit(Inventory.FULL[ItemCatalog.item(item).tipo])
+		return
 	_open(by)
 
 

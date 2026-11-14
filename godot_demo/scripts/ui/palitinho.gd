@@ -47,6 +47,10 @@ static func can_play() -> String:
 		return "Por hoje chega. Você me limpou."
 	if Inventory.money < STAKE:
 		return "Sem dinheiro na mesa não tem jogo, rapaz."
+	if Inventory.money_room() < STAKE:
+		return "Teu bolso tá cheio, rapaz. Vai gastar primeiro."
+	if Inventory.money_room() < STAKE:
+		return "Teu bolso tá cheio, rapaz. Vai gastar primeiro."
 	return ""
 
 
@@ -140,7 +144,7 @@ func _guess_for_him(said: int) -> int:
 func _end() -> void:
 	phase = "end"
 	if wins.x >= 2:
-		Inventory.money += STAKE; lost += STAKE
+		Inventory.earn(STAKE); lost += STAKE
 		var k := Story.count("palitinho:vitorias"); Story.bump("palitinho:vitorias")
 		line.text = "Você ganhou: Cr$ %d. O Tenório junta os palitos devagar.\nTenório: — %s" % [STAKE,
 			MEMORIES[k] if k < MEMORIES.size() else "Sorte de principiante. Amanhã eu desforro."]

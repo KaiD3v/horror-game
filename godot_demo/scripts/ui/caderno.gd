@@ -130,7 +130,9 @@ func _entries() -> Array:
 					var n := Inventory.count(id)
 					if n > 0 and (it.tipo == kind or (kind == "" and it.tipo not in ["ferramenta", "chave"])):
 						var label: String = "Contas de terço (%d de %d)" % [(n - 1) % Inventory.BEADS + 1, Inventory.BEADS] if id == "conta_terco" \
-							else it.nome + (" (%d)" % n if it.tipo not in ["ferramenta", "melhoria"] else "")
+							else "Lamparina · " + Inventory.lamp_state() if id == "lamparina" \
+							else it.nome + (" (%d de %d)" % [n, Inventory.cap(it.tipo)] if it.tipo == "municao" \
+							else " (%d)" % n if it.tipo not in ["ferramenta", "melhoria", "equipamento"] else "")
 						out.append({"texto": label, "titulo": it.nome,
 							"detalhe": it.descricao})
 		"Notas":
@@ -143,8 +145,9 @@ func _entries() -> Array:
 func _head() -> String:
 	if SECTIONS[section] != "Bolso":
 		return ""
-	return "Dia %d · %s · %s\nDinheiro: %s" % [int(WorldTime.minutes / 1440.0) + 1, WorldTime.period().nome, WorldTime.clock(),
-		ItemCatalog.price(Inventory.money)]
+	return "Dia %d · %s · %s\nDinheiro: %s de %s%s" % [int(WorldTime.minutes / 1440.0) + 1, WorldTime.period().nome, WorldTime.clock(),
+		ItemCatalog.price(Inventory.money), ItemCatalog.price(Inventory.cap("dinheiro")),
+		"   ·   com o Bento: " + ItemCatalog.price(Inventory.banked) if Inventory.banked > 0 else ""]
 
 
 func _tell(i: int) -> void:  # the right page: the one chosen

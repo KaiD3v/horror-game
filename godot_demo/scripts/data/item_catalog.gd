@@ -9,8 +9,13 @@
 #                    The tools that open the way: pe_de_cabra (boarded doors), picareta (holes, stone rubble), corda
 #                    (down and up wells, holes, high places): a door / rubble / well asks for one with `requires`.
 #   tipo "melhoria"  an upgrade, Zelda style (../docs/CHAVE_DO_PORTAO.md "As melhorias"): one of a kind where it lies,
-#                    never sold, never given twice. Inventory.health_max / breath_max count them: coracao_exvoto (the
-#                    story's: a heart at once), conta_terco (exploration's: every Inventory.BEADS, one more bead of breath).
+#                    never given twice. Inventory.health_max / breath_max count them: coracao_exvoto (the story's: a
+#                    heart at once), conta_terco (exploration's: every Inventory.BEADS, one more bead of breath); and
+#                    Inventory.fuel_max the lantern's (../docs/MELHORIAS.md): pavio_algodao, tanque_latao (sold, once),
+#                    azeite_santissimo (it never goes out).
+#   tipo "equipamento" carried, never spent: what holds things (Inventory.ROOM: how many bolts, cures, how much money
+#                    fit), the leather quiver (quieter running).
+#   tipo "combustivel" querosene: fills the lantern when it runs dry (R).
 #   tipo "lembranca" something of someone's, carried to be given back (a dialogue takes it: "toma"); does nothing.
 #   tipo "chave"     a key: each opens only its own lock, and is spent on it. A lock (a door, a trunk, any
 #                    Interactable) names it in `requires`; the first E with it takes it and the lock stays open for
@@ -20,7 +25,8 @@ class_name ItemCatalog
 
 const MONEY := "Cr$"   # 1974: cruzeiros
 const ITEMS := {
-	"lamparina": {"nome": "Lamparina", "descricao": "Querosene e pavio. A única luz que você leva para a noite.", "tipo": "ferramenta"},
+	"lamparina": {"nome": "Lamparina", "descricao": "Querosene e pavio. A única luz que você leva para a noite. Seca e apaga; R apaga, acende, enche.", "tipo": "ferramenta"},
+	"querosene": {"nome": "Querosene", "descricao": "Uma garrafa de querosene com rolha de sabugo. Enche a lamparina quando ela seca (R).", "tipo": "combustivel"},
 	"facao": {"nome": "Facão", "descricao": "Lâmina de cortar cana. Corta, apara golpes (botão direito).", "tipo": "ferramenta"},
 	"besta": {"nome": "Besta", "descricao": "Arma de caça, de longe e em silêncio. Atira virotes.", "tipo": "ferramenta"},
 	"virote": {"nome": "Virote", "descricao": "Ponta de ferro para a besta. Um a cada vez que recarrega.", "tipo": "municao"},
@@ -34,7 +40,15 @@ const ITEMS := {
 	"relogio_bolso": {"nome": "Relógio de bolso", "descricao": "Prata, parado nas quatro e dez. Na tampa, por dentro: \"Ao meu Tonico. Lurdes, 1960.\"", "tipo": "lembranca"},
 	"chave_enfermeira": {"nome": "Chave da casa da enfermeira", "descricao": "Uma chave comprida, enferrujada. O Bastião guardou: \"Se eu não descer, queima tudo\", ela disse.", "tipo": "chave", "modelo": "chave"},
 	"cobertor": {"nome": "Cobertor de lã", "descricao": "Lã grossa, xadrez, cheirando a fumaça. Era da cama do Zé.", "tipo": "lembranca"},
-	"aljava_couro": {"nome": "Aljava de couro", "descricao": "A do Tenório, de couro cru, forrada de feltro: os virotes não batem uns nos outros quando ele corre.", "tipo": "equipamento"},
+	"aljava_couro": {"nome": "Aljava de couro", "descricao": "A do Tenório, de couro cru, forrada de feltro: os virotes não batem uns nos outros quando ele corre. Cabem doze.", "tipo": "equipamento"},
+	"bolsa_cinto": {"nome": "Bolsa de cinto", "descricao": "Lona de caminhão costurada em três bolsos, presa no cinto. Cabem dezoito virotes.", "tipo": "equipamento"},
+	"embornal": {"nome": "Embornal de pano", "descricao": "Saco de algodão cru com alça, costurado pela Firmina. Cabem quatro curativos.", "tipo": "equipamento"},
+	"estojo_celina": {"nome": "Estojo da enfermeira", "descricao": "Lata branca, a cruz vermelha descascada; dentro da tampa, a caneta: Celina. Cabem seis curativos.", "tipo": "equipamento"},
+	"porta_niquel": {"nome": "Porta-níquel", "descricao": "Couro de fecho de mola, que estala. Cabem Cr$ 120.", "tipo": "equipamento"},
+	"capanga": {"nome": "Capanga de couro", "descricao": "Bolsa de couro de pendurar no ombro. Era do pai do Seu Bento. Cabem Cr$ 250.", "tipo": "equipamento"},
+	"pavio_algodao": {"nome": "Pavio de algodão trançado", "descricao": "Grosso, trançado à mão. Queima mais devagar: a lamparina dura mais.", "tipo": "melhoria"},
+	"tanque_latao": {"nome": "Tanque de latão", "descricao": "Um reservatório maior, soldado no pé da lamparina pelo Seu Dito. Leva o dobro de querosene.", "tipo": "melhoria"},
+	"azeite_santissimo": {"nome": "Azeite do Santíssimo", "descricao": "Da lâmpada do sacrário, que a Firmina nunca deixou apagar. Na lamparina, não apaga mais.", "tipo": "melhoria"},
 	"chave_motorista": {"nome": "Chave da casa do motorista", "descricao": "Do Seu Abílio, o motorista da Colônia. Ele deixou com o Seu Dito, pra guardar a mercadoria.", "tipo": "chave", "modelo": "chave"},
 	"medalha": {"nome": "Medalha de São Cristóvão", "descricao": "Lata dourada, o santo com o Menino nas costas atravessando o rio. Protetor dos motoristas. No verso: \"Abílio\".", "tipo": "lembranca"},
 	"escapulario": {"nome": "Escapulário", "descricao": "Dois quadradinhos de pano num cordão, Nossa Senhora do Carmo. No verso, a lápis: Joaquim.", "tipo": "lembranca"},

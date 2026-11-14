@@ -7,10 +7,12 @@
 # An option: {"texto": "...", "vai": node | "fim" (closes) | "" (stays), "se": condition, "faz": [actions],
 #             "uma_vez": true (gone once picked)}.
 # A condition (every key must hold): "tem" / "nao_tem": an item; "marca" / "sem_marca": a Story mark;
-#   "tarefa": [id, "nova" | "ativa" | "feita"] (or a list of them, all); "noite": true / false (WorldTime); "lugar": where their routine has
+#   "tarefa": [id, "nova" | "ativa" | "feita"] (or a list of them, all); "noite": true / false (WorldTime);
+#   "com_dinheiro" / "guardado": true / false (money in his pocket, money left with Seu Bento); "lugar": where their routine has
 #   them now (NpcCatalog "rotina": "varrendo", "almoco", "portao", "varanda", "cemiterio", "cruzeiro").
 # An action: "marca": name; "loja": shop id (the shop opens over the talk); "da" / "toma": item (+ "qtd");
-#   "dinheiro": n; "cura": true (his wounds closed); "tarefa": [id, state] (the HUD tells it).
+#   "dinheiro": n (what does not fit in his purse is left with Seu Bento); "guarda": true (all his money to Seu
+#   Bento), "retira": true (back from Seu Bento, as much as fits); "cura": true (his wounds closed); "tarefa": [id, state] (the HUD tells it).
 # A villager with no file still talks: a greeting, their shop if they have one, and goodbye.
 class_name Dialog
 extends RefCounted
@@ -116,6 +118,10 @@ func holds(c: Dictionary) -> bool:
 			"noite": ok = WorldTime.is_night() == v
 			"lugar": ok = NpcCatalog.slot(who).get("lugar", "") == v
 			"leu": ok = v in NotesReader.read
+			"com_dinheiro": ok = (Inventory.money > 0) == v
+			"guardado": ok = (Inventory.banked > 0) == v
+			"com_dinheiro": ok = (Inventory.money > 0) == v
+			"guardado": ok = (Inventory.banked > 0) == v
 			_: push_error("Dialog %s: unknown condition %s" % [who, k]); ok = false
 		if not ok:
 			return false
@@ -132,7 +138,17 @@ func _do(actions: Array) -> String:
 				"jogo": ui = "jogo:" + a.jogo
 				"da": Inventory.add(a.da, a.get("qtd", 1))
 				"toma": Inventory.take(a.toma, a.get("qtd", 1))
-				"dinheiro": Inventory.money += a.dinheiro
+				"dinheiro":
+					var over := Inventory.receive(a.dinheiro)
+					if over != "":
+						player.notice.emit(over)
+				"guarda":
+					player.notice.emit("O Bento anota no caderno: %s guardados." % ItemCatalog.price(Inventory.money))
+					Inventory.banked += Inventory.money; Inventory.money = 0
+				"retira":
+					Inventory.banked -= Inventory.earn(Inventory.banked)
+					player.notice.emit("Ficam %s com o Bento." % ItemCatalog.price(Inventory.banked) if Inventory.banked > 0
+						else "O Bento risca a conta do caderno.")
 				"cura": player.heal(player.max_health)
 				"tarefa":
 					Story.set_task(a.tarefa[0], a.tarefa[1])
